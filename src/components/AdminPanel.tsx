@@ -5193,11 +5193,145 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   onSubmit={handleSaveHomepageConfig}
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
-                  {/* PANEL 1: HERO OUTLINE (TAILORED TO APPLIED THEME) */}
+                  {/* PANEL 1: TOP HEADER & SITE BRANDING IDENTITY */}
+                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2 flex items-center justify-between">
+                      <span>1. Top Header & Site Branding Identity</span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        [{activeTheme.toUpperCase()}]
+                      </span>
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Marketplace Title / Name
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={homepageForm.appName}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                appName: e.target.value,
+                              }))
+                            }
+                            placeholder="e.g. Flaskia"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Brand Badge Behind Title
+                          </label>
+                          <input
+                            type="text"
+                            value={homepageForm.appBrandBadge}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                appBrandBadge: e.target.value,
+                              }))
+                            }
+                            placeholder="e.g. CHEMICALS"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Header Subtitle Tagline
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={homepageForm.appSubtitle}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              appSubtitle: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. Chemicals & Research Solutions"
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                          <span>Admin WhatsApp Helpline Number</span>
+                          <span className="text-[9px] text-slate-500 font-normal">With Country Code (e.g. 15099941048)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={homepageForm.adminWhatsappNumber}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              adminWhatsappNumber: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. 15099941048"
+                          className="w-full px-3 py-2 bg-slate-950 border border-emerald-900/60 rounded-xl text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500 transition"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Launcher Logo Icon
+                          </label>
+                          <select
+                            value={homepageForm.appLogoIcon}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                appLogoIcon: e.target.value,
+                              }))
+                            }
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition cursor-pointer"
+                          >
+                            <option value="FlaskConical">Flask Conical</option>
+                            <option value="Award">Award Badge</option>
+                            <option value="Activity">Pulse Activity</option>
+                            <option value="ShieldCheck">Verified Shield</option>
+                            <option value="Globe">Global Network</option>
+                            <option value="Cpu">Microchip CPU</option>
+                            <option value="Sparkles">Sparkles Star</option>
+                            <option value="Beaker">Beaker Tube</option>
+                            <option value="Heart">Care Heart</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Browser Favicon URL
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={homepageForm.appFaviconUrl}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                appFaviconUrl: e.target.value,
+                              }))
+                            }
+                            placeholder="e.g. https://icons8.com/chemistry"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PANEL 2: MAIN HOMEPAGE HERO BANNER SECTION */}
                   <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2 flex items-center justify-between">
                       <span>
-                        1. {activeTheme === "emerald" ? "Emerald Scientific Lab" : (activeTheme === "retail" || isCyber) ? "Amazon & Flipkart Retail" : "IndiaMART B2B Procurement"} Hero Section
+                        2. {activeTheme === "indiamart" ? "IndiaMART B2B Hero Banner" : (activeTheme === "retail" || isCyber) ? "Amazon & Flipkart Hero Banner" : "Emerald Scientific Hero Banner"}
                       </span>
                       <span className="text-[10px] text-slate-500 font-mono">
                         [{activeTheme.toUpperCase()}]
@@ -5207,7 +5341,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                     <div className="space-y-3">
                       <div>
                         <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          {activeTheme === "emerald" ? "Header Safety Tag / Compliance Badge" : (activeTheme === "retail" || isCyber) ? "Retail Promo Deal Pill / Badge" : "B2B Supplier Badge / Category Tag"}
+                          {activeTheme === "indiamart" ? "Hero Category Tag / Pill Badge" : activeTheme === "emerald" ? "Header Safety Tag / Compliance Badge" : "Retail Promo Deal Pill / Badge"}
                         </label>
                         <input
                           type="text"
@@ -5220,11 +5354,11 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                             }))
                           }
                           placeholder={
-                            activeTheme === "emerald"
+                            activeTheme === "indiamart"
+                              ? "e.g. IndiaMART Verified Chemical Procurement Direct"
+                              : activeTheme === "emerald"
                               ? "e.g. FDA & OSHA GHS COMPLIANT PROCUREMENT"
-                              : (activeTheme === "retail" || isCyber)
-                              ? "e.g. 🔥 BIG SAVING DAYS • LIMITED TIME DEALS"
-                              : "e.g. 256-BIT SSL ENCRYPTED & PCI-DSS SAFE"
+                              : "e.g. 🔥 BIG SAVING DAYS • LIMITED TIME DEALS"
                           }
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                         />
@@ -5232,7 +5366,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
                       <div>
                         <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          {activeTheme === "emerald" ? "Main Lab Headline Title" : (activeTheme === "retail" || isCyber) ? "Main Retail Banner Headline" : "Wholesale B2B Quotation Headline"}
+                          {activeTheme === "indiamart" ? "Wholesale B2B Main Banner Headline" : activeTheme === "emerald" ? "Main Lab Headline Title" : "Main Retail Banner Headline"}
                         </label>
                         <input
                           type="text"
@@ -5245,11 +5379,11 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                             }))
                           }
                           placeholder={
-                            activeTheme === "emerald"
+                            activeTheme === "indiamart"
+                              ? "e.g. Wholesale Chemical Supplier & Bulk Quotation Hub"
+                              : activeTheme === "emerald"
                               ? "e.g. High-Purity Laboratory Reagents & Supplies"
-                              : (activeTheme === "retail" || isCyber)
-                              ? "e.g. Global Chemistry & Lab Equipment Marketplace"
-                              : "e.g. Wholesale Chemical Supplier & Bulk Quotation Hub"
+                              : "e.g. Global Chemistry & Lab Equipment Marketplace"
                           }
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                         />
@@ -5261,7 +5395,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         </label>
                         <textarea
                           required
-                          rows={4}
+                          rows={3}
                           value={homepageForm.heroDescription}
                           onChange={(e) =>
                             setHomepageForm((prev) => ({
@@ -5270,22 +5404,41 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                             }))
                           }
                           placeholder={
-                            activeTheme === "emerald"
+                            activeTheme === "indiamart"
+                              ? "e.g. Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals..."
+                              : activeTheme === "emerald"
                               ? "e.g. Flaskia distributes analytical chemical solutions..."
-                              : (activeTheme === "retail" || isCyber)
-                              ? "e.g. Shop 10,000+ ACS Grade Chemical Reagents with Express Free Delivery..."
-                              : "e.g. Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals..."
+                              : "e.g. Shop 10,000+ ACS Grade Chemical Reagents with Express Free Delivery..."
                           }
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition resize-none leading-relaxed"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Primary Callout / Quote Button Text
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={homepageForm.complianceBtnText}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              complianceBtnText: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. Get Price Quote"
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* PANEL 2: KEY LAB PERFORMANCE METRICS */}
+                  {/* PANEL 3: CORE PERFORMANCE METRICS & WATERMARKS */}
                   <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2">
-                      2. Highlighted Lab Core Metrics
+                      3. Core Performance Metrics & Watermarks
                     </h3>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -5370,7 +5523,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
                     <div className="border-t border-slate-800/40 pt-3 mt-1 space-y-3">
                       <h4 className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">
-                        Artwork watermark labels
+                        Artwork Watermark Badges
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -5411,104 +5564,29 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                     </div>
                   </div>
 
-                  {/* PANEL 3: GRAPHICS & BANNER ASSETS */}
+                  {/* PANEL 4: GHS & COMPLIANCE ADVISORY FOOTNOTE BANNER */}
                   <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2">
-                      3. Graphic Launcher Imagery
+                      4. GHS & Compliance Advisory Footnote Banner
                     </h3>
 
                     <div className="space-y-3">
                       <div>
                         <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Illustration Banner Image URL
+                          Notice Advisory Emoji
                         </label>
                         <input
                           type="text"
                           required
-                          value={homepageForm.heroImageUrl}
+                          value={homepageForm.complianceEmoji}
                           onChange={(e) =>
                             setHomepageForm((prev) => ({
                               ...prev,
-                              heroImageUrl: e.target.value,
+                              complianceEmoji: e.target.value,
                             }))
                           }
-                          placeholder="e.g. /src/assets/images/chemical_hero_banner.png"
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white uppercase focus:outline-none focus:border-rose-500"
                         />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Accessible Image Alt description
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={homepageForm.heroImageAlt}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              heroImageAlt: e.target.value,
-                            }))
-                          }
-                          placeholder="e.g. High Purity Research Chemistry Lab Illustration"
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                        />
-                      </div>
-
-                      <div className="bg-slate-950/40 p-3 rounded-lg border border-slate-900 flex items-start gap-2.5">
-                        <AlertTriangle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <div className="text-[10px] leading-relaxed text-slate-400">
-                          <strong>Graphics Note:</strong> All image path
-                          bindings must refer to robust relative assets, local
-                          workspace directories, or public HTTPS image sources.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PANEL 4: GHS COMPLIANCE NOTICE FOOTER */}
-                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2">
-                      4. GHS Compliance Footnote Banner
-                    </h3>
-
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="col-span-1">
-                          <label className="block text-[10px] text-slate-400 mb-1">
-                            Notice Emoji
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={homepageForm.complianceEmoji}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                complianceEmoji: e.target.value,
-                              }))
-                            }
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-center text-xs text-white uppercase focus:outline-none focus:border-rose-500"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-[10px] text-slate-400 mb-1">
-                            Button Callout Label
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={homepageForm.complianceBtnText}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                complianceBtnText: e.target.value,
-                              }))
-                            }
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                          />
-                        </div>
                       </div>
 
                       <div>
@@ -5551,141 +5629,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                     </div>
                   </div>
 
-                  {/* PANEL 5: MARKETPLACE NAME & LOGO IDENTITY */}
-                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2">
-                      5. Brand Header & Logo Identity
-                    </h3>
-
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Marketplace Name
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={homepageForm.appName}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appName: e.target.value,
-                              }))
-                            }
-                            placeholder="e.g. Flaskia"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Branding Badge
-                          </label>
-                          <input
-                            type="text"
-                            value={homepageForm.appBrandBadge}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appBrandBadge: e.target.value,
-                              }))
-                            }
-                            placeholder="e.g. PRO (leave blank to hide)"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Header Subtitle Tagline
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={homepageForm.appSubtitle}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              appSubtitle: e.target.value,
-                            }))
-                          }
-                          placeholder="e.g. Academic Supply Direct"
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                          <span>Admin WhatsApp Number (For Product Inquiries)</span>
-                          <span className="text-[9px] text-slate-500 font-normal">With Country Code (e.g. 15099941048 or 919876543210)</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={homepageForm.adminWhatsappNumber}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              adminWhatsappNumber: e.target.value,
-                            }))
-                          }
-                          placeholder="e.g. 15099941048"
-                          className="w-full px-3 py-2 bg-slate-950 border border-emerald-900/60 rounded-xl text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500 transition"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Launcher Logo Icon
-                          </label>
-                          <select
-                            value={homepageForm.appLogoIcon}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appLogoIcon: e.target.value,
-                              }))
-                            }
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition cursor-pointer"
-                          >
-                            <option value="FlaskConical">Flask Conical</option>
-                            <option value="Award">Award Badge</option>
-                            <option value="Activity">Pulse Activity</option>
-                            <option value="ShieldCheck">Verified Shield</option>
-                            <option value="Globe">Global Network</option>
-                            <option value="Cpu">Microchip CPU</option>
-                            <option value="Sparkles">Sparkles Star</option>
-                            <option value="Beaker">Beaker Tube</option>
-                            <option value="Heart">Care Heart</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Browser Favicon URL
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={homepageForm.appFaviconUrl}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appFaviconUrl: e.target.value,
-                              }))
-                            }
-                            placeholder="e.g. https://icons8.com/chemistry"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PANEL 6: MARKETPLACE FOOTER CONFIGURATION */}
+                  {/* PANEL 5: INSTITUTIONAL FOOTER & REGULATORY LICENSES */}
                   <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4 md:col-span-2">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2">
-                      6. Institutional Footer Management
+                      5. Institutional Footer & Regulatory Certifications
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

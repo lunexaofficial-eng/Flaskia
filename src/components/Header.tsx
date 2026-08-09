@@ -1,6 +1,7 @@
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import CurrencySelector from "./CurrencySelector";
+import LiveInquiryTicker from "./LiveInquiryTicker";
 import { 
   ShoppingBag, 
   Search, 
@@ -37,6 +38,9 @@ interface HeaderProps {
   appLogoIcon?: string;
   currentUser?: any;
   onLogout?: () => void;
+  onOpenInquiry?: (product?: any) => void;
+  onSelectProductById?: (productId: string) => void;
+  inquiries?: any[];
 }
 
 const getLogoIcon = (iconName: string) => {
@@ -68,6 +72,9 @@ export default function Header({
   appLogoIcon = "FlaskConical",
   currentUser,
   onLogout,
+  onOpenInquiry,
+  onSelectProductById,
+  inquiries = [],
 }: HeaderProps) {
   const { isRetail, isIndiamart } = useTheme();
   const TargetIcon = getLogoIcon(appLogoIcon);
@@ -86,16 +93,16 @@ export default function Header({
               className="flex items-center gap-3 cursor-pointer group shrink-0"
             >
               <div className="w-10 h-10 rounded-xl bg-[#2e7d32] text-white flex items-center justify-center font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
-                ₹
+                <TargetIcon className="w-5.5 h-5.5 text-white stroke-[2.25] group-hover:rotate-12 transition-transform duration-300" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xl font-extrabold tracking-tight text-slate-900 font-sans">{appName}</span>
                   <span className="bg-[#00a699] text-white text-[9.5px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
-                    VERIFIED B2B
+                    {appBrandBadge || "CHEMICALS"}
                   </span>
                 </div>
-                <p className="text-[10px] text-emerald-800 font-bold font-mono">IndiaMART Chemical Procurement Direct</p>
+                <p className="text-[10px] text-emerald-800 font-bold font-mono">{appSubtitle || "Chemicals & Research Solutions"}</p>
               </div>
             </div>
 
@@ -123,7 +130,7 @@ export default function Header({
             {/* Post Requirement & RFQ Actions */}
             <div className="flex items-center justify-between md:justify-end gap-2.5 text-xs">
               
-              <CurrencySelector />
+              <CurrencySelector align="left" />
 
               <button
                 onClick={() => onNavigate("store")}
@@ -146,18 +153,13 @@ export default function Header({
           </div>
         </div>
 
-        {/* Secondary Category Ribbon */}
-        <div className="bg-[#2b3445] text-slate-200 px-4 md:px-8 py-2 text-xs border-t border-slate-700 overflow-x-auto whitespace-nowrap">
-          <div className="max-w-7xl mx-auto flex items-center gap-6 text-[11.5px] font-semibold">
-            <span className="text-emerald-400 font-bold uppercase tracking-wider">Product Categories:</span>
-            <span className="hover:text-emerald-300 cursor-pointer font-bold text-white" onClick={() => onNavigate("store")}>All Reagents</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>ACS Grade Acids</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>Solvents & Hydrocarbons</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>High-Purity Buffers</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>Indicators & Dyes</span>
-            <span className="hover:text-white cursor-pointer text-amber-300 font-bold ml-auto" onClick={onOpenHelp}>⭐ Supplier Rating ≥ 4.8</span>
-          </div>
-        </div>
+        {/* Live Slidable Customer Inquiry History Stream Ticker */}
+        <LiveInquiryTicker 
+          inquiries={inquiries}
+          onOpenInquiry={onOpenInquiry}
+          onSelectProductById={onSelectProductById}
+          theme="indiamart"
+        />
       </header>
     );
   }
@@ -278,28 +280,13 @@ export default function Header({
           </div>
         </div>
 
-        {/* Secondary Category Sub-Nav Bar (Flipkart Style Category Ribbon) */}
-        <div className="bg-[#232f3e] text-slate-200 px-4 md:px-8 py-2 text-xs border-t border-slate-700/60 overflow-x-auto whitespace-nowrap">
-          <div className="max-w-7xl mx-auto flex items-center gap-6 text-[11.5px] font-medium">
-            <button 
-              onClick={() => onNavigate("store")}
-              className={`flex items-center gap-1.5 hover:text-white transition cursor-pointer font-bold ${
-                currentView === "store" ? "text-[#febd69] border-b-2 border-[#febd69] pb-0.5" : "text-slate-200"
-              }`}
-            >
-              <Menu className="w-4 h-4" /> All Categories
-            </button>
-            <span className="hover:text-amber-300 cursor-pointer flex items-center gap-1 text-amber-300 font-bold" onClick={() => onNavigate("store")}>
-              <Zap className="w-3.5 h-3.5 text-amber-400" /> Today's Deals
-            </span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>Chemical Reagents</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>Lab Instruments</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>Glassware & Supplies</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>Safety Direct</span>
-            <span className="hover:text-white cursor-pointer" onClick={() => onNavigate("store")}>Prime Bulk Packs</span>
-            <span className="hover:text-white cursor-pointer ml-auto text-slate-400" onClick={onOpenHelp}>Help & SDS Center</span>
-          </div>
-        </div>
+        {/* Live Slidable Customer Inquiry History Stream Ticker */}
+        <LiveInquiryTicker 
+          inquiries={inquiries}
+          onOpenInquiry={onOpenInquiry}
+          onSelectProductById={onSelectProductById}
+          theme="retail"
+        />
       </header>
     );
   }
@@ -355,7 +342,7 @@ export default function Header({
 
         {/* Action Controls & Navigation tabs */}
         <div className="flex items-center gap-3.5 justify-between md:justify-end">
-          <CurrencySelector />
+          <CurrencySelector align="right" />
 
           <nav className="flex items-center gap-2">
             <button
@@ -449,6 +436,14 @@ export default function Header({
         </div>
 
       </div>
+
+      {/* Live Slidable Customer Inquiry History Stream Ticker */}
+      <LiveInquiryTicker 
+        inquiries={inquiries}
+        onOpenInquiry={onOpenInquiry}
+        onSelectProductById={onSelectProductById}
+        theme="emerald"
+      />
     </header>
   );
 }

@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useCurrency, SUPPORTED_CURRENCIES } from "../context/CurrencyContext";
 import { Globe, ChevronDown, Check, RefreshCw } from "lucide-react";
 
-export default function CurrencySelector() {
+interface CurrencySelectorProps {
+  align?: "left" | "right";
+}
+
+export default function CurrencySelector({ align = "left" }: CurrencySelectorProps) {
   const { currency, currencyInfo, setCurrency, detectedCountry, exchangeRates, isLoadingRates } = useCurrency();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -32,7 +36,7 @@ export default function CurrencySelector() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[120] overflow-hidden animate-fade-in divide-y divide-slate-100">
+        <div className={`absolute ${align === "right" ? "right-0 left-auto" : "left-0 right-auto"} mt-1.5 w-64 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-2xl z-[120] overflow-hidden animate-fade-in divide-y divide-slate-100`}>
           {/* Header Info */}
           <div className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border-b border-slate-200">
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 font-mono uppercase tracking-wider">

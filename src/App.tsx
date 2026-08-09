@@ -231,11 +231,52 @@ export default function App() {
   const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   const [inquiryDefaultQty, setInquiryDefaultQty] = useState(1);
+  const [inquiriesList, setInquiriesList] = useState<any[]>([]);
+
+  const fetchInquiries = async () => {
+    try {
+      const res = await fetch("/api/inquiries");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setInquiriesList(data);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch inquiries:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchInquiries();
+  }, []);
 
   const handleOpenInquiry = (product: Product, quantity: number = 1) => {
     setInquiryProduct(product);
     setInquiryDefaultQty(quantity);
     setIsInquiryModalOpen(true);
+    window.history.pushState({ modal: "inquiry" }, "", "#inquiry");
+  };
+
+  const handleHeaderOpenInquiry = (product?: Product) => {
+    const target = product || activeProduct || appProducts[0] || PRODUCTS[0];
+    if (target) {
+      handleOpenInquiry(target, 1);
+    }
+  };
+
+  const handleSelectProductById = (productId: string) => {
+    const found = appProducts.find((p) => p.id.toLowerCase() === productId.toLowerCase()) || PRODUCTS.find((p) => p.id.toLowerCase() === productId.toLowerCase());
+    if (found) {
+      handleProductSelect(found);
+    } else if (appProducts.length > 0) {
+      handleProductSelect(appProducts[0]);
+    }
+  };
+
+  const handleOpenHelp = () => {
+    setIsHelpOpen(true);
+    window.history.pushState({ modal: "help" }, "", "#help");
   };
 
   // Sync favicon and document title dynamically
@@ -325,9 +366,9 @@ export default function App() {
     };
   }, []);
 
-  // Router listener for separate admin URL
+  // Router listener & Mobile Device Back Button navigation handler
   useEffect(() => {
-    const checkPath = () => {
+    const handlePopState = (e: PopStateEvent) => {
       const path = window.location.pathname;
       const targetAdminPath = homepageConfig.admin_url_path || "/lunexa_official";
       const sanitizedTarget = targetAdminPath.startsWith("/") ? targetAdminPath : `/${targetAdminPath}`;
@@ -336,20 +377,67 @@ export default function App() {
 
       if (path === noTrailing || path === hasTrailing) {
         setCurrentView("admin");
-      } else {
-        setCurrentView((prev) => {
-          if (prev === "admin") {
-            return "store";
+        return;
+      }
+
+      // Close modals first if user presses mobile back button while modal is active
+      if (showCheckoutModalPrompt) {
+        setShowCheckoutModalPrompt(false);
+        return;
+      }
+      if (isInquiryModalOpen) {
+        setIsInquiryModalOpen(false);
+        return;
+      }
+      if (isHelpOpen) {
+        setIsHelpOpen(false);
+        return;
+      }
+
+      const state = e.state;
+      const hash = window.location.hash || "";
+
+      if (state && state.view) {
+        if (state.view === "product" && state.productId) {
+          const found = appProducts.find((p) => p.id === state.productId) || PRODUCTS.find((p) => p.id === state.productId);
+          if (found) {
+            setActiveProduct(found);
+            setCurrentView("product");
+          } else {
+            setCurrentView("store");
+            setActiveProduct(null);
           }
-          return prev;
-        });
+        } else if (state.view === "policies") {
+          if (state.tab) setActivePolicyTab(state.tab);
+          setCurrentView("policies");
+          setActiveProduct(null);
+        } else if (["store", "checkout", "orders", "profile"].includes(state.view)) {
+          setCurrentView(state.view);
+          if (state.view === "store") setActiveProduct(null);
+        } else {
+          setCurrentView("store");
+          setActiveProduct(null);
+        }
+      } else if (hash.startsWith("#product-")) {
+        const pId = hash.replace("#product-", "");
+        const found = appProducts.find((p) => p.id === pId) || PRODUCTS.find((p) => p.id === pId);
+        if (found) {
+          setActiveProduct(found);
+          setCurrentView("product");
+        } else {
+          setCurrentView("store");
+          setActiveProduct(null);
+        }
+      } else {
+        // Return back to store catalog when mobile back button is pressed
+        setCurrentView("store");
+        setActiveProduct(null);
       }
     };
 
-    checkPath();
-    window.addEventListener("popstate", checkPath);
-    return () => window.removeEventListener("popstate", checkPath);
-  }, [homepageConfig.admin_url_path]);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [homepageConfig.admin_url_path, showCheckoutModalPrompt, isInquiryModalOpen, isHelpOpen, appProducts]);
 
   const handleBackToStore = () => {
     window.history.pushState({}, "", "/");
@@ -392,6 +480,7 @@ export default function App() {
   const handleProductSelect = (product: Product) => {
     setActiveProduct(product);
     setCurrentView("product");
+    window.history.pushState({ view: "product", productId: product.id }, "", `#product-${product.id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -422,6 +511,7 @@ export default function App() {
     setModalPackaging(targetPkg);
     setAddedProductForCheckoutModal(product);
     setShowCheckoutModalPrompt(true);
+    window.history.pushState({ modal: "checkout_prompt" }, "", "#cart-prompt");
   };
 
   const handleDetailedAddToCart = (product: Product, qty: number, pkg: string, agreesTerms: boolean) => {
@@ -442,6 +532,7 @@ export default function App() {
     
     // Direct navigate to checkout to review purchase
     setCurrentView("checkout");
+    window.history.pushState({ view: "checkout" }, "", "#checkout");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -594,7 +685,7 @@ export default function App() {
     if (view === "store") {
       setActiveProduct(null);
     }
-    window.history.pushState({}, "", "/");
+    window.history.pushState({ view }, "", view === "store" ? "/" : `#${view}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -602,6 +693,7 @@ export default function App() {
     setActivePolicyTab(tab);
     setCurrentView("policies");
     setActiveProduct(null);
+    window.history.pushState({ view: "policies", tab }, "", `#policy-${tab}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -646,13 +738,16 @@ export default function App() {
               setActiveProduct(null);
             }
           }}
-          onOpenHelp={() => setIsHelpOpen(true)}
+          onOpenHelp={handleOpenHelp}
           appName={homepageConfig.appName}
           appBrandBadge={homepageConfig.appBrandBadge}
           appSubtitle={homepageConfig.appSubtitle}
           appLogoIcon={homepageConfig.appLogoIcon}
           currentUser={currentUser}
           onLogout={handleLogout}
+          onOpenInquiry={handleHeaderOpenInquiry}
+          onSelectProductById={handleSelectProductById}
+          inquiries={inquiriesList}
         />
       </div>
 
@@ -702,11 +797,11 @@ export default function App() {
                 <div className="bg-gradient-to-r from-[#1b5e20] via-[#2e7d32] to-[#00695c] rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
                   <div className="max-w-3xl space-y-4 relative z-10">
                     <h1 className="text-2xl md:text-4xl font-black font-sans leading-tight">
-                      Wholesale Chemical Supplier & Bulk Quotation Hub
+                      {homepageConfig.heroTitle || "Wholesale Chemical Supplier & Bulk Quotation Hub"}
                     </h1>
 
                     <p className="text-emerald-100/90 text-xs md:text-sm leading-relaxed max-w-2xl">
-                      Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA, and fast dispatch.
+                      {homepageConfig.heroDescription || "Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA, and fast dispatch."}
                     </p>
 
                     {/* Quick 1-Line RFQ Bar */}
@@ -748,7 +843,7 @@ export default function App() {
                             className="bg-[#00a699] hover:bg-[#00897b] text-white text-xs font-black px-5 py-3 rounded-xl transition cursor-pointer shadow-md uppercase tracking-wider whitespace-nowrap active:scale-95 flex items-center justify-center gap-1.5"
                           >
                             <Zap className="w-3.5 h-3.5 fill-white text-white" />
-                            <span>Get Price Quote</span>
+                            <span>{homepageConfig.complianceBtnText || "Get Price Quote"}</span>
                           </button>
                         </form>
                       )}
@@ -977,7 +1072,7 @@ export default function App() {
                 </p>
               </div>
               <button
-                onClick={() => setIsHelpOpen(true)}
+                onClick={handleOpenHelp}
                 className="px-4.5 py-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100/50 rounded-xl cursor-pointer transition shrink-0 self-stretch sm:self-auto text-center"
                 id="view-faq-manual-btn"
               >
@@ -1246,6 +1341,7 @@ export default function App() {
         defaultQty={inquiryDefaultQty}
         whatsappNumber={homepageConfig.adminWhatsappNumber || "15099941048"}
         appName={homepageConfig.appName || "Flaskia"}
+        onSuccess={fetchInquiries}
       />
 
       {/* Pristine Floating WhatsApp Helper Widget */}

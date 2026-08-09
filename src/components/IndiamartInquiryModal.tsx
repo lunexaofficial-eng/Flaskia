@@ -10,6 +10,7 @@ interface IndiamartInquiryModalProps {
   defaultQty?: number;
   whatsappNumber?: string;
   appName?: string;
+  onSuccess?: () => void;
 }
 
 export default function IndiamartInquiryModal({
@@ -19,6 +20,7 @@ export default function IndiamartInquiryModal({
   defaultQty = 1,
   whatsappNumber = "15099941048",
   appName = "Flaskia",
+  onSuccess,
 }: IndiamartInquiryModalProps) {
   const { formatPrice, currencySymbol, currency } = useCurrency();
   const [quantityCount, setQuantityCount] = useState<number>(defaultQty || 1);
@@ -101,6 +103,9 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.error || "Failed to log inquiry");
+    }
+    if (onSuccess) {
+      onSuccess();
     }
     return data.inquiryId || `INQ-${Date.now()}`;
   };
