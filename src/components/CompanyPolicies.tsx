@@ -46,9 +46,9 @@ interface CompanyPoliciesProps {
 export default function CompanyPolicies({
   initialTab = "about",
   onBack,
-  appName = "Rexvora",
+  appName = "Flaskia",
   appSubtitle = "Academic Supply Direct",
-  footerCompanyName = "Rexvora Supplies International Co."
+  footerCompanyName = "Flaskia Supplies International Co."
 }: CompanyPoliciesProps) {
   const [activeTab, setActiveTab] = useState<PolicyTab>(initialTab);
   const [policies, setPolicies] = React.useState<any[]>([]);
@@ -91,7 +91,7 @@ export default function CompanyPolicies({
         return {
           title: "Contact Us",
           subtitle: "Our support staff, physical logistics desk, and regulatory officers are at your service.",
-          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@rexvora.com, compliance@rexvora.com\nWhatsApp Helpline: +1 (509) 994-1048 (Text Only, Chat 24/7)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`,
+          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@flaskia.com, compliance@flaskia.com\nWhatsApp Helpline: +1 (509) 994-1048 (Text Only, Chat 24/7)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`,
         };
       case "privacy":
         return {
@@ -127,7 +127,7 @@ export default function CompanyPolicies({
         return {
           title: "Return Policy",
           subtitle: "Strict guidelines regarding return parcels under chemical regulations.",
-          content: `Once a chemical security seal is ruptured, regulatory rules strictly prohibit return shipment via standard public couriers. Reagents return is confined strictly to un-opened, factory-locked packages.\n\nNo delivery parcel can be returned to our warehouse without a pre-authorized Return Merchandise Authorization (RMA) ticket. Please contact our support desk (compliance@rexvora.com) to obtain the RMA documentation prior to making shipping arrangements.\n\nReturn windows close exactly thirty (30) days from original order dispatch. The outer regulatory seals, heat-locked bands, GHS decals, safety rings, and inner secure caps must look completely un-ruptured and clean to pass return audits.`,
+          content: `Once a chemical security seal is ruptured, regulatory rules strictly prohibit return shipment via standard public couriers. Reagents return is confined strictly to un-opened, factory-locked packages.\n\nNo delivery parcel can be returned to our warehouse without a pre-authorized Return Merchandise Authorization (RMA) ticket. Please contact our support desk (compliance@flaskia.com) to obtain the RMA documentation prior to making shipping arrangements.\n\nReturn windows close exactly thirty (30) days from original order dispatch. The outer regulatory seals, heat-locked bands, GHS decals, safety rings, and inner secure caps must look completely un-ruptured and clean to pass return audits.`,
         };
       case "refund":
         return {
@@ -311,7 +311,7 @@ export default function CompanyPolicies({
               <span>Custody Verification</span>
             </div>
             <p>
-              Rexvora complies fully with the Federal Hazardous Substances Act guidelines. Delivery is strictly confined to verified institutional science chambers.
+              Flaskia complies fully with the Federal Hazardous Substances Act guidelines. Delivery is strictly confined to verified institutional science chambers.
             </p>
           </div>
         </div>
@@ -408,9 +408,9 @@ export default function CompanyPolicies({
                           <div>
                             <p className="text-[10.5px] font-bold text-slate-700 uppercase">Desk Email</p>
                             <p className="text-[11px] text-slate-500 leading-tight mt-0.5">
-                              support@rexvora.com
+                              support@flaskia.com
                               <br />
-                              compliance@rexvora.com
+                              compliance@flaskia.com
                             </p>
                           </div>
                         </div>

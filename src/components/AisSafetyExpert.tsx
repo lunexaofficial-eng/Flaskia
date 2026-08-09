@@ -45,7 +45,7 @@ export default function AisSafetyExpert({ product }: AisSafetyExpertProps) {
       {
         id: "initial-welcome",
         sender: "ai",
-        text: `Greetings! I am the **Rexvora SDS Safety Assistant**, trained on international GHS compliance and physical-chemical storage regulations. Let me assist you with proper handling guidelines for **${product.name} (CAS: ${product.cas})**. What safety or storage concern can I help clarify?`,
+        text: `Greetings! I am the **Flaskia SDS Safety Assistant**, trained on international GHS compliance and physical-chemical storage regulations. Let me assist you with proper handling guidelines for **${product.name} (CAS: ${product.cas})**. What safety or storage concern can I help clarify?`,
         timestamp: new Date()
       }
     ]);

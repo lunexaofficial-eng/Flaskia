@@ -61,7 +61,7 @@ export default function Header({
   searchQuery,
   onSearchChange,
   onOpenHelp,
-  appName = "Rexvora",
+  appName = "Flaskia",
   appBrandBadge = "PRO",
   appSubtitle = "Academic Supply Direct",
   appLogoIcon = "FlaskConical",

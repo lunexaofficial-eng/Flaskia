@@ -127,7 +127,7 @@ export default function App() {
 
   // Load local customer user state from localStorage on init
   useEffect(() => {
-    const saved = localStorage.getItem("rexvora_customer_user");
+    const saved = localStorage.getItem("flaskia_customer_user");
     if (saved) {
       try {
         setCurrentUser(JSON.parse(saved));
@@ -141,9 +141,9 @@ export default function App() {
   const handleSetUser = (user: any) => {
     setCurrentUser(user);
     if (user) {
-      localStorage.setItem("rexvora_customer_user", JSON.stringify(user));
+      localStorage.setItem("flaskia_customer_user", JSON.stringify(user));
     } else {
-      localStorage.removeItem("rexvora_customer_user");
+      localStorage.removeItem("flaskia_customer_user");
     }
   };
 
@@ -178,7 +178,7 @@ export default function App() {
   const [homepageConfig, setHomepageConfig] = useState({
     heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
     heroTitle: "High-Purity Laboratory Reagents & Supplies",
-    heroDescription: "Rexvora distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+    heroDescription: "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
     heroStat1Value: "≤18 MΩ·cm",
     heroStat1Label: "Methylene conductivity standard",
     heroStat2Value: "100%",
@@ -190,10 +190,10 @@ export default function App() {
     complianceBtnText: "Open Safety & FAQ Manual",
     complianceEmoji: "🔐",
     complianceTitle: "GHS Custody compliance assurance:",
-    complianceText: "Rexvora monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+    complianceText: "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
     
     // Brand identity defaults
-    appName: "Rexvora",
+    appName: "Flaskia",
     appBrandBadge: "PRO",
     appSubtitle: "Academic Supply Direct",
     appLogoIcon: "FlaskConical",
@@ -201,11 +201,11 @@ export default function App() {
     admin_url_path: "/lunexa_official",
     
     // Complete adaptive footer defaults
-    footerCompanyName: "Rexvora Supplies International Co.",
+    footerCompanyName: "Flaskia Supplies International Co.",
     footerLicence1: "OSHA ID: 44321-REAG",
     footerLicence2: "EPA LICENSE: 7385-CHEM",
     footerLicence3: "DOT TRANSPORT: CLASS 9",
-    footerCopyright: "Rexvora. Educational Material Logistics. Sandbox Checkout Portal."
+    footerCopyright: "Flaskia. Educational Material Logistics. Sandbox Checkout Portal."
   });
 
   const loadHomepageConfig = () => {
@@ -616,7 +616,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white" id="rexvora-app">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white" id="flaskia-app">
       
       {/* Dynamic Header block */}
       <div className="print:hidden">

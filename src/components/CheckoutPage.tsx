@@ -488,7 +488,7 @@ export default function CheckoutPage({
           <Truck className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-base font-bold text-slate-800 font-heading">Your lab shopping cart is empty</h3>
           <p className="text-xs text-slate-500 mt-2 leading-relaxed px-6">
-            Review the Rexvora catalog and add high-purity chemicals, buffers, or class A laboratory borosilicate glassware to proceed.
+            Review the Flaskia catalog and add high-purity chemicals, buffers, or class A laboratory borosilicate glassware to proceed.
           </p>
           <button
             onClick={onBackToStore}

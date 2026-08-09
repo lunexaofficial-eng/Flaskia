@@ -96,7 +96,7 @@ export const PRODUCTS: Product[] = [
           content: [
             "Product Name: Copper(II) Sulfate Pentahydrate",
             "Recommended Use: Laboratory chemical, analytical reagent, educational demonstration.",
-            "Manufacturer: Rexvora Supplies International Co.",
+            "Manufacturer: Flaskia Supplies International Co.",
           ],
         },
         {

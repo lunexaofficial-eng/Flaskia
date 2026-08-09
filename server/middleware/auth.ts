@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "rexvora_secure_secret_backup_2026";
+const JWT_SECRET = process.env.JWT_SECRET || "flaskia_secure_secret_backup_2026";
 
 export interface AuthenticatedRequest extends Request {
   user?: {

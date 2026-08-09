@@ -344,7 +344,7 @@ const MOCK_FAQS: FaqItem[] = [
     category: "safety",
     question: "What is an SDS (Safety Data Sheet) and how can I find it?",
     answer:
-      "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Rexvora reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
+      "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Flaskia reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
     keywords: [
       "sds",
       "safety data sheet",
@@ -393,7 +393,7 @@ const MOCK_FAQS: FaqItem[] = [
     question:
       "Can chemicals be shipped directly to residential/home addresses?",
     answer:
-      "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Rexvora strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
+      "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Flaskia strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
     keywords: [
       "residential",
       "home",
@@ -408,7 +408,7 @@ const MOCK_FAQS: FaqItem[] = [
     category: "shipping",
     question: "What temperature controls are used during transit?",
     answer:
-      "Rexvora utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
+      "Flaskia utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
     keywords: [
       "temperature",
       "transit",
@@ -423,7 +423,7 @@ const MOCK_FAQS: FaqItem[] = [
     category: "compliance",
     question: "Do I need institutional verification or a license to purchase?",
     answer:
-      "Yes. Rexvora requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
+      "Yes. Flaskia requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
     keywords: [
       "license",
       "verification",
@@ -453,7 +453,7 @@ const MOCK_FAQS: FaqItem[] = [
   {
     id: "compliance-3",
     category: "compliance",
-    question: "How does Rexvora uphold legal custody regulations?",
+    question: "How does Flaskia uphold legal custody regulations?",
     answer:
       "Our operations comply directly with EPA toxic control standards, DOT transport manuals, and OSHA safety guidelines. All orders undergo rigorous institutional checks, and all packaging includes physical safety documentation (SDS and GHS warning prints) directly in the parcel. We also record strict digital logs of lot numbers, purities, and transport chains for complete traceability.",
     keywords: [
@@ -563,7 +563,7 @@ function ShipmentCard({
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.setTextColor(15, 23, 42);
-    doc.text("REXVORA", 14, 28);
+    doc.text("FLASKIA", 14, 28);
     
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
@@ -584,10 +584,10 @@ function ShipmentCard({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text("Rexvora Chemical Marketplace Corp.", 14, 49);
+    doc.text("Flaskia Chemical Marketplace Corp.", 14, 49);
     doc.text("100 Molecular Way, Dispatch Dock 4G", 14, 53);
     doc.text("Cambridge, MA 02139 | United States", 14, 57);
-    doc.text("E-mail: logistics@rexvora.com", 14, 61);
+    doc.text("E-mail: logistics@flaskia.com", 14, 61);
     doc.text("WhatsApp Help Line: +1 (509) 994-1048 (Chat Only)", 14, 65);
     doc.text("EPA Custody Lic: #EPA-4491-09B", 14, 69);
     
@@ -855,7 +855,7 @@ function ShipmentCard({
     doc.text("• OTP HANDOVER POLICIES: Recipient MUST hand over the 6-digit OTP", 18, summaryBlockY + 20);
     doc.text("  consignee verification code to the active delivery logistics driver.", 18, summaryBlockY + 24);
     doc.text("• SECURE CUSTODY: For safety and billing queries, scan the QR code", 18, summaryBlockY + 29);
-    doc.text("  or contact support directly at logistics-dispatch@rexvora.com.", 18, summaryBlockY + 33);
+    doc.text("  or contact support directly at logistics-dispatch@flaskia.com.", 18, summaryBlockY + 33);
     
     // Footer Badge bar
     const pageHeight = doc.internal.pageSize.height;
@@ -865,7 +865,7 @@ function ShipmentCard({
     doc.setFontSize(7); 
     doc.setFont("helvetica", "bold"); 
     doc.setTextColor(255, 255, 255);
-    doc.text("OFFICIAL REXVORA CHEMICAL LOGISTICS RECORD — FOR PROFESSIONAL RESEARCH ONLY", 18, pageHeight - 11.8);
+    doc.text("OFFICIAL FLASKIA CHEMICAL LOGISTICS RECORD — FOR PROFESSIONAL RESEARCH ONLY", 18, pageHeight - 11.8);
     
     doc.setFontSize(7); 
     doc.setFont("helvetica", "normal"); 
@@ -1614,7 +1614,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         complianceBtnText: homeData.complianceBtnText || "",
 
         // Brand details loading
-        appName: homeData.appName || "Rexvora",
+        appName: homeData.appName || "Flaskia",
         appBrandBadge: homeData.appBrandBadge || "PRO",
         appSubtitle: homeData.appSubtitle || "Academic Supply Direct",
         appLogoIcon: homeData.appLogoIcon || "FlaskConical",
@@ -1624,13 +1624,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
         // Footer details loading
         footerCompanyName:
-          homeData.footerCompanyName || "Rexvora Supplies International Co.",
+          homeData.footerCompanyName || "Flaskia Supplies International Co.",
         footerLicence1: homeData.footerLicence1 || "OSHA ID: 44321-REAG",
         footerLicence2: homeData.footerLicence2 || "EPA LICENSE: 7385-CHEM",
         footerLicence3: homeData.footerLicence3 || "DOT TRANSPORT: CLASS 9",
         footerCopyright:
           homeData.footerCopyright ||
-          "Rexvora. Educational Material Logistics. Sandbox Checkout Portal.",
+          "Flaskia. Educational Material Logistics. Sandbox Checkout Portal.",
 
         admin_url_path: homeData.admin_url_path || "/lunexa_official",
 
@@ -1698,7 +1698,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
         heroTitle: "High-Purity Laboratory Reagents & Supplies",
         heroDescription:
-          "Rexvora distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+          "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
         heroStat1Value: "≤18 MΩ·cm",
         heroStat1Label: "Methylene conductivity standard",
         heroStat2Value: "100%",
@@ -1711,23 +1711,23 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         complianceEmoji: "🔐",
         complianceTitle: "GHS Custody compliance assurance:",
         complianceText:
-          "Rexvora monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+          "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
         complianceBtnText: "Open Safety & FAQ Manual",
 
         // Default brand variables
-        appName: "Rexvora",
+        appName: "Flaskia",
         appBrandBadge: "PRO",
         appSubtitle: "Academic Supply Direct",
         appLogoIcon: "FlaskConical",
         appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
 
         // Default footer variables
-        footerCompanyName: "Rexvora Supplies International Co.",
+        footerCompanyName: "Flaskia Supplies International Co.",
         footerLicence1: "OSHA ID: 44321-REAG",
         footerLicence2: "EPA LICENSE: 7385-CHEM",
         footerLicence3: "DOT TRANSPORT: CLASS 9",
         footerCopyright:
-          "Rexvora. Educational Material Logistics. Sandbox Checkout Portal.",
+          "Flaskia. Educational Material Logistics. Sandbox Checkout Portal.",
         admin_url_path: "/lunexa_official",
       });
     }
@@ -5072,7 +5072,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               heroDescription: e.target.value,
                             }))
                           }
-                          placeholder="e.g. Rexvora distributes analytical chemical solutions..."
+                          placeholder="e.g. Flaskia distributes analytical chemical solutions..."
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition resize-none leading-relaxed"
                         />
                       </div>
@@ -5370,7 +5370,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                 appName: e.target.value,
                               }))
                             }
-                            placeholder="e.g. Rexvora"
+                            placeholder="e.g. Flaskia"
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                           />
                         </div>
@@ -5482,7 +5482,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                 footerCompanyName: e.target.value,
                               }))
                             }
-                            placeholder="e.g. Rexvora Supplies International Co."
+                            placeholder="e.g. Flaskia Supplies International Co."
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                           />
                         </div>
@@ -5501,7 +5501,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                 footerCopyright: e.target.value,
                               }))
                             }
-                            placeholder="e.g. Rexvora. Educational Material Logistics."
+                            placeholder="e.g. Flaskia. Educational Material Logistics."
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                           />
                         </div>
@@ -7600,13 +7600,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                             <input
                               type="text"
                               readOnly
-                              value="https://www.rexvora.com/api/paypal/webhook"
+                              value="https://www.flaskia.com/api/paypal/webhook"
                               className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-rose-300 font-mono outline-none cursor-text select-all"
                             />
                             <button
                               type="button"
                               onClick={() => {
-                                navigator.clipboard.writeText("https://www.rexvora.com/api/paypal/webhook");
+                                navigator.clipboard.writeText("https://www.flaskia.com/api/paypal/webhook");
                                 alert("Vercel production webhook URL copied to clipboard!");
                               }}
                               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-[10px] font-semibold font-mono transition inline-flex items-center shrink-0 cursor-pointer"
@@ -7697,7 +7697,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                     <div>
                       <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5 font-heading">
                         <Workflow className="w-4 h-4 text-rose-500" />
-                        Rexvora Financial Settlement & Refund Ledger Console
+                        Flaskia Financial Settlement & Refund Ledger Console
                       </h3>
                       <p className="text-xs text-slate-400 mt-1">
                         Review administrative audits, invoices, verified PayPal transactions, and trigger real-time compliance refunds.
@@ -7849,7 +7849,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                     doc.setTextColor(255, 255, 255);
                                     doc.setFont("helvetica", "bold");
                                     doc.setFontSize(22);
-                                    doc.text("REX VORA SOLUTIONS", 15, 25);
+                                    doc.text("FLASKIA SOLUTIONS", 15, 25);
                                     doc.setFontSize(10);
                                     doc.text("CHEMICALS & RESEARCH SUPPLY DIRECT", 15, 32);
                                     
@@ -7876,7 +7876,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                     
                                     doc.setFontSize(8);
                                     doc.setTextColor(148, 163, 184);
-                                    doc.text("Rexvora Laboratory logistics validates dynamic OSHA custody trails. Procurement approved by sandbox credentials.", 15, 180);
+                                    doc.text("Flaskia Laboratory logistics validates dynamic OSHA custody trails. Procurement approved by sandbox credentials.", 15, 180);
                                     doc.save(`${inv.invoice_number}.pdf`);
                                   }}
                                   className="px-2 py-0.5 bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white rounded text-[10px] transition cursor-pointer"

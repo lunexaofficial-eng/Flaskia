@@ -1072,7 +1072,7 @@ export async function initDb(frontProducts?: any[]) {
           category: "safety",
           question: "What is an SDS (Safety Data Sheet) and how can I find it?",
           answer:
-            "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Rexvora reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
+            "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Flaskia reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
           keywords: [
             "sds",
             "safety data sheet",
@@ -1121,7 +1121,7 @@ export async function initDb(frontProducts?: any[]) {
           question:
             "Can chemicals be shipped directly to residential/home addresses?",
           answer:
-            "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Rexvora strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
+            "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Flaskia strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
           keywords: [
             "residential",
             "home",
@@ -1136,7 +1136,7 @@ export async function initDb(frontProducts?: any[]) {
           category: "shipping",
           question: "What temperature controls are used during transit?",
           answer:
-            "Rexvora utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
+            "Flaskia utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
           keywords: [
             "temperature",
             "transit",
@@ -1152,7 +1152,7 @@ export async function initDb(frontProducts?: any[]) {
           question:
             "Do I need institutional verification or a license to purchase?",
           answer:
-            "Yes. Rexvora requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
+            "Yes. Flaskia requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
           keywords: [
             "license",
             "verification",
@@ -1182,7 +1182,7 @@ export async function initDb(frontProducts?: any[]) {
         {
           id: "compliance-3",
           category: "compliance",
-          question: "How does Rexvora uphold legal custody regulations?",
+          question: "How does Flaskia uphold legal custody regulations?",
           answer:
             "Our operations comply directly with EPA toxic control standards, DOT transport manuals, and OSHA safety guidelines. All orders undergo rigorous institutional checks, and all packaging includes physical safety documentation (SDS and GHS warning prints) directly in the parcel. We also record strict digital logs of lot numbers, purities, and transport chains for complete traceability.",
           keywords: [
@@ -1221,7 +1221,7 @@ export async function initDb(frontProducts?: any[]) {
         heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
         heroTitle: "High-Purity Laboratory Reagents & Supplies",
         heroDescription:
-          "Rexvora distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+          "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
         heroStat1Value: "≤18 MΩ·cm",
         heroStat1Label: "Methylene conductivity standard",
         heroStat2Value: "100%",
@@ -1235,18 +1235,18 @@ export async function initDb(frontProducts?: any[]) {
         complianceEmoji: "🔐",
         complianceTitle: "GHS Custody compliance assurance:",
         complianceText:
-          "Rexvora monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
-        appName: "Rexvora",
+          "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+        appName: "Flaskia",
         appBrandBadge: "PRO",
         appSubtitle: "Academic Supply Direct",
         appLogoIcon: "FlaskConical",
         appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
-        footerCompanyName: "Rexvora Supplies International Co.",
+        footerCompanyName: "Flaskia Supplies International Co.",
         footerLicence1: "OSHA ID: 44321-REAG",
         footerLicence2: "EPA LICENSE: 7385-CHEM",
         footerLicence3: "DOT TRANSPORT: CLASS 9",
         footerCopyright:
-          "Rexvora. Educational Material Logistics. Sandbox Checkout Portal.",
+          "Flaskia. Educational Material Logistics. Sandbox Checkout Portal.",
       };
 
       for (const key of Object.keys(defaultHomepageConfig)) {
@@ -1272,7 +1272,7 @@ export async function initDb(frontProducts?: any[]) {
           id: "contact",
           title: "Contact Us",
           subtitle: "Our support staff, physical logistics desk, and regulatory officers are at your service.",
-          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@rexvora.com, compliance@rexvora.com\nPhone: +1 (800) 555-CHEM (M-F 8:00 AM - 5:00 PM PST)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`
+          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@flaskia.com, compliance@flaskia.com\nPhone: +1 (800) 555-CHEM (M-F 8:00 AM - 5:00 PM PST)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`
         },
         {
           id: "privacy",
@@ -1308,7 +1308,7 @@ export async function initDb(frontProducts?: any[]) {
           id: "return",
           title: "Return Policy",
           subtitle: "Strict guidelines regarding return parcels under chemical regulations.",
-          content: `Once a chemical security seal is ruptured, regulatory rules strictly prohibit return shipment via standard public couriers. Reagents return is confined strictly to un-opened, factory-locked packages.\n\nNo delivery parcel can be returned to our warehouse without a pre-authorized Return Merchandise Authorization (RMA) ticket. Please contact our support desk (compliance@rexvora.com) to obtain the RMA documentation prior to making shipping arrangements.\n\nReturn windows close exactly thirty (30) days from original order dispatch. The outer regulatory seals, heat-locked bands, GHS decals, safety rings, and inner secure caps must look completely un-ruptured and clean to pass return audits.`
+          content: `Once a chemical security seal is ruptured, regulatory rules strictly prohibit return shipment via standard public couriers. Reagents return is confined strictly to un-opened, factory-locked packages.\n\nNo delivery parcel can be returned to our warehouse without a pre-authorized Return Merchandise Authorization (RMA) ticket. Please contact our support desk (compliance@flaskia.com) to obtain the RMA documentation prior to making shipping arrangements.\n\nReturn windows close exactly thirty (30) days from original order dispatch. The outer regulatory seals, heat-locked bands, GHS decals, safety rings, and inner secure caps must look completely un-ruptured and clean to pass return audits.`
         },
         {
           id: "refund",
@@ -1410,7 +1410,7 @@ export async function initDb(frontProducts?: any[]) {
         INSERT INTO payment_methods (id, name, type, is_active, details) VALUES
         ('pm_manual_1', 'Manual Bank Transfer / UPI', 'manual', true, $1::jsonb)
       `, [JSON.stringify({
-          instructions: "Please manually transfer the exact order amount to the bank account below. Include your Order ID in the payment reference.\n\nUPI ID: rexvora@bank\nAccount Holder: Rexvora Labs Logistics\nBank Name: Central Bank\nAccount Number: 1234567890\nIFSC Code: CNRB0001234\n\nYour order will remain pending until payment is verified by our team."
+          instructions: "Please manually transfer the exact order amount to the bank account below. Include your Order ID in the payment reference.\n\nUPI ID: flaskia@bank\nAccount Holder: Flaskia Labs Logistics\nBank Name: Central Bank\nAccount Number: 1234567890\nIFSC Code: CNRB0001234\n\nYour order will remain pending until payment is verified by our team."
       })]);
     }
 

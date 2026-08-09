@@ -271,7 +271,7 @@ export default function CustomerAuth({ onAuthSuccess, onClose }: CustomerAuthPro
     }
 
     if (!acceptTerms) {
-      setSignupError("You must read and accept the Rexvora Marketplace terms and conditions.");
+      setSignupError("You must read and accept the Flaskia Marketplace terms and conditions.");
       return;
     }
 
@@ -323,7 +323,7 @@ export default function CustomerAuth({ onAuthSuccess, onClose }: CustomerAuthPro
             : "bg-slate-100 text-slate-800 border-slate-200"
         }`}>
           <Sparkles className={`w-3.5 h-3.5 ${isCyber ? "text-cyan-400" : "text-blue-500"} animate-pulse`} />
-          <span>Rexvora Procure Gateway</span>
+          <span>Flaskia Procure Gateway</span>
         </div>
         <h2 className={`text-2xl font-black tracking-tight font-sans ${
           isCyber ? "text-cyan-100" : "text-slate-900"
@@ -828,7 +828,7 @@ export default function CustomerAuth({ onAuthSuccess, onClose }: CustomerAuthPro
                     className="mt-0.5 rounded border-slate-300 text-slate-955 focus:ring-slate-900 focus:ring-1 cursor-pointer w-3.5 h-3.5"
                   />
                   <span>
-                    I confirm my scholarly entity status and accept the standard Rexvora <b>Terms and Conditions</b>, biological liability compliance controls, and privacy directives.
+                    I confirm my scholarly entity status and accept the standard Flaskia <b>Terms and Conditions</b>, biological liability compliance controls, and privacy directives.
                   </span>
                 </label>
               </div>

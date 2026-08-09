@@ -278,7 +278,7 @@ export default function PayPalPortal({ amount, cartItems, shippingDetails, onSuc
             
             {/* Amount and Merchant info */}
             <div className="p-4 bg-zinc-950/60 border-b border-zinc-800 flex items-center justify-between text-xs">
-              <span className="text-zinc-400">Merchant: <strong>Rexvora Solution Hub</strong></span>
+              <span className="text-zinc-400">Merchant: <strong>Flaskia Solution Hub</strong></span>
               <span className="text-sm font-bold text-zinc-200 font-mono">Total: ${amount.toFixed(2)} {currency}</span>
             </div>
 

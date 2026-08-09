@@ -1,5 +1,5 @@
 {
-  "name": "Rexvora Marketplace",
+  "name": "Flaskia Marketplace",
   "description": "A secure professional e-commerce platform for high-purity laboratory reagents, chemical analytics, buffers, and indicators, complete with enterprise compliance, deep GHS audit tracking logs, and a fully functional PostgreSQL & Prisma backend database.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

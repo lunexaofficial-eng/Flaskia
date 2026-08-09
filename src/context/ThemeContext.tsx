@@ -27,7 +27,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode; initialTheme?:
   initialTheme = "emerald",
 }) => {
   const [activeTheme, setActiveThemeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem("rexvora_active_theme");
+    const saved = localStorage.getItem("flaskia_active_theme");
     if (saved === "retail" || saved === "emerald" || saved === "indiamart" || saved === "cyber") {
       if (saved === "cyber") return "retail";
       return saved as ThemeMode;
@@ -44,7 +44,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode; initialTheme?:
           const theme = data.active_theme === "cyber" ? "retail" : data.active_theme;
           if (theme === "retail" || theme === "emerald" || theme === "indiamart") {
             setActiveThemeState(theme as ThemeMode);
-            localStorage.setItem("rexvora_active_theme", theme);
+            localStorage.setItem("flaskia_active_theme", theme);
           }
         }
       })
@@ -54,7 +54,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode; initialTheme?:
   const setTheme = (theme: ThemeMode) => {
     const targetTheme = theme === "cyber" ? "retail" : theme;
     setActiveThemeState(targetTheme);
-    localStorage.setItem("rexvora_active_theme", targetTheme);
+    localStorage.setItem("flaskia_active_theme", targetTheme);
     // Sync with server homepage config
     fetch("/api/homepage", {
       method: "PUT",

@@ -74,7 +74,7 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
       id: "safety-3",
       category: "safety",
       question: "What is an SDS (Safety Data Sheet) and how can I find it?",
-      answer: "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Rexvora reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
+      answer: "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Flaskia reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
       keywords: ["sds", "safety data sheet", "pdf", "section", "document", "spec"]
     },
     {
@@ -95,21 +95,21 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
       id: "shipping-2",
       category: "shipping",
       question: "Can chemicals be shipped directly to residential/home addresses?",
-      answer: "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Rexvora strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
+      answer: "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Flaskia strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
       keywords: ["residential", "home", "address", "shipping", "place", "deliver"]
     },
     {
       id: "shipping-3",
       category: "shipping",
       question: "What temperature controls are used during transit?",
-      answer: "Rexvora utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
+      answer: "Flaskia utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
       keywords: ["temperature", "transit", "climate", "cold", "heat", "stability"]
     },
     {
       id: "compliance-1",
       category: "compliance",
       question: "Do I need institutional verification or a license to purchase?",
-      answer: "Yes. Rexvora requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
+      answer: "Yes. Flaskia requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
       keywords: ["license", "verification", "institution", "academic", "purchase", "checkout"]
     },
     {
@@ -122,7 +122,7 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
     {
       id: "compliance-3",
       category: "compliance",
-      question: "How does Rexvora uphold legal custody regulations?",
+      question: "How does Flaskia uphold legal custody regulations?",
       answer: "Our operations comply directly with EPA toxic control standards, DOT transport manuals, and OSHA safety guidelines. All orders undergo rigorous institutional checks, and all packaging includes physical safety documentation (SDS and GHS warning prints) directly in the parcel. We also record strict digital logs of lot numbers, purities, and transport chains for complete traceability.",
       keywords: ["regulation", "compliance", "legal", "safety", "epa", "osha", "traceability"]
     }

@@ -35,7 +35,7 @@ export default function ProductDetails({
   product,
   onBack,
   onAddToCart,
-  appName = "Rexvora",
+  appName = "Flaskia",
   appSubtitle = "Academic Supply Direct",
 }: ProductDetailsProps) {
   const { isCyber, isRetail, isIndiamart } = useTheme();
