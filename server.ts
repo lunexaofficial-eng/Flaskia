@@ -213,11 +213,163 @@ app.post("/api/products", async (req, res) => {
       ],
     );
     invalidateCache("products");
+
+    // Automatically broadcast email notification to all registered user emails in PostgreSQL
+    broadcastNewProductNotification(p).catch((err) => {
+      console.error("Async broadcast error for new product:", err);
+    });
+
     return res.json(p);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
+
+// Broadcast Helper: Sends branded email notification when a new product is added
+async function broadcastNewProductNotification(product: any) {
+  try {
+    const { rows } = await pool.query(
+      "SELECT DISTINCT email FROM customers WHERE email IS NOT NULL AND email != ''"
+    );
+
+    if (!rows || rows.length === 0) {
+      console.log("[Product Broadcast] No registered users in PostgreSQL database to notify.");
+      return;
+    }
+
+    const emails = rows.map((r: any) => r.email.toLowerCase().trim());
+    console.log(`[Product Broadcast] Broadcasting new product alert to ${emails.length} subscriber emails for: ${product.name}`);
+
+    const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>New Product Released - ${product.name}</title>
+      </head>
+      <body style="margin:0; padding:0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 40px 10px;">
+          <tr>
+            <td align="center">
+              <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #1e293b; border-radius: 16px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                
+                <!-- HEADER -->
+                <tr>
+                  <td style="background-color: #0f172a; padding: 28px 32px; border-bottom: 2px solid #10b981; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
+                      🧪 FLASKIA <span style="color: #10b981; font-weight: 400; font-size: 16px; font-family: monospace;">LABORATORY</span>
+                    </div>
+                    <div style="margin-top: 8px; display: inline-block; background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 20px;">
+                      ✨ NEW PRODUCT ARRIVAL ALERT
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- THUMBNAIL IMAGE -->
+                ${product.image ? `
+                <tr>
+                  <td align="center" style="padding: 24px 32px 0 32px; background-color: #1e293b;">
+                    <img src="${product.image}" alt="${product.name}" style="max-width: 100%; max-height: 280px; object-fit: contain; border-radius: 12px; border: 1px solid #334155; background-color: #0f172a; display: block;" referrerPolicy="no-referrer" />
+                  </td>
+                </tr>
+                ` : ''}
+
+                <!-- BODY CONTENT -->
+                <tr>
+                  <td style="padding: 28px 32px; text-align: left;">
+                    <h2 style="margin: 0 0 10px 0; color: #ffffff; font-size: 22px; font-weight: 700; line-height: 1.3;">
+                      ${product.name}
+                    </h2>
+                    
+                    ${product.description ? `
+                    <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #94a3b8;">
+                      ${product.description}
+                    </p>
+                    ` : ''}
+
+                    <!-- PRODUCT SPECIFICATIONS GRID -->
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0f172a; border-radius: 12px; border: 1px solid #334155; margin-bottom: 24px; padding: 16px;">
+                      <tr>
+                        <td width="50%" style="padding: 6px 12px; font-size: 12px; color: #94a3b8;">
+                          <strong>Grade:</strong> <span style="color: #38bdf8;">${product.grade || 'ACS / Tech'}</span>
+                        </td>
+                        <td width="50%" style="padding: 6px 12px; font-size: 12px; color: #94a3b8;">
+                          <strong>CAS No:</strong> <span style="color: #f59e0b; font-family: monospace;">${product.cas || 'N/A'}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="50%" style="padding: 6px 12px; font-size: 12px; color: #94a3b8;">
+                          <strong>Purity:</strong> <span style="color: #34d399;">${product.purity || 'High Grade'}</span>
+                        </td>
+                        <td width="50%" style="padding: 6px 12px; font-size: 12px; color: #94a3b8;">
+                          <strong>Formula:</strong> <span style="color: #f1f5f9; font-family: monospace;">${product.formula || 'N/A'}</span>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- PRICE AND CTA -->
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
+                      <tr>
+                        <td style="vertical-align: middle;">
+                          <div style="font-size: 12px; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 0.5px;">Unit Price</div>
+                          <div style="font-size: 26px; font-weight: 800; color: #34d399; line-height: 1.2;">
+                            $${Number(product.price).toFixed(2)}
+                            <span style="font-size: 13px; color: #94a3b8; font-weight: 400;">/ ${product.unit || 'pack'}</span>
+                          </div>
+                        </td>
+                        <td align="right" style="vertical-align: middle;">
+                          <a href="https://flaskia.com" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; padding: 12px 24px; border-radius: 10px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                            Order / Request RFQ &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                  <td style="background-color: #0f172a; padding: 20px 32px; border-top: 1px solid #334155; text-align: center;">
+                    <p style="margin: 0; font-size: 11px; color: #64748b; line-height: 1.5;">
+                      You are receiving this automated release announcement because your email is registered in the <strong>Flaskia B2B Chemical Marketplace</strong> database.<br>
+                      &copy; 2026 Flaskia Enterprise. All High-Purity Reagents & ACS Chemicals Certified.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    if (resendClient) {
+      for (const targetEmail of emails) {
+        try {
+          await resendClient.emails.send({
+            from: fromAddress,
+            to: [targetEmail],
+            subject: `🔥 New Arrival: ${product.name} Now Available on Flaskia`,
+            html: emailHtml,
+          });
+          console.log(`[Product Broadcast OK] Sent email alert to ${targetEmail} for ${product.name}`);
+        } catch (err: any) {
+          console.error(`[Product Broadcast Error] Failed sending to ${targetEmail}:`, err?.message || err);
+        }
+      }
+    } else {
+      console.log(`[DEV MODE PRODUCT BROADCAST] No RESEND_API_KEY. Would send new product email to ${emails.length} subscriber emails:`, emails);
+    }
+  } catch (err: any) {
+    console.error("Error broadcasting product notification email:", err);
+  }
+}
 
 app.put("/api/products/:id", async (req, res) => {
   try {
@@ -1044,7 +1196,7 @@ async function sendSimulatedEmail(targetEmail: string, subject: string, body: st
   // 3. Dispatch real email via official Resend Integration Provider when key is configured
   if (resendClient) {
     try {
-      const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia <noreply@flaskia.com>";
+      const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
       const mailPayload: any = {
         from: fromAddress,
         to: [targetEmail.toLowerCase().trim()],
@@ -2745,25 +2897,16 @@ app.post("/api/auth/login", async (req, res) => {
 
 
 
-// --- OTP & CUSTOMER REGISTER STEP ROUTES (With Zod & Resend) ---
+// --- OTP & CUSTOMER REGISTER STEP ROUTES (Pure Email + OTP Authentication) ---
 
 const sendOtpSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email layout"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"]
+  email: z.string().email("Please enter a valid email address.")
 });
 
 const verifyOtpSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  email: z.string().email(),
-  password: z.string().min(6),
-  otp: z.string().length(6, "OTP must be exactly 6 digits")
+  email: z.string().email("Please enter a valid email address."),
+  otp: z.string().length(6, "OTP must be exactly 6 digits"),
+  name: z.string().optional()
 });
 
 const billingSchema = z.object({
@@ -2784,17 +2927,11 @@ app.post("/api/auth/otp/send", async (req, res) => {
   try {
     const parseResult = sendOtpSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return res.status(400).json({ error: parseResult.error.issues[0]?.message || "Invalid input layout." });
+      return res.status(400).json({ error: parseResult.error.issues[0]?.message || "Invalid email address format." });
     }
 
     const { email } = parseResult.data;
-    const lowerEmail = email.toLowerCase();
-
-    // Verify uniqueness of the account email
-    const emailCheck = await pool.query("SELECT id FROM customers WHERE email = $1", [lowerEmail]);
-    if (emailCheck.rows.length > 0) {
-      return res.status(400).json({ error: "An account has already been registered with this email." });
-    }
+    const lowerEmail = email.toLowerCase().trim();
 
     // Cooldown lookup (resend cooldown: 60 seconds)
     const otpCheck = await pool.query("SELECT * FROM customer_otps WHERE email = $1", [lowerEmail]);
@@ -2813,7 +2950,7 @@ app.post("/api/auth/otp/send", async (req, res) => {
       // Hour rate limit of 10 attempts
       if (record.rate_limit_count >= 10 && (now.getTime() - new Date(record.last_sent_at).getTime()) < 3600000) {
         return res.status(429).json({
-          error: "Rate limit exceeded. Maximum 10 OTP registrations per hour. Please try again later."
+          error: "Rate limit exceeded. Maximum 10 OTP requests per hour. Please try again later."
         });
       }
     }
@@ -2843,50 +2980,72 @@ app.post("/api/auth/otp/send", async (req, res) => {
 
     if (resendClient) {
       try {
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia <noreply@flaskia.com>";
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
         const sendResult = await resendClient.emails.send({
           from: fromAddress,
           to: [lowerEmail],
-          subject: `Verification Code: ${code} - Flaskia Marketplace`,
+          subject: `🔐 Your Access Code: ${code} - Flaskia Marketplace`,
           html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #fafafa; padding: 40px 20px; color: #222;">
-              <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 35px; border-radius: 20px; border: 1px solid #e5e5e5; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-                <div style="text-align: center; margin-bottom: 25px;">
-                  <h1 style="color: #000000; font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.5px;">Flaskia</h1>
-                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; font-weight: 600;">Secure Marketplace Verification</span>
-                </div>
-                
-                <p style="font-size: 14px; line-height: 1.6; color: #444; margin-bottom: 20px; text-align: center;">
-                  Thank you for registering at Flaskia. Please use the following 6-digit confirmation code to complete Step 1 of your scholar registry.
-                </p>
-                
-                <div style="background-color: #f5f5f5; border-radius: 12px; padding: 18px 24px; text-align: center; margin: 25px 0; border: 1px solid #eaeaea;">
-                  <span style="font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #111;">${code}</span>
-                </div>
-                
-                <p style="font-size: 12px; line-height: 1.6; color: #ff3b30; text-align: center; margin-top: 15px; font-weight: 500;">
-                  This verification code is strictly valid for 10 minutes.
-                </p>
-                
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;" />
-                
-                <p style="font-size: 11px; line-height: 1.5; color: #888; text-align: center; margin: 0;">
-                  Flaskia Inc, All rights reserved.<br />
-                  For inquiries or technical compliance, please contact support@flaskia.com.<br />
-                  This is an automated security payload. Please do not reply.
-                </p>
-              </div>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin:0; padding:0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 40px 10px;">
+                <tr>
+                  <td align="center">
+                    <table width="100%" max-width="500" border="0" cellspacing="0" cellpadding="0" style="max-width: 500px; background-color: #1e293b; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;">
+                      <tr>
+                        <td style="background-color: #0f172a; padding: 24px 32px; border-bottom: 2px solid #10b981; text-align: center;">
+                          <div style="font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
+                            🧪 FLASKIA <span style="color: #10b981; font-weight: 400; font-size: 14px; font-family: monospace;">MARKETPLACE</span>
+                          </div>
+                          <div style="margin-top: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #34d399; font-weight: 700;">
+                            Instant Security Authentication
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 32px; text-align: center;">
+                          <p style="font-size: 14px; line-height: 1.6; color: #94a3b8; margin: 0 0 24px 0;">
+                            Use the following 6-digit access code to log in to your account.
+                          </p>
+                          <div style="background-color: #0f172a; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #334155; margin-bottom: 24px;">
+                            <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #34d399;">${code}</span>
+                          </div>
+                          <p style="font-size: 12px; color: #f87171; margin: 0 0 20px 0; font-weight: 600;">
+                            ⏰ This code is valid for 10 minutes.
+                          </p>
+                          <p style="font-size: 12px; color: #64748b; margin: 0;">
+                            If you did not request this login code, please ignore this email.
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="background-color: #0f172a; padding: 16px 32px; border-top: 1px solid #334155; text-align: center;">
+                          <p style="margin: 0; font-size: 11px; color: #64748b;">
+                            &copy; 2026 Flaskia Enterprise. All rights reserved.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
           `
         });
 
         if (sendResult.error) {
-          console.error("[Resend Error] Registration OTP dispatch error:", sendResult.error);
+          console.error("[Resend Error] OTP dispatch error:", sendResult.error);
           sentWithResend = false;
-          resendMessage = "Error sending email: " + sendResult.error.message;
+          resendMessage = "Access code generated. Resend test environment active - use preview code below.";
         } else {
           sentWithResend = true;
-          resendMessage = "Verification OTP has been sent via email successfully.";
+          resendMessage = "6-digit access code sent to your email successfully.";
           console.log(`[Resend OK] OTP email sent to ${lowerEmail} (Message ID: ${sendResult.data?.id})`);
         }
       } catch (err: any) {
@@ -2895,15 +3054,15 @@ app.post("/api/auth/otp/send", async (req, res) => {
         resendMessage = "Error sending email: " + err.message;
       }
     } else {
-      console.log(`[DEV MODE PREVIEW] No RESEND_API_KEY. OTP is: ${code}`);
-      resendMessage = "Resend API is missing in host environment. Fallback simulation output created.";
+      console.log(`[DEV MODE PREVIEW] No RESEND_API_KEY. Access OTP code is: ${code}`);
+      resendMessage = "Resend API key missing in environment. Access code provided in dev mode.";
     }
 
     return res.json({ 
       success: true, 
       message: resendMessage,
-      previewOtp: resendClient ? undefined : code,
-      devMode: !resendClient
+      previewOtp: sentWithResend ? undefined : code,
+      devMode: !sentWithResend
     });
 
   } catch (err: any) {
@@ -2912,7 +3071,7 @@ app.post("/api/auth/otp/send", async (req, res) => {
   }
 });
 
-// Verify OTP and create initial User
+// Verify OTP and Authenticate User (Creates customer in PostgreSQL if new)
 app.post("/api/auth/otp/verify", async (req, res) => {
   try {
     const parseResult = verifyOtpSchema.safeParse(req.body);
@@ -2920,13 +3079,13 @@ app.post("/api/auth/otp/verify", async (req, res) => {
       return res.status(400).json({ error: parseResult.error.issues[0]?.message || "Invalid payload format." });
     }
 
-    const { firstName, lastName, email, password, otp } = parseResult.data;
-    const lowerEmail = email.toLowerCase();
+    const { email, otp, name: reqName } = parseResult.data;
+    const lowerEmail = email.toLowerCase().trim();
 
     // Retrieve active OTP record
     const otpQuery = await pool.query("SELECT * FROM customer_otps WHERE email = $1", [lowerEmail]);
     if (otpQuery.rows.length === 0) {
-      return res.status(400).json({ error: "No verification process initiated for this email. Please request an OTP first." });
+      return res.status(400).json({ error: "No active login session for this email. Please request a new access code." });
     }
 
     const record = otpQuery.rows[0];
@@ -2934,49 +3093,53 @@ app.post("/api/auth/otp/verify", async (req, res) => {
     // Check attempt threshold limit
     if (record.attempts >= 5) {
       return res.status(400).json({ 
-        error: "Too many verification attempts (limit: 5). Please request a fresh OTP." 
+        error: "Too many verification attempts (limit: 5). Please request a fresh code." 
       });
     }
 
     // Check expiration timeline
     if (new Date() > new Date(record.expires_at)) {
-      return res.status(400).json({ error: "The verification code has expired. Please request a fresh OTP." });
+      return res.status(400).json({ error: "The verification code has expired. Please request a fresh code." });
     }
 
     // Authenticate code match
     const match = bcrypt.compareSync(otp, record.otp_code);
 
     if (!match) {
-      // Increment attempt penalty in PostgreSQL
       await pool.query("UPDATE customer_otps SET attempts = attempts + 1 WHERE email = $1", [lowerEmail]);
       const attemptsRemaining = 5 - (record.attempts + 1);
       return res.status(400).json({ 
-        error: `Incorrect verification code. ${attemptsRemaining} attempts remaining.` 
+        error: `Incorrect access code. ${attemptsRemaining} attempts remaining.` 
       });
     }
 
-    // Delete OTP record on successful verification to clean up
+    // Delete OTP record on successful verification
     await pool.query("DELETE FROM customer_otps WHERE email = $1", [lowerEmail]);
 
-    // Check account duplication again
-    const userExist = await pool.query("SELECT id FROM customers WHERE email = $1", [lowerEmail]);
+    // Query or Create customer in PostgreSQL database
+    const userExist = await pool.query("SELECT * FROM customers WHERE email = $1", [lowerEmail]);
+    let verifiedUser: any = null;
+
     if (userExist.rows.length > 0) {
-      return res.status(400).json({ error: "Account already created during session latency." });
+      // Existing user found - mark email_verified = TRUE
+      await pool.query("UPDATE customers SET email_verified = TRUE WHERE email = $1", [lowerEmail]);
+      const updatedUser = await pool.query("SELECT * FROM customers WHERE email = $1", [lowerEmail]);
+      verifiedUser = mapCustomerFromDb(updatedUser.rows[0]);
+    } else {
+      // New user - insert into PostgreSQL customers table
+      const cid = "cust-" + uuidv4().substring(0, 10);
+      const defaultName = reqName || lowerEmail.split('@')[0].replace(/[._]/g, ' ');
+      const formattedName = defaultName.charAt(0).toUpperCase() + defaultName.slice(1);
+
+      await pool.query(`
+        INSERT INTO customers (
+          id, name, email, email_verified, joined_date, role
+        ) VALUES ($1, $2, $3, TRUE, $4, 'CUSTOMER')
+      `, [cid, formattedName, lowerEmail, new Date().toLocaleDateString()]);
+
+      const userQuery = await pool.query("SELECT * FROM customers WHERE id = $1", [cid]);
+      verifiedUser = mapCustomerFromDb(userQuery.rows[0]);
     }
-
-    // Create standard Verified customer
-    const cid = "cust-" + uuidv4().substring(0, 10);
-    const hashedPw = bcrypt.hashSync(password, 10);
-    const name = `${firstName} ${lastName}`;
-
-    await pool.query(`
-      INSERT INTO customers (
-        id, name, first_name, last_name, email, password_hash, email_verified, joined_date, role
-      ) VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7, 'CUSTOMER')
-    `, [cid, name, firstName, lastName, lowerEmail, hashedPw, new Date().toLocaleDateString()]);
-
-    const userQuery = await pool.query("SELECT * FROM customers WHERE id = $1", [cid]);
-    const verifiedUser = mapCustomerFromDb(userQuery.rows[0]);
 
     // Sign session Token
     const token = jwt.sign(
@@ -2987,7 +3150,7 @@ app.post("/api/auth/otp/verify", async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Email identity authenticated and verified successfully.",
+      message: "Authentication successful.",
       user: verifiedUser,
       token
     });
@@ -3128,7 +3291,7 @@ app.post("/api/profile/otp/send", async (req, res) => {
 
     if (resendClient) {
       try {
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia <noreply@flaskia.com>";
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
         const sendResult = await resendClient.emails.send({
           from: fromAddress,
           to: [lowerEmail],
@@ -3166,7 +3329,7 @@ app.post("/api/profile/otp/send", async (req, res) => {
         if (sendResult.error) {
           console.error("[Resend Error] Profile OTP dispatch error:", sendResult.error);
           sentWithResend = false;
-          resendMessage = "Error sending email: " + sendResult.error.message;
+          resendMessage = "Verification OTP generated. Use preview code below.";
         } else {
           sentWithResend = true;
           resendMessage = "Verification OTP has been dispatched to your registered email.";
@@ -3185,8 +3348,8 @@ app.post("/api/profile/otp/send", async (req, res) => {
     return res.json({ 
       success: true, 
       message: resendMessage,
-      previewOtp: resendClient ? undefined : code,
-      devMode: !resendClient
+      previewOtp: sentWithResend ? undefined : code,
+      devMode: !sentWithResend
     });
 
   } catch (err: any) {
