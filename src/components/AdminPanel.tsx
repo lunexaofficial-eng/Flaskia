@@ -63,7 +63,10 @@ import {
   Printer,
   Briefcase,
   Image,
-  Palette
+  Palette,
+  Building2,
+  Zap,
+  MessageCircle
 } from "lucide-react";
 import { PRODUCTS } from "../data";
 import { useTheme } from "../context/ThemeContext";
@@ -1381,6 +1384,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     appSubtitle: "",
     appLogoIcon: "",
     appFaviconUrl: "",
+    adminWhatsappNumber: "",
 
     // Core Footer configuration settings
     footerCompanyName: "",
@@ -1621,6 +1625,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         appFaviconUrl:
           homeData.appFaviconUrl ||
           "https://img.icons8.com/color/48/chemistry.png",
+        adminWhatsappNumber: homeData.adminWhatsappNumber || "15099941048",
 
         // Footer details loading
         footerCompanyName:
@@ -4911,101 +4916,276 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                 className="space-y-6 animate-fade-in text-white"
                 id="marketplace-homepage-editor"
               >
-                {/* Visual live layout preview */}
+                {/* Visual live layout preview for CURRENTLY APPLIED THEME */}
                 <div className="bg-slate-900/40 p-5 border border-slate-800 rounded-3xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                      Real-time Storefront Visual Mockup (Live Preview)
-                    </h3>
-                    <span className="text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 font-mono text-slate-500 ">
-                      REACTIVE FRAME
-                    </span>
-                  </div>
-
-                  {/* Virtual storefront hero preview rendered exactly like the real storefront */}
-                  <div className="bg-slate-50 text-slate-900 border border-slate-200 p-6 rounded-2xl space-y-6 shadow-sm ">
-                    <div className="relative bg-white border border-slate-200 rounded-2xl overflow-hidden p-5 flex flex-col md:flex-row items-center justify-between gap-6">
-                      <div className="space-y-3 max-w-md">
-                        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 font-mono text-[9px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase">
-                          <Sparkles className="w-3 h-3 text-blue-500" />
-                          {homepageForm.heroTag || "[UNDEFINED COMPLIANCE TAG]"}
+                  {/* Theme Status Indicator Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
+                          Active Theme Management:
                         </span>
-                        <h2 className="text-xl md:text-2xl font-light text-slate-800 tracking-tight leading-none font-heading">
-                          {homepageForm.heroTitle || "[EMPTY HEADER HEADLINE]"}
-                        </h2>
-                        <p className="text-slate-500 text-[11px] leading-relaxed">
-                          {homepageForm.heroDescription ||
-                            "[No description entered yet. Provide business details below...]"}
-                        </p>
-
-                        {/* stats */}
-                        <div className="flex gap-4 pt-2 font-mono text-[10px] text-slate-400 border-t border-slate-100">
-                          <div>
-                            <span className="block text-slate-700 font-bold text-xs">
-                              {homepageForm.heroStat1Value || "N/A"}
-                            </span>
-                            {homepageForm.heroStat1Label || "Stat 1 Label"}
-                          </div>
-                          <div className="h-6 w-px bg-slate-200" />
-                          <div>
-                            <span className="block text-slate-700 font-bold text-xs">
-                              {homepageForm.heroStat2Value || "N/A"}
-                            </span>
-                            {homepageForm.heroStat2Label || "Stat 2 Label"}
-                          </div>
-                        </div>
                       </div>
-
-                      {/* image */}
-                      <div className="w-48 h-32 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative shrink-0">
-                        <img
-                          src={
-                            homepageForm.heroImageUrl ||
-                            "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=200"
-                          }
-                          alt="preview-banner"
-                          className="w-full h-full object-cover opacity-90"
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=200";
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/20 to-transparent" />
-                        <div className="absolute bottom-1.5 left-1.5 right-1.5 text-[8px] text-slate-500 flex items-center justify-between">
-                          <span className="font-semibold font-mono tracking-tighter">
-                            {homepageForm.heroWatermarkTitle || "WATERMARK"}
-                          </span>
-                          <span className="bg-white/95 text-blue-600 px-1.5 py-0.2 rounded border border-slate-200 font-bold uppercase">
-                            {homepageForm.heroWatermarkBadge || "BADGE"}
-                          </span>
-                        </div>
-                      </div>
+                      {activeTheme === "emerald" && (
+                        <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Emerald Scientific Lab Theme
+                        </span>
+                      )}
+                      {(activeTheme === "retail" || isCyber) && (
+                        <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                          <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+                          Amazon & Flipkart Retail Theme
+                        </span>
+                      )}
+                      {activeTheme === "indiamart" && (
+                        <span className="px-3 py-1 bg-teal-500/20 border border-teal-500/40 text-teal-300 text-xs font-bold rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(20,184,166,0.2)]">
+                          <Building2 className="w-3.5 h-3.5 text-teal-400" />
+                          IndiaMART B2B Procurement Theme
+                        </span>
+                      )}
                     </div>
 
-                    {/* Bottom compliance notice preview */}
-                    <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row gap-3 items-center justify-between text-slate-500 shadow-xs text-[10px]">
-                      <div className="flex gap-2 items-center">
-                        <span className="text-xs shrink-0">
-                          {homepageForm.complianceEmoji || "🔐"}
-                        </span>
-                        <p className="leading-snug text-slate-500">
-                          <strong>
-                            {homepageForm.complianceTitle ||
-                              "GHS Compliance Prefix:"}
-                          </strong>{" "}
-                          {homepageForm.complianceText ||
-                            "Detailed Advisory Statement."}
-                        </p>
-                      </div>
+                    {/* Quick Theme Switcher */}
+                    <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
                       <button
-                        className="px-3 py-1.5 text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-100/50 rounded-lg shrink-0"
                         type="button"
+                        onClick={() => {
+                          setTheme("emerald");
+                          fetch("/api/homepage", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ active_theme: "emerald" }),
+                          }).catch(() => {});
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                          activeTheme === "emerald"
+                            ? "bg-emerald-600 text-white shadow-xs"
+                            : "text-slate-400 hover:text-white"
+                        }`}
                       >
-                        {homepageForm.complianceBtnText || "Safety Manual"}
+                        🌿 Emerald
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTheme("retail");
+                          fetch("/api/homepage", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ active_theme: "retail" }),
+                          }).catch(() => {});
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                          activeTheme === "retail" || isCyber
+                            ? "bg-[#ff9f00] text-slate-950 shadow-xs font-extrabold"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        🛒 Retail
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTheme("indiamart");
+                          fetch("/api/homepage", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ active_theme: "indiamart" }),
+                          }).catch(() => {});
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                          activeTheme === "indiamart"
+                            ? "bg-gradient-to-r from-[#2e7d32] to-[#00a699] text-white shadow-xs"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        🇮🇳 IndiaMART
                       </button>
                     </div>
                   </div>
+
+                  {/* Render Live Preview ONLY for the CURRENTLY APPLIED Theme */}
+                  {activeTheme === "indiamart" ? (
+                    /* IndiaMART B2B Procurement Theme Mockup */
+                    <div className="bg-gradient-to-r from-[#1b5e20] via-[#2e7d32] to-[#00695c] rounded-2xl p-6 text-white shadow-lg space-y-4">
+                      <div className="flex justify-between items-center border-b border-emerald-700/60 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#00a699] text-white text-[10px] font-black px-2.5 py-0.5 rounded uppercase font-mono">
+                            IndiaMART B2B Live Preview
+                          </span>
+                          <span className="text-xs text-emerald-200 font-mono">Wholesale RFQ Quote Engine</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-300 font-mono font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                          APPLIED THEME
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h1 className="text-xl md:text-2xl font-black font-sans leading-tight">
+                          {homepageForm.heroTitle || "Wholesale Chemical Supplier & Bulk Quotation Hub"}
+                        </h1>
+                        <p className="text-emerald-100/90 text-xs leading-relaxed max-w-2xl">
+                          {homepageForm.heroDescription || "Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA, and fast dispatch."}
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-2 max-w-xl pt-1">
+                          <div className="flex-1 bg-white text-slate-800 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 opacity-90">
+                            Chemical name needed (e.g. Acetone, Sulfuric Acid)...
+                          </div>
+                          <div className="w-full sm:w-36 bg-white text-slate-800 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 opacity-90">
+                            Mobile / WhatsApp
+                          </div>
+                          <div className="bg-[#00a699] text-white text-xs font-black px-4 py-2 rounded-xl uppercase tracking-wider flex items-center justify-center gap-1 shrink-0">
+                            <Zap className="w-3.5 h-3.5 fill-white" />
+                            <span>{homepageForm.complianceBtnText || "Get Price Quote"}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 text-[10.5px] text-emerald-200 font-mono pt-1">
+                          <span className="flex items-center gap-1">
+                            <Lock className="w-3.5 h-3.5 text-amber-300" /> 256-Bit SSL/TLS Encrypted
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> PCI-DSS Gateway Safe
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (activeTheme === "retail" || isCyber) ? (
+                    /* Amazon & Flipkart Retail Theme Mockup */
+                    <div className="bg-gradient-to-r from-[#2874f0] via-[#1f5bc0] to-[#131921] rounded-2xl p-6 text-white shadow-lg space-y-4">
+                      <div className="flex justify-between items-center border-b border-blue-400/30 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#febd69] text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase font-sans">
+                            Flipkart / Amazon Live Preview
+                          </span>
+                          <span className="text-xs text-blue-200 font-mono">Retail Storefront Layout</span>
+                        </div>
+                        <span className="text-[10px] text-amber-300 font-mono font-bold bg-slate-950/60 px-2 py-0.5 rounded border border-amber-500/30">
+                          APPLIED THEME
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="bg-[#febd69] text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider font-sans">
+                            {homepageForm.heroTag || "🔥 BIG SAVING DAYS • LIMITED TIME DEALS"}
+                          </span>
+                          <span className="bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                            {homepageForm.heroWatermarkBadge || "UP TO 60% OFF DIRECT"}
+                          </span>
+                        </div>
+                        <h2 className="text-xl md:text-2xl font-extrabold tracking-tight font-sans leading-tight">
+                          {homepageForm.heroTitle || "Global Chemistry & Lab Equipment Marketplace"}
+                        </h2>
+                        <p className="text-blue-100 text-xs leading-relaxed max-w-2xl">
+                          {homepageForm.heroDescription || "Shop 10,000+ ACS Grade Chemical Reagents, Glassware & Safety Equipment with Express Free Delivery."}
+                        </p>
+
+                        <div className="flex items-center gap-3 pt-2">
+                          <div className="bg-[#ff9f00] text-slate-950 font-extrabold px-5 py-2 rounded-lg text-xs uppercase tracking-wide shadow-md">
+                            EXPLORE DEALS NOW
+                          </div>
+                          <div className="bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5">
+                            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp Support
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Emerald Scientific Lab Theme Mockup */
+                    <div className="bg-slate-50 text-slate-900 border border-slate-200 p-6 rounded-2xl space-y-6 shadow-sm">
+                      <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded uppercase font-mono">
+                            Emerald Lab Live Preview
+                          </span>
+                          <span className="text-xs text-slate-500 font-mono">Scientific Storefront Layout</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-700 font-mono font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          APPLIED THEME
+                        </span>
+                      </div>
+
+                      <div className="relative bg-white border border-slate-200 rounded-2xl overflow-hidden p-5 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="space-y-3 max-w-md">
+                          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 font-mono text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-100 uppercase">
+                            <Sparkles className="w-3 h-3 text-emerald-600" />
+                            {homepageForm.heroTag || "FDA & OSHA GHS COMPLIANT PROCUREMENT"}
+                          </span>
+                          <h2 className="text-xl md:text-2xl font-light text-slate-800 tracking-tight leading-none font-heading">
+                            {homepageForm.heroTitle || "High-Purity Laboratory Reagents & Supplies"}
+                          </h2>
+                          <p className="text-slate-500 text-[11px] leading-relaxed">
+                            {homepageForm.heroDescription ||
+                              "Flaskia distributes analytical chemical solutions..."}
+                          </p>
+
+                          <div className="flex gap-4 pt-2 font-mono text-[10px] text-slate-400 border-t border-slate-100">
+                            <div>
+                              <span className="block text-slate-700 font-bold text-xs">
+                                {homepageForm.heroStat1Value || "≤18 MΩ·cm"}
+                              </span>
+                              {homepageForm.heroStat1Label || "Conductivity limit"}
+                            </div>
+                            <div className="h-6 w-px bg-slate-200" />
+                            <div>
+                              <span className="block text-slate-700 font-bold text-xs">
+                                {homepageForm.heroStat2Value || "100%"}
+                              </span>
+                              {homepageForm.heroStat2Label || "SDS Documentation"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="w-48 h-32 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative shrink-0">
+                          <img
+                            src={
+                              homepageForm.heroImageUrl ||
+                              "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=200"
+                            }
+                            alt="preview-banner"
+                            className="w-full h-full object-cover opacity-90"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=200";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/20 to-transparent" />
+                          <div className="absolute bottom-1.5 left-1.5 right-1.5 text-[8px] text-slate-500 flex items-center justify-between">
+                            <span className="font-semibold font-mono tracking-tighter">
+                              {homepageForm.heroWatermarkTitle || "WATERMARK"}
+                            </span>
+                            <span className="bg-white/95 text-emerald-600 px-1.5 py-0.2 rounded border border-slate-200 font-bold uppercase">
+                              {homepageForm.heroWatermarkBadge || "BADGE"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row gap-3 items-center justify-between text-slate-500 shadow-xs text-[10px]">
+                        <div className="flex gap-2 items-center">
+                          <span className="text-xs shrink-0">
+                            {homepageForm.complianceEmoji || "🔐"}
+                          </span>
+                          <p className="leading-snug text-slate-500">
+                            <strong>
+                              {homepageForm.complianceTitle || "GHS Compliance Prefix:"}
+                            </strong>{" "}
+                            {homepageForm.complianceText || "Detailed Advisory Statement."}
+                          </p>
+                        </div>
+                        <button
+                          className="px-3 py-1.5 text-[9px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 border border-emerald-100/50 rounded-lg shrink-0"
+                          type="button"
+                        >
+                          {homepageForm.complianceBtnText || "Safety Manual"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Form controls split in elegant Grid panels */}
@@ -5013,16 +5193,21 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   onSubmit={handleSaveHomepageConfig}
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
-                  {/* PANEL 1: HERO OUTLINE */}
+                  {/* PANEL 1: HERO OUTLINE (TAILORED TO APPLIED THEME) */}
                   <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2">
-                      1. Brand Welcome & Hero Section
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2 flex items-center justify-between">
+                      <span>
+                        1. {activeTheme === "emerald" ? "Emerald Scientific Lab" : (activeTheme === "retail" || isCyber) ? "Amazon & Flipkart Retail" : "IndiaMART B2B Procurement"} Hero Section
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        [{activeTheme.toUpperCase()}]
+                      </span>
                     </h3>
 
                     <div className="space-y-3">
                       <div>
                         <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Header Safety Tag / Compliance Badge
+                          {activeTheme === "emerald" ? "Header Safety Tag / Compliance Badge" : (activeTheme === "retail" || isCyber) ? "Retail Promo Deal Pill / Badge" : "B2B Supplier Badge / Category Tag"}
                         </label>
                         <input
                           type="text"
@@ -5034,14 +5219,20 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               heroTag: e.target.value,
                             }))
                           }
-                          placeholder="e.g. FDA & OSHA GHS COMPLIANT PROCUREMENT"
+                          placeholder={
+                            activeTheme === "emerald"
+                              ? "e.g. FDA & OSHA GHS COMPLIANT PROCUREMENT"
+                              : (activeTheme === "retail" || isCyber)
+                              ? "e.g. 🔥 BIG SAVING DAYS • LIMITED TIME DEALS"
+                              : "e.g. 256-BIT SSL ENCRYPTED & PCI-DSS SAFE"
+                          }
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                         />
                       </div>
 
                       <div>
                         <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Main Store Headline Title
+                          {activeTheme === "emerald" ? "Main Lab Headline Title" : (activeTheme === "retail" || isCyber) ? "Main Retail Banner Headline" : "Wholesale B2B Quotation Headline"}
                         </label>
                         <input
                           type="text"
@@ -5053,7 +5244,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               heroTitle: e.target.value,
                             }))
                           }
-                          placeholder="e.g. High-Purity Laboratory Reagents & Supplies"
+                          placeholder={
+                            activeTheme === "emerald"
+                              ? "e.g. High-Purity Laboratory Reagents & Supplies"
+                              : (activeTheme === "retail" || isCyber)
+                              ? "e.g. Global Chemistry & Lab Equipment Marketplace"
+                              : "e.g. Wholesale Chemical Supplier & Bulk Quotation Hub"
+                          }
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                         />
                       </div>
@@ -5072,7 +5269,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               heroDescription: e.target.value,
                             }))
                           }
-                          placeholder="e.g. Flaskia distributes analytical chemical solutions..."
+                          placeholder={
+                            activeTheme === "emerald"
+                              ? "e.g. Flaskia distributes analytical chemical solutions..."
+                              : (activeTheme === "retail" || isCyber)
+                              ? "e.g. Shop 10,000+ ACS Grade Chemical Reagents with Express Free Delivery..."
+                              : "e.g. Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals..."
+                          }
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition resize-none leading-relaxed"
                         />
                       </div>
@@ -5409,6 +5612,25 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           }
                           placeholder="e.g. Academic Supply Direct"
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                          <span>Admin WhatsApp Number (For Product Inquiries)</span>
+                          <span className="text-[9px] text-slate-500 font-normal">With Country Code (e.g. 15099941048 or 919876543210)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={homepageForm.adminWhatsappNumber}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              adminWhatsappNumber: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. 15099941048"
+                          className="w-full px-3 py-2 bg-slate-950 border border-emerald-900/60 rounded-xl text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500 transition"
                         />
                       </div>
 
@@ -8186,7 +8408,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                             </h3>
                           </div>
                           <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                            Sleek IndiaMART B2B marketplace theme with animated hero banner, verified OEM badges, wholesale bulk MOQ pricing, and RFQ inquiry popup system. Direct card checkout is replaced with B2B inquiry submissions stored live in the database.
+                            Sleek IndiaMART B2B marketplace theme with animated hero banner, marketplace security badges, wholesale bulk MOQ pricing, and RFQ inquiry popup system. Direct card checkout is replaced with B2B inquiry submissions stored live in the database.
                           </p>
                         </div>
                         {activeTheme === "indiamart" && (
@@ -8217,8 +8439,8 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         </div>
                         <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-md space-y-2 relative">
                           <div className="flex justify-between items-center bg-[#1b5e20] text-white px-2 py-0.5 rounded text-[9px] font-mono">
-                            <span>✓ Verified OEM Supplier</span>
-                            <span>GST Verified</span>
+                            <span>🔒 256-Bit SSL Encrypted</span>
+                            <span>Official Store</span>
                           </div>
                           <h4 className="text-xs font-bold text-slate-900 font-sans">High-Purity Lab Reagent</h4>
                           <div className="flex items-center justify-between text-[10px] text-slate-600 font-mono">

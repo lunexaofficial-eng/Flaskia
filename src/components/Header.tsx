@@ -1,5 +1,6 @@
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
+import CurrencySelector from "./CurrencySelector";
 import { 
   ShoppingBag, 
   Search, 
@@ -75,23 +76,6 @@ export default function Header({
     // IndiaMART B2B Procurement Theme Header
     return (
       <header className="sticky top-0 z-50 font-sans select-none shadow-md" id="app-header-indiamart">
-        {/* Top B2B Announcement Strip */}
-        <div className="bg-[#1b5e20] text-emerald-100 text-[11px] font-semibold py-1 px-4 border-b border-emerald-800">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#00a699] text-white font-black px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">
-                IndiaMART B2B Platform
-              </span>
-              <span className="truncate">Verified Chemical Manufacturers & Suppliers | Get Instant Price Quotes & COA Direct</span>
-            </div>
-            <div className="hidden md:flex items-center gap-4 text-[10.5px]">
-              <span className="hover:underline cursor-pointer" onClick={onOpenHelp}>Helpdesk: +1 (509) 994-1048</span>
-              <span>|</span>
-              <span className="hover:underline cursor-pointer" onClick={() => onNavigate("orders")}>Inquiry Tracker</span>
-            </div>
-          </div>
-        </div>
-
         {/* Primary B2B Navigation Bar (IndiaMART Teal & White Accent) */}
         <div className="bg-white border-b border-slate-200 text-slate-800 px-4 md:px-8 py-3">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -137,14 +121,16 @@ export default function Header({
             </div>
 
             {/* Post Requirement & RFQ Actions */}
-            <div className="flex items-center justify-between md:justify-end gap-3 text-xs">
+            <div className="flex items-center justify-between md:justify-end gap-2.5 text-xs">
               
+              <CurrencySelector />
+
               <button
                 onClick={() => onNavigate("store")}
-                className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#2e7d32] font-extrabold px-3.5 py-2 rounded-xl text-xs transition cursor-pointer"
+                className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#2e7d32] font-extrabold px-3 py-2 rounded-xl text-xs transition cursor-pointer"
               >
                 <Sparkles className="w-4 h-4 text-[#00a699]" />
-                <span>Get Best Price</span>
+                <span className="hidden sm:inline">Browse Catalog</span>
               </button>
 
               <button
@@ -180,23 +166,6 @@ export default function Header({
     // Amazon & Flipkart Retail Powerhouse Theme Header
     return (
       <header className="sticky top-0 z-50 font-sans select-none shadow-md" id="app-header-retail">
-        {/* Top Announcement Banner (Flipkart / Amazon Sale Banner) */}
-        <div className="bg-[#2874f0] text-white text-[11px] font-semibold py-1 px-4 flex items-center justify-between border-b border-blue-600/50">
-          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#ffe11b] text-slate-900 font-black px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">
-                BIG SAVINGS DAY
-              </span>
-              <span className="truncate">⚡ Extra 10% Instant Discount on HDFC & SBI Cards | Free Express Delivery on Prime Orders!</span>
-            </div>
-            <div className="hidden md:flex items-center gap-4 text-[10.5px] opacity-90">
-              <span className="hover:underline cursor-pointer" onClick={onOpenHelp}>24x7 Customer Care</span>
-              <span>|</span>
-              <span className="hover:underline cursor-pointer" onClick={() => onNavigate("orders")}>Track Order</span>
-            </div>
-          </div>
-        </div>
-
         {/* Primary Retail Header Bar (Amazon #131921 / Flipkart Blue Navbar) */}
         <div className="bg-[#131921] text-white px-4 md:px-8 py-2.5">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -386,6 +355,8 @@ export default function Header({
 
         {/* Action Controls & Navigation tabs */}
         <div className="flex items-center gap-3.5 justify-between md:justify-end">
+          <CurrencySelector />
+
           <nav className="flex items-center gap-2">
             <button
               onClick={() => onNavigate("store")}

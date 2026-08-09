@@ -1,18 +1,21 @@
 import React from "react";
 import { Product } from "../data";
 import GhsPictogram from "./GhsPictogram";
-import { AlertTriangle, Tag, ZoomIn, ShoppingCart, Star, ShieldCheck, Zap } from "lucide-react";
+import { AlertTriangle, Tag, ZoomIn, ShoppingCart, Star, ShieldCheck, Zap, Lock, MessageCircle } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { useCurrency } from "../context/CurrencyContext";
 
 interface ProductCardProps {
   key?: string | number;
   product: Product;
   onSelect: (product: Product) => void;
   onAddToCart: (product: Product, event: React.MouseEvent) => void;
+  onOpenInquiry?: (product: Product) => void;
 }
 
-export default function ProductCard({ product, onSelect, onAddToCart }: ProductCardProps) {
+export default function ProductCard({ product, onSelect, onAddToCart, onOpenInquiry }: ProductCardProps) {
   const { isRetail, isIndiamart } = useTheme();
+  const { formatPrice } = useCurrency();
 
   if (isIndiamart) {
     // IndiaMART B2B Procurement Product Card
@@ -25,10 +28,10 @@ export default function ProductCard({ product, onSelect, onAddToCart }: ProductC
         {/* Top Supplier Verification Ribbon */}
         <div className="bg-[#1b5e20] text-white px-3 py-1 flex items-center justify-between text-[10px] font-mono">
           <span className="flex items-center gap-1 font-bold text-emerald-200">
-            <ShieldCheck className="w-3 h-3 text-emerald-400" /> Verified OEM Supplier
+            <Lock className="w-3 h-3 text-emerald-400" /> 256-Bit SSL Encrypted
           </span>
           <span className="bg-emerald-800 text-white font-extrabold px-1.5 py-0.2 rounded">
-            GST Verified
+            Official Store
           </span>
         </div>
 
@@ -72,7 +75,7 @@ export default function ProductCard({ product, onSelect, onAddToCart }: ProductC
               <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Estimated Bulk Price</div>
               <div className="flex items-baseline gap-1 mt-0.5">
                 <span className="text-base font-black text-[#2e7d32] font-mono">
-                  ${product.price.toFixed(2)}
+                  {formatPrice(product.price)}
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
                   / {product.unit}
@@ -84,7 +87,7 @@ export default function ProductCard({ product, onSelect, onAddToCart }: ProductC
             </div>
           </div>
 
-          {/* Action Buttons: Get Best Price */}
+          {/* Action Buttons: Get Best Price / Inquiry */}
           <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
             <button
               onClick={(e) => {
@@ -93,14 +96,21 @@ export default function ProductCard({ product, onSelect, onAddToCart }: ProductC
               }}
               className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded-xl transition cursor-pointer"
             >
-              Specs
+              Read Specs
             </button>
             <button
-              onClick={(e) => onAddToCart(product, e)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOpenInquiry) {
+                  onOpenInquiry(product);
+                } else {
+                  onAddToCart(product, e);
+                }
+              }}
               className="flex-1 bg-gradient-to-r from-[#2e7d32] to-[#00a699] hover:from-[#1b5e20] hover:to-[#00897b] text-white text-xs font-black py-2 rounded-xl transition cursor-pointer shadow-md flex items-center justify-center gap-1.5 uppercase tracking-wider active:scale-95"
             >
-              <Zap className="w-3.5 h-3.5 fill-white text-white" />
-              <span>Get Best Price</span>
+              <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
+              <span>Enquire on WhatsApp</span>
             </button>
           </div>
         </div>
@@ -172,13 +182,13 @@ export default function ProductCard({ product, onSelect, onAddToCart }: ProductC
             {/* Price Section: Deal Price + Original MRP Strikethrough */}
             <div className="mt-2.5 flex items-baseline gap-2">
               <span className="text-base font-extrabold text-slate-900 font-sans">
-                ${product.price.toFixed(2)}
+                {formatPrice(product.price)}
               </span>
               <span className="text-xs text-slate-400 line-through">
-                ${originalPrice.toFixed(2)}
+                {formatPrice(originalPrice)}
               </span>
               <span className="text-[11px] font-bold text-emerald-600">
-                Save ${(originalPrice - product.price).toFixed(2)}
+                Save {formatPrice(originalPrice - product.price)}
               </span>
             </div>
 
@@ -283,7 +293,7 @@ export default function ProductCard({ product, onSelect, onAddToCart }: ProductC
           <div>
             <div className="text-[9px] uppercase tracking-widest font-mono text-slate-400">Reagent price</div>
             <span className="text-base font-bold font-mono text-slate-900">
-              ${product.price.toFixed(2)}
+              {formatPrice(product.price)}
               <span className="text-[10px] ml-0.5 font-normal text-slate-400">/{product.unit}</span>
             </span>
           </div>

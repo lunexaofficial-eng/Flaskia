@@ -4,6 +4,7 @@ import NfpaDiamond from "./NfpaDiamond";
 import GhsPictogram from "./GhsPictogram";
 import AisSafetyExpert from "./AisSafetyExpert";
 import { useTheme } from "../context/ThemeContext";
+import { useCurrency } from "../context/CurrencyContext";
 import {
   FileText,
   ShoppingCart,
@@ -16,6 +17,8 @@ import {
   AlertTriangle,
   Printer,
   Zap,
+  Lock,
+  MessageCircle,
 } from "lucide-react";
 
 interface ProductDetailsProps {
@@ -27,18 +30,23 @@ interface ProductDetailsProps {
     packaging: string,
     agreesTerms: boolean,
   ) => void;
+  onOpenInquiry?: (product: Product, quantity?: number) => void;
   appName?: string;
   appSubtitle?: string;
+  whatsappNumber?: string;
 }
 
 export default function ProductDetails({
   product,
   onBack,
   onAddToCart,
+  onOpenInquiry,
   appName = "Flaskia",
   appSubtitle = "Academic Supply Direct",
+  whatsappNumber = "15099941048",
 }: ProductDetailsProps) {
   const { isCyber, isRetail, isIndiamart } = useTheme();
+  const { formatPrice } = useCurrency();
   const [activeTab, setActiveTab] = useState<number>(0);
   const [qty, setQty] = useState(1);
   const [selectedPkg, setSelectedPkg] = useState("Glass Lab Bottle");
@@ -312,10 +320,10 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               {isIndiamart && (
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <span className="bg-[#1b5e20] text-white text-xs font-bold px-2.5 py-0.5 rounded flex items-center gap-1 font-sans">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Verified OEM Supplier
+                    <Lock className="w-3.5 h-3.5 text-emerald-400" /> 256-Bit SSL Encrypted Vault
                   </span>
                   <span className="bg-[#00a699] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">
-                    GST & ISO 9001 Certified
+                    ISO 9001 Certified
                   </span>
                   <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold px-2 py-0.5 rounded font-mono">
                     MOQ: 1 {product.unit} | Response Rate: 98%
@@ -361,12 +369,12 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-3xl font-extrabold text-slate-900 font-mono">
-                      ${unitPrice.toFixed(2)}
+                      {formatPrice(unitPrice)}
                     </span>
                     {isRetail && (
                       <>
                         <span className="text-sm text-slate-400 line-through">
-                          ${(unitPrice * 1.35).toFixed(2)}
+                          {formatPrice(unitPrice * 1.35)}
                         </span>
                         <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                           26% OFF
@@ -441,8 +449,8 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                         {opt.priceDelta === 0
                           ? "Standard Package"
                           : opt.priceDelta > 0
-                            ? `+$${opt.priceDelta.toFixed(2)}`
-                            : `-$${Math.abs(opt.priceDelta).toFixed(2)}`}
+                            ? `+${formatPrice(opt.priceDelta)}`
+                            : `-${formatPrice(Math.abs(opt.priceDelta))}`}
                       </span>
                     </div>
                   ))}
@@ -522,46 +530,24 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                   )}
                 </div>
 
+                {/* Inquire on WhatsApp Direct Button */}
                 <button
                   type="button"
                   onClick={() => {
-                    if (!declaredCompliance) {
-                      setShowAgreementError(true);
-                      const el = document.getElementById("compliance-verification-box");
-                      if (el) {
-                        el.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }
-                      return;
+                    if (onOpenInquiry) {
+                      onOpenInquiry(product, qty);
+                    } else {
+                      const cleanPhone = (whatsappNumber || "15099941048").replace(/[^0-9]/g, "");
+                      const textMsg = `*NEW B2B PRODUCT ENQUIRY* 🧪\n------------------------------------\n📦 *Product Name:* ${product.name}\n🆔 *Product ID:* ${product.id}\n🧪 *CAS Registry:* ${product.cas || "N/A"}\n🔬 *Purity & Grade:* ${product.purity || "ACS Grade"} | ${product.grade || "Technical"} Grade\n🏷️ *Price:* $${product.price} / ${product.unit || "unit"}\n🖼️ *Product Image:* ${product.image}\n------------------------------------\n*Inquiry Quantity:* ${qty}\nHello Admin, I am interested in this product and would like to ask a question / get best bulk quotation.`;
+                      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, "_blank");
                     }
-                    onAddToCart(product, qty, selectedPkg, declaredCompliance);
                   }}
-                  className={`flex-[1.5] flex min-w-[220px] w-full items-center gap-2 justify-center font-bold text-xs py-3.5 px-4.5 rounded-xl cursor-pointer transition active:scale-95 text-center shadow-md hover:shadow-lg ${
-                    isIndiamart
-                      ? "bg-gradient-to-r from-[#2e7d32] to-[#00a699] hover:from-[#1b5e20] hover:to-[#00897b] text-white font-black uppercase tracking-wider shadow-emerald-200"
-                      : isRetail
-                      ? "bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 font-extrabold shadow-amber-200"
-                      : "bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                  }`}
+                  className="flex-1 flex min-w-[200px] items-center gap-2.5 justify-center font-black text-sm py-3.5 px-6 rounded-xl cursor-pointer transition active:scale-95 text-center shadow-md hover:shadow-lg bg-emerald-600 hover:bg-emerald-700 text-white uppercase tracking-wider"
                 >
-                  {isIndiamart ? (
-                    <>
-                      <Zap className="w-4.5 h-4.5 shrink-0 fill-white text-white" />
-                      <span>REQUEST BEST PRICE & QUOTATION</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="w-4.5 h-4.5 shrink-0" />
-                      <span>{isRetail ? `ADD TO CART ($${totalPrice.toFixed(2)})` : `Add to Chem-Cart ($${totalPrice.toFixed(2)})`}</span>
-                    </>
-                  )}
+                  <MessageCircle className="w-5 h-5 shrink-0 fill-white" />
+                  <span>Enquire on WhatsApp</span>
                 </button>
               </div>
-
-              {showAgreementError && (
-                <p className="text-[10px] text-red-650 font-bold text-center select-none h-2 leading-none absolute bottom-1 right-6 animate-pulse">
-                  * Action Required: Accept Safety Verification above!
-                </p>
-              )}
             </div>
             
             <div className="bg-amber-50/50 border border-amber-200/50 rounded-xl p-3 flex items-center justify-center gap-2 mt-4 text-amber-900 shadow-xs">

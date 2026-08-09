@@ -19,6 +19,7 @@ import { PRODUCTS, Product } from "./data";
 import CustomerAuth from "./components/CustomerAuth";
 import UserProfile from "./components/UserProfile";
 import CheckoutPromptModal from "./components/CheckoutPromptModal";
+import IndiamartInquiryModal from "./components/IndiamartInquiryModal";
 import { useTheme } from "./context/ThemeContext";
 import { 
   FlaskConical, 
@@ -45,7 +46,8 @@ import {
   Zap,
   Send,
   FileText,
-  Truck
+  Truck,
+  Lock
 } from "lucide-react";
 
 export default function App() {
@@ -199,6 +201,7 @@ export default function App() {
     appLogoIcon: "FlaskConical",
     appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
     admin_url_path: "/lunexa_official",
+    adminWhatsappNumber: "15099941048",
     
     // Complete adaptive footer defaults
     footerCompanyName: "Flaskia Supplies International Co.",
@@ -222,6 +225,17 @@ export default function App() {
       .catch(err => {
         console.warn("Could not retrieve latest homepage config, using local state defaults", err);
       });
+  };
+
+  // Inquiry Modal State & Handler
+  const [inquiryProduct, setInquiryProduct] = useState<Product | null>(null);
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const [inquiryDefaultQty, setInquiryDefaultQty] = useState(1);
+
+  const handleOpenInquiry = (product: Product, quantity: number = 1) => {
+    setInquiryProduct(product);
+    setInquiryDefaultQty(quantity);
+    setIsInquiryModalOpen(true);
   };
 
   // Sync favicon and document title dynamically
@@ -692,7 +706,7 @@ export default function App() {
                     </h1>
 
                     <p className="text-emerald-100/90 text-xs md:text-sm leading-relaxed max-w-2xl">
-                      Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with GST tax invoices, lot-certified CoA, and fast dispatch.
+                      Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA, and fast dispatch.
                     </p>
 
                     {/* Quick 1-Line RFQ Bar */}
@@ -740,16 +754,16 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* Simple Trust Badges in 1 Line */}
-                    <div className="flex flex-wrap items-center gap-4 text-[11px] text-emerald-200 font-mono pt-1">
-                      <span className="flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 100% Verified OEM
+                    {/* B2B Marketplace Security Architecture Badges */}
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-emerald-100 font-mono pt-2 border-t border-emerald-700/50">
+                      <span className="flex items-center gap-1.5 font-bold text-amber-300">
+                        <Lock className="w-3.5 h-3.5 text-amber-300" /> 256-Bit SSL/TLS Encryption
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5 text-teal-300" /> GST Tax Invoice
+                      <span className="flex items-center gap-1.5 font-bold text-emerald-300">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> PCI-DSS Gateway Protection
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <Truck className="w-3.5 h-3.5 text-cyan-300" /> Pan-India Delivery
+                      <span className="flex items-center gap-1.5 font-bold text-cyan-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300" /> GHS & OSHA Safety Compliant
                       </span>
                     </div>
                   </div>
@@ -802,17 +816,26 @@ export default function App() {
                       referrerPolicy="no-referrer" 
                       onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400"; }} 
                     />
-                    <span className="text-[11px] font-extrabold text-white mt-1 uppercase font-mono">Verified OEM Direct Stock</span>
+                    <span className="text-[10px] font-bold text-emerald-300 mt-1 uppercase font-mono flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-emerald-400" /> 256-Bit SSL Encrypted Vault
+                    </span>
                   </div>
                 </div>
 
-                {/* Bank Discount Ribbon */}
-                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-amber-900 flex-wrap gap-2">
-                  <div className="flex items-center gap-2 font-bold">
-                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Instant 10% Discount on HDFC & SBI Credit Cards | No Cost EMI Available</span>
+                {/* Marketplace Security & Trust Ribbon */}
+                <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-slate-200 flex-wrap gap-3 font-mono shadow-xs">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px]">
+                    <span className="flex items-center gap-1.5 font-bold text-amber-300">
+                      <Lock className="w-3.5 h-3.5 text-amber-300" /> 256-Bit SSL Encrypted
+                    </span>
+                    <span className="flex items-center gap-1.5 font-bold text-emerald-400">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> PCI-DSS Gateway Security
+                    </span>
+                    <span className="flex items-center gap-1.5 font-bold text-cyan-300">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300" /> GHS Chemical Safety Standard
+                    </span>
                   </div>
-                  <span className="bg-amber-200 text-amber-950 text-[10px] font-black px-2 py-0.5 rounded font-mono uppercase">Code: RETAIL10</span>
+                  <span className="bg-emerald-950 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded border border-emerald-800 uppercase">OFFICIAL SECURE STORE</span>
                 </div>
               </div>
             ) : (
@@ -847,17 +870,17 @@ export default function App() {
                     </a>
                   </div>
                   
-                  {/* Visual statistics labels */}
-                  <div className="flex gap-6 pt-2 font-mono text-[11px] text-slate-400 border-t border-slate-100">
-                    <div>
-                      <span className="block text-slate-700 font-bold text-base">{homepageConfig.heroStat1Value}</span>
-                      {homepageConfig.heroStat1Label}
-                    </div>
-                    <div className="h-8 w-px bg-slate-200" />
-                    <div>
-                      <span className="block text-slate-700 font-bold text-base">{homepageConfig.heroStat2Value}</span>
-                      {homepageConfig.heroStat2Label}
-                    </div>
+                  {/* Detailed Marketplace Security Specs */}
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 font-mono text-[11px] text-slate-600 border-t border-slate-100">
+                    <span className="flex items-center gap-1.5 font-bold text-slate-800">
+                      <Lock className="w-3.5 h-3.5 text-amber-600" /> 256-Bit SSL/TLS Encryption
+                    </span>
+                    <span className="flex items-center gap-1.5 font-bold text-slate-800">
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> PCI-DSS Secure Payments
+                    </span>
+                    <span className="flex items-center gap-1.5 font-bold text-slate-800">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" /> GHS & OSHA Chemical Compliance
+                    </span>
                   </div>
                 </div>
 
@@ -938,6 +961,7 @@ export default function App() {
                     product={prod}
                     onSelect={handleProductSelect}
                     onAddToCart={handleQuickAddToCart}
+                    onOpenInquiry={handleOpenInquiry}
                   />
                 ))}
               </div>
@@ -973,8 +997,10 @@ export default function App() {
               setCurrentView("store");
             }}
             onAddToCart={handleDetailedAddToCart}
+            onOpenInquiry={handleOpenInquiry}
             appName={homepageConfig.appName}
             appSubtitle={homepageConfig.appSubtitle}
+            whatsappNumber={homepageConfig.adminWhatsappNumber || "15099941048"}
           />
         )}
 
@@ -1211,6 +1237,16 @@ export default function App() {
       </footer>
 
 
+
+      {/* IndiaMART / B2B WhatsApp Product Inquiry Modal */}
+      <IndiamartInquiryModal
+        product={inquiryProduct}
+        isOpen={isInquiryModalOpen}
+        onClose={() => setIsInquiryModalOpen(false)}
+        defaultQty={inquiryDefaultQty}
+        whatsappNumber={homepageConfig.adminWhatsappNumber || "15099941048"}
+        appName={homepageConfig.appName || "Flaskia"}
+      />
 
       {/* Pristine Floating WhatsApp Helper Widget */}
       <div id="whatsapp-floating-widget" className="fixed bottom-6 right-6 z-50 print:hidden flex flex-col items-end gap-2 group select-none">
