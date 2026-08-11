@@ -2038,10 +2038,25 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
   const fetchInquiries = async () => {
     try {
-      const res = await fetch("/api/inquiries");
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+      const res = await fetch("/api/admin/inquiries", {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.inquiries)) {
         setInquiriesList(data.inquiries);
+      } else if (Array.isArray(data)) {
+        setInquiriesList(data);
+      } else {
+        const pubRes = await fetch("/api/inquiries");
+        const pubData = await pubRes.json();
+        if (Array.isArray(pubData)) {
+          setInquiriesList(pubData);
+        } else if (pubData && pubData.success && Array.isArray(pubData.inquiries)) {
+          setInquiriesList(pubData.inquiries);
+        }
       }
     } catch (err) {
       console.error("Failed to fetch inquiries:", err);
@@ -8493,11 +8508,11 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                       onClick={async () => {
                         if (window.confirm("Are you sure you want to completely clear all inquiries from everywhere in this marketplace?")) {
                           try {
-                            const token = localStorage.getItem("flaskia_admin_token");
+                            const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
                             await fetch("/api/admin/inquiries/clear-all", {
                               method: "POST",
                               headers: {
-                                "Authorization": `Bearer ${token}`
+                                "Authorization": `Bearer ${adminToken}`
                               }
                             });
                             fetchInquiries();
@@ -8642,12 +8657,12 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                         onChange={async (e) => {
                                           const newStatus = e.target.value;
                                           try {
-                                            const token = localStorage.getItem("flaskia_admin_token");
+                                            const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
                                             await fetch(`/api/admin/inquiries/${inq.id}/status`, {
                                               method: "PUT",
                                               headers: {
                                                 "Content-Type": "application/json",
-                                                "Authorization": `Bearer ${token}`
+                                                "Authorization": `Bearer ${adminToken}`
                                               },
                                               body: JSON.stringify({ status: newStatus }),
                                             });
@@ -8740,14 +8755,14 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                               if (!msg) return;
                                               setSendingAdminReply(true);
                                               try {
-                                                const token = localStorage.getItem("flaskia_admin_token");
+                                                const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
                                                 await fetch(`/api/admin/inquiries/${inq.id}/reply`, {
                                                   method: "POST",
                                                   headers: {
                                                     "Content-Type": "application/json",
-                                                    "Authorization": `Bearer ${token}`
+                                                    "Authorization": `Bearer ${adminToken}`
                                                   },
-                                                  body: JSON.stringify({ message: msg, adminName: "Flaskia B2B Support" })
+                                                  body: JSON.stringify({ message: msg, adminName: "LUNEXA B2B Support" })
                                                 });
                                                 setAdminReplyText((prev) => ({ ...prev, [inq.id]: "" }));
                                                 fetchInquiries();
