@@ -369,14 +369,14 @@ export default function App() {
 
   // Router listener & Mobile Device Back Button navigation handler
   useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
+    const handlePopState = (e?: PopStateEvent) => {
       const path = window.location.pathname;
       const targetAdminPath = homepageConfig.admin_url_path || "/lunexa_official";
       const sanitizedTarget = targetAdminPath.startsWith("/") ? targetAdminPath : `/${targetAdminPath}`;
       const hasTrailing = sanitizedTarget.endsWith("/") ? sanitizedTarget : `${sanitizedTarget}/`;
       const noTrailing = sanitizedTarget.endsWith("/") ? sanitizedTarget.slice(0, -1) : sanitizedTarget;
 
-      if (path === noTrailing || path === hasTrailing) {
+      if (path === noTrailing || path === hasTrailing || window.location.hash === "#admin") {
         setCurrentView("admin");
         return;
       }
@@ -395,7 +395,7 @@ export default function App() {
         return;
       }
 
-      const state = e.state;
+      const state = e?.state;
       const hash = window.location.hash || "";
 
       if (state && state.view) {
@@ -429,13 +429,14 @@ export default function App() {
           setCurrentView("store");
           setActiveProduct(null);
         }
-      } else {
-        // Return back to store catalog when mobile back button is pressed
-        setCurrentView("store");
-        setActiveProduct(null);
+      } else if (hash === "#admin") {
+        setCurrentView("admin");
+      } else if (path === "/" || path === "") {
+        // Stay on currentView or store
       }
     };
 
+    handlePopState();
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [homepageConfig.admin_url_path, showCheckoutModalPrompt, isInquiryModalOpen, isHelpOpen, appProducts]);
