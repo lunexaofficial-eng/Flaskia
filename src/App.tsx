@@ -382,17 +382,19 @@ export default function App() {
       }
 
       // Close modals first if user presses mobile back button while modal is active
-      if (showCheckoutModalPrompt) {
-        setShowCheckoutModalPrompt(false);
-        return;
-      }
-      if (isInquiryModalOpen) {
-        setIsInquiryModalOpen(false);
-        return;
-      }
-      if (isHelpOpen) {
-        setIsHelpOpen(false);
-        return;
+      if (e) {
+        if (showCheckoutModalPrompt) {
+          setShowCheckoutModalPrompt(false);
+          return;
+        }
+        if (isInquiryModalOpen) {
+          setIsInquiryModalOpen(false);
+          return;
+        }
+        if (isHelpOpen) {
+          setIsHelpOpen(false);
+          return;
+        }
       }
 
       const state = e?.state;

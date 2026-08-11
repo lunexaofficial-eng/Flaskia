@@ -762,12 +762,13 @@ app.post("/api/inquiries", async (req, res) => {
       customerId,
     } = req.body;
 
-    if (!productId || !buyerName || !buyerEmail) {
-      return res.status(400).json({ error: "Product ID, buyer name, and buyer email are required." });
+    if (!productId) {
+      return res.status(400).json({ error: "Product ID is required." });
     }
 
     const id = `INQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const trimmedEmail = buyerEmail.toLowerCase().trim();
+    const effectiveName = buyerName && buyerName.trim() ? buyerName.trim() : "WhatsApp Buyer";
+    const effectiveEmail = buyerEmail && buyerEmail.trim() ? buyerEmail.toLowerCase().trim() : "buyer@marketplace.com";
 
     await pool.query(
       `
@@ -783,8 +784,8 @@ app.post("/api/inquiries", async (req, res) => {
         productImage || "",
         price || "",
         quantity || "1",
-        buyerName,
-        trimmedEmail,
+        effectiveName,
+        effectiveEmail,
         buyerPhone || "",
         companyName || "",
         deliveryPincode || "",
@@ -800,7 +801,7 @@ app.post("/api/inquiries", async (req, res) => {
       INSERT INTO inquiry_messages (id, inquiry_id, sender_role, sender_name, sender_email, message)
       VALUES ($1, $2, 'CUSTOMER', $3, $4, $5)
     `,
-      [msgId, id, buyerName, trimmedEmail, notes || `Requirement quote requested for ${quantity} units of ${productName}.`]
+      [msgId, id, effectiveName, effectiveEmail, notes || `Requirement quote requested for ${quantity} units of ${productName}.`]
     );
 
     return res.json({

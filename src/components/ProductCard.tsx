@@ -196,23 +196,36 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
             </p>
           </div>
 
-          {/* Action Buttons (Amazon / Flipkart Yellow & Orange Buttons) */}
+          {/* Action Buttons (Amazon / Flipkart Yellow & Orange Buttons + WhatsApp) */}
           <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onSelect(product);
               }}
-              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold py-1.5 rounded transition cursor-pointer text-center"
+              className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded transition cursor-pointer text-center"
             >
               Details
             </button>
             <button
               onClick={(e) => onAddToCart(product, e)}
-              className="flex-1 bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 text-[11px] font-extrabold py-1.5 rounded transition cursor-pointer shadow-xs flex items-center justify-center gap-1"
+              className="px-2.5 py-1.5 bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 text-[11px] font-extrabold rounded transition cursor-pointer shadow-xs flex items-center justify-center gap-1"
             >
               <ShoppingCart className="w-3 h-3 text-slate-950" />
-              <span>Add to Cart</span>
+              <span>Add</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOpenInquiry) {
+                  onOpenInquiry(product);
+                }
+              }}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold py-1.5 rounded transition cursor-pointer shadow-xs flex items-center justify-center gap-1 uppercase tracking-wider"
+              title="Enquire on WhatsApp"
+            >
+              <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
+              <span>Enquire on WhatsApp</span>
             </button>
           </div>
         </div>
@@ -287,7 +300,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
         </div>
 
         {/* Buy & Inspect Footers */}
-        <div className="mt-4 pt-3.5 border-t flex items-center justify-between border-slate-100">
+        <div className="mt-4 pt-3.5 border-t flex flex-col sm:flex-row gap-2.5 items-start sm:items-center justify-between border-slate-100">
           <div>
             <div className="text-[9px] uppercase tracking-widest font-mono text-slate-400">Reagent price</div>
             <span className="text-base font-bold font-mono text-slate-900">
@@ -296,7 +309,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 select-none font-sans">
+          <div className="flex items-center gap-1.5 select-none font-sans w-full sm:w-auto">
             {/* Quick Inspect Button */}
             <button
               onClick={(e) => {
@@ -312,11 +325,26 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
             {/* Quick Add To Cart Button */}
             <button
               onClick={(e) => onAddToCart(product, e)}
-              className="px-3.5 py-2 rounded-xl font-semibold text-xs transition duration-150 active:scale-95 shadow-xs cursor-pointer flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+              className="px-2.5 py-2 rounded-xl font-semibold text-xs transition duration-150 active:scale-95 shadow-xs cursor-pointer flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
               title="Add Reagent to Cart"
             >
               <ShoppingCart className="w-3.5 h-3.5" />
               <span>Add</span>
+            </button>
+
+            {/* Enquire on WhatsApp Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOpenInquiry) {
+                  onOpenInquiry(product);
+                }
+              }}
+              className="flex-1 sm:flex-initial px-3 py-2 rounded-xl font-black text-xs transition duration-150 active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white uppercase tracking-wider"
+              title="Enquire on WhatsApp"
+            >
+              <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
+              <span>Enquire on WhatsApp</span>
             </button>
           </div>
         </div>
