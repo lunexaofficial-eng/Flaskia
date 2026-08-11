@@ -8778,6 +8778,35 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         <span>{activeThreadInquiryId === inq.id ? "Close Thread" : "Reply Thread"}</span>
                                       </button>
+
+                                      <button
+                                        onClick={async () => {
+                                          if (window.confirm(`Are you sure you want to permanently delete Inquiry #${inq.id} (${inq.product_name || 'RFQ'})? It will be permanently removed from everywhere in the marketplace.`)) {
+                                            setInquiriesList((prev) => prev.filter((item) => item.id !== inq.id));
+                                            try {
+                                              const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+                                              const res = await fetch(`/api/admin/inquiries/${inq.id}`, {
+                                                method: "DELETE",
+                                                headers: {
+                                                  "Authorization": `Bearer ${adminToken}`
+                                                }
+                                              });
+                                              if (!res.ok) {
+                                                await fetch(`/api/inquiries/${inq.id}`, {
+                                                  method: "DELETE"
+                                                });
+                                              }
+                                              fetchInquiries();
+                                            } catch (err) {
+                                              console.error("Failed to delete inquiry:", err);
+                                            }
+                                          }
+                                        }}
+                                        className="px-2.5 py-1 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/80 hover:border-rose-700 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                                        <span>Delete Inquiry</span>
+                                      </button>
                                     </div>
                                   </td>
                                 </tr>

@@ -1010,6 +1010,30 @@ app.post("/api/admin/inquiries/clear-all", checkAdminAuth, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/inquiries/:id - Delete a single inquiry record permanently
+app.delete("/api/admin/inquiries/:id", checkAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM inquiry_messages WHERE inquiry_id = $1", [id]);
+    await pool.query("DELETE FROM inquiries WHERE id = $1", [id]);
+    return res.json({ success: true, message: `Inquiry #${id} deleted successfully.` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/inquiries/:id - Fallback delete single inquiry
+app.delete("/api/inquiries/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM inquiry_messages WHERE inquiry_id = $1", [id]);
+    await pool.query("DELETE FROM inquiries WHERE id = $1", [id]);
+    return res.json({ success: true, message: `Inquiry #${id} deleted successfully.` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.put("/api/admin/inquiries/:id/status", checkAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
