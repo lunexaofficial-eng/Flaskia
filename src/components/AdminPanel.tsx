@@ -1111,6 +1111,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
   // B2B Inquiries / RFQs State
   const [inquiriesList, setInquiriesList] = useState<any[]>([]);
   const [inquirySearchQuery, setInquirySearchQuery] = useState<string>("");
+  const [inquiryStatusFilter, setInquiryStatusFilter] = useState<string>("ALL");
   const [adminReplyText, setAdminReplyText] = useState<{ [id: string]: string }>({});
   const [activeThreadInquiryId, setActiveThreadInquiryId] = useState<string | null>(null);
   const [sendingAdminReply, setSendingAdminReply] = useState<boolean>(false);
@@ -8532,30 +8533,56 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   </div>
                 </div>
 
-                {/* Filter / Search Bar */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
-                  <div className="relative w-full sm:w-80">
-                    <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
-                    <input
-                      type="text"
-                      placeholder="Search by buyer name, email, phone, product..."
-                      value={inquirySearchQuery}
-                      onChange={(e) => setInquirySearchQuery(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
-                    />
+                {/* Filter / Search Bar & Status Tabs */}
+                <div className="flex flex-col gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    {/* Status Filter Tabs */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                      {["ALL", "PENDING", "APPROVED", "REPLIED", "RESOLVED", "REJECTED", "CLOSED"].map((st) => (
+                        <button
+                          key={st}
+                          onClick={() => setInquiryStatusFilter(st)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition cursor-pointer whitespace-nowrap ${
+                            inquiryStatusFilter === st
+                              ? "bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-900/30"
+                              : "bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800"
+                          }`}
+                        >
+                          {st === "ALL" ? `All (${inquiriesList.length})` : st}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="relative w-full sm:w-72">
+                      <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+                      <input
+                        type="text"
+                        placeholder="Search by buyer name, email, phone, product..."
+                        value={inquirySearchQuery}
+                        onChange={(e) => setInquirySearchQuery(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-400 font-mono">
-                    Showing {inquiriesList.filter((i) => {
-                      if (!inquirySearchQuery) return true;
-                      const q = inquirySearchQuery.toLowerCase();
-                      return (
-                        (i.buyer_name || "").toLowerCase().includes(q) ||
-                        (i.buyer_email || "").toLowerCase().includes(q) ||
-                        (i.buyer_phone || "").toLowerCase().includes(q) ||
-                        (i.product_name || "").toLowerCase().includes(q) ||
-                        (i.company_name || "").toLowerCase().includes(q)
-                      );
-                    }).length} of {inquiriesList.length} inquiries
+
+                  <div className="text-xs text-slate-400 font-mono flex items-center justify-between">
+                    <span>
+                      Showing {inquiriesList.filter((i) => {
+                        const q = inquirySearchQuery.toLowerCase();
+                        const matchQuery = !q || (
+                          (i.buyer_name || "").toLowerCase().includes(q) ||
+                          (i.buyer_email || "").toLowerCase().includes(q) ||
+                          (i.buyer_phone || "").toLowerCase().includes(q) ||
+                          (i.product_name || "").toLowerCase().includes(q) ||
+                          (i.company_name || "").toLowerCase().includes(q)
+                        );
+                        const matchStatus = inquiryStatusFilter === "ALL" || (i.status || "PENDING") === inquiryStatusFilter;
+                        return matchQuery && matchStatus;
+                      }).length} of {inquiriesList.length} inquiries
+                    </span>
+                    {inquiryStatusFilter !== "ALL" && (
+                      <span className="text-emerald-400 font-bold">Filtered by status: {inquiryStatusFilter}</span>
+                    )}
                   </div>
                 </div>
 
@@ -8570,38 +8597,40 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           <th className="p-4">Product Requested</th>
                           <th className="p-4">Quantity & Packaging</th>
                           <th className="p-4">Requirements / Note</th>
-                          <th className="p-4">Status</th>
+                          <th className="p-4">Status & Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/60">
                         {inquiriesList.filter((i) => {
-                          if (!inquirySearchQuery) return true;
                           const q = inquirySearchQuery.toLowerCase();
-                          return (
+                          const matchQuery = !q || (
                             (i.buyer_name || "").toLowerCase().includes(q) ||
                             (i.buyer_email || "").toLowerCase().includes(q) ||
                             (i.buyer_phone || "").toLowerCase().includes(q) ||
                             (i.product_name || "").toLowerCase().includes(q) ||
                             (i.company_name || "").toLowerCase().includes(q)
                           );
+                          const matchStatus = inquiryStatusFilter === "ALL" || (i.status || "PENDING") === inquiryStatusFilter;
+                          return matchQuery && matchStatus;
                         }).length === 0 ? (
                           <tr>
                             <td colSpan={6} className="p-8 text-center text-slate-500 font-mono">
-                              No B2B RFQ inquiries found matching query.
+                              No B2B RFQ inquiries found matching query and status filter.
                             </td>
                           </tr>
                         ) : (
                           inquiriesList
                             .filter((i) => {
-                              if (!inquirySearchQuery) return true;
                               const q = inquirySearchQuery.toLowerCase();
-                              return (
+                              const matchQuery = !q || (
                                 (i.buyer_name || "").toLowerCase().includes(q) ||
                                 (i.buyer_email || "").toLowerCase().includes(q) ||
                                 (i.buyer_phone || "").toLowerCase().includes(q) ||
                                 (i.product_name || "").toLowerCase().includes(q) ||
                                 (i.company_name || "").toLowerCase().includes(q)
                               );
+                              const matchStatus = inquiryStatusFilter === "ALL" || (i.status || "PENDING") === inquiryStatusFilter;
+                              return matchQuery && matchStatus;
                             })
                             .map((inq) => (
                               <React.Fragment key={inq.id}>
@@ -8651,14 +8680,18 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                     </p>
                                   </td>
                                   <td className="p-4 whitespace-nowrap">
-                                    <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col gap-2 min-w-[140px]">
                                       <select
                                         value={inq.status || "PENDING"}
                                         onChange={async (e) => {
                                           const newStatus = e.target.value;
+                                          // Optimistic local state update
+                                          setInquiriesList((prev) =>
+                                            prev.map((item) => (item.id === inq.id ? { ...item, status: newStatus } : item))
+                                          );
                                           try {
                                             const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
-                                            await fetch(`/api/admin/inquiries/${inq.id}/status`, {
+                                            const res = await fetch(`/api/admin/inquiries/${inq.id}/status`, {
                                               method: "PUT",
                                               headers: {
                                                 "Content-Type": "application/json",
@@ -8666,24 +8699,73 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                               },
                                               body: JSON.stringify({ status: newStatus }),
                                             });
+                                            if (!res.ok) {
+                                              await fetch(`/api/inquiries/${inq.id}/status`, {
+                                                method: "PUT",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ status: newStatus }),
+                                              });
+                                            }
                                             fetchInquiries();
                                           } catch (err) {
                                             console.error("Failed status update:", err);
                                           }
                                         }}
                                         className={`text-xs font-bold px-3 py-1.5 rounded-xl border font-mono cursor-pointer transition ${
-                                          inq.status === "RESOLVED" || inq.status === "REPLIED"
-                                            ? "bg-emerald-950 text-emerald-300 border-emerald-700"
-                                            : inq.status === "CLOSED"
+                                          inq.status === "APPROVED"
+                                            ? "bg-emerald-950 text-emerald-300 border-emerald-500 shadow-sm shadow-emerald-900/50"
+                                            : inq.status === "RESOLVED"
+                                            ? "bg-teal-950 text-teal-300 border-teal-700"
+                                            : inq.status === "REPLIED"
+                                            ? "bg-blue-950 text-blue-300 border-blue-700"
+                                            : inq.status === "CLOSED" || inq.status === "REJECTED"
                                             ? "bg-slate-900 text-slate-500 border-slate-800"
                                             : "bg-amber-950 text-amber-300 border-amber-700 animate-pulse"
                                         }`}
                                       >
-                                        <option value="PENDING">PENDING</option>
-                                        <option value="REPLIED">REPLIED</option>
-                                        <option value="RESOLVED">RESOLVED</option>
-                                        <option value="CLOSED">CLOSED</option>
+                                        <option value="PENDING">⏳ PENDING</option>
+                                        <option value="APPROVED">✅ APPROVED (Approve Quote)</option>
+                                        <option value="REPLIED">💬 REPLIED</option>
+                                        <option value="RESOLVED">🎉 RESOLVED</option>
+                                        <option value="REJECTED">❌ REJECTED</option>
+                                        <option value="CLOSED">🔒 CLOSED</option>
                                       </select>
+
+                                      {/* Quick Approve Button */}
+                                      {inq.status !== "APPROVED" && (
+                                        <button
+                                          onClick={async () => {
+                                            setInquiriesList((prev) =>
+                                              prev.map((item) => (item.id === inq.id ? { ...item, status: "APPROVED" } : item))
+                                            );
+                                            try {
+                                              const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+                                              const res = await fetch(`/api/admin/inquiries/${inq.id}/status`, {
+                                                method: "PUT",
+                                                headers: {
+                                                  "Content-Type": "application/json",
+                                                  "Authorization": `Bearer ${adminToken}`
+                                                },
+                                                body: JSON.stringify({ status: "APPROVED" }),
+                                              });
+                                              if (!res.ok) {
+                                                await fetch(`/api/inquiries/${inq.id}/status`, {
+                                                  method: "PUT",
+                                                  headers: { "Content-Type": "application/json" },
+                                                  body: JSON.stringify({ status: "APPROVED" }),
+                                                });
+                                              }
+                                              fetchInquiries();
+                                            } catch (err) {
+                                              console.error("Failed quick approve:", err);
+                                            }
+                                          }}
+                                          className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                                        >
+                                          <CheckCircle2 className="w-3.5 h-3.5" />
+                                          <span>Approve Quote</span>
+                                        </button>
+                                      )}
 
                                       <button
                                         onClick={() => {

@@ -269,7 +269,7 @@ export default function MyInquiriesHub({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
             {/* Filter Pills */}
             <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
-              {["ALL", "PENDING", "REPLIED", "CLOSED"].map((st) => (
+              {["ALL", "PENDING", "APPROVED", "REPLIED", "RESOLVED", "CLOSED"].map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
@@ -366,14 +366,22 @@ export default function MyInquiriesHub({
                     <div className="flex items-center gap-3 self-end md:self-center">
                       <span
                         className={`text-[11px] font-extrabold uppercase px-3 py-1 rounded-xl border font-mono tracking-wide ${
-                          inq.status === "REPLIED"
+                          inq.status === "APPROVED"
+                            ? "bg-emerald-600 text-white border-emerald-700 shadow-sm"
+                            : inq.status === "RESOLVED"
                             ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                            : inq.status === "CLOSED"
+                            : inq.status === "REPLIED"
+                            ? "bg-blue-100 text-blue-800 border-blue-300"
+                            : inq.status === "CLOSED" || inq.status === "REJECTED"
                             ? "bg-slate-100 text-slate-600 border-slate-300"
                             : "bg-amber-100 text-amber-800 border-amber-300 animate-pulse"
                         }`}
                       >
-                        {inq.status === "REPLIED" ? "💬 Admin Replied" : inq.status}
+                        {inq.status === "APPROVED"
+                          ? "✅ Quote Approved"
+                          : inq.status === "REPLIED"
+                          ? "💬 Admin Replied"
+                          : inq.status}
                       </span>
 
                       <button className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">

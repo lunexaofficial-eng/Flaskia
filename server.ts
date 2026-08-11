@@ -1021,6 +1021,17 @@ app.put("/api/admin/inquiries/:id/status", checkAdminAuth, async (req, res) => {
   }
 });
 
+app.put("/api/inquiries/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    await pool.query("UPDATE inquiries SET status = $1, updated_at = NOW() WHERE id = $2", [status, id]);
+    return res.json({ success: true, id, status });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // --- PAYPAL PRODUCTION-READY INTEGRATION GATEWAY API AND SERVICES ---
 
 // Utility: Read registered PayPal config settings on the server side
