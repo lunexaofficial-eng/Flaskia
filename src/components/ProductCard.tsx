@@ -4,6 +4,7 @@ import GhsPictogram from "./GhsPictogram";
 import { AlertTriangle, Tag, ZoomIn, ShoppingCart, Star, ShieldCheck, Zap, Lock, MessageCircle } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useCurrency } from "../context/CurrencyContext";
+import { getProxiedImageUrl } from "../utils/imageUtils";
 
 interface ProductCardProps {
   key?: string | number;
@@ -38,13 +39,10 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
         {/* Product Image & Badges Container */}
         <div className="h-44 relative overflow-hidden bg-slate-50 p-3 flex items-center justify-center border-b border-slate-100">
           <img
-            src={product.image}
+            src={getProxiedImageUrl(product.image)}
             alt={product.name}
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             referrerPolicy="no-referrer"
-            onError={(e) => {
-              e.currentTarget.src = "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=200";
-            }}
           />
 
           <span className="absolute top-2 left-2 bg-[#00a699] text-white font-black text-[9.5px] px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
@@ -132,7 +130,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
         {/* Flipkart / Amazon Image Container */}
         <div className="h-48 relative overflow-hidden bg-slate-50 p-3 flex items-center justify-center border-b border-slate-100">
           <img
-            src={product.image}
+            src={getProxiedImageUrl(product.image)}
             alt={product.name}
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             referrerPolicy="no-referrer"
@@ -233,7 +231,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
       {/* Product Image and Grade Tag overlay */}
       <div className="h-44 relative overflow-hidden select-none bg-slate-100">
         <img
-          src={product.image}
+          src={getProxiedImageUrl(product.image)}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 opacity-90 group-hover:opacity-100"
           referrerPolicy="no-referrer"

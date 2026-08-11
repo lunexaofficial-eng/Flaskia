@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Send, CheckCircle2, Phone, Mail, MapPin, Package, ShieldCheck, MessageCircle, AlertCircle, ExternalLink, Atom, Scale, Info, Plus, Minus, Calculator } from "lucide-react";
 import { Product } from "../data";
 import { useCurrency } from "../context/CurrencyContext";
+import { getProxiedImageUrl } from "../utils/imageUtils";
 
 interface IndiamartInquiryModalProps {
   product: Product | null;
@@ -280,13 +281,10 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5 min-w-0 w-full sm:w-auto">
                   <img
-                    src={product.image}
+                    src={getProxiedImageUrl(product.image)}
                     alt={product.name}
                     className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl border border-slate-200 shrink-0 bg-white shadow-xs"
                     referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=200";
-                    }}
                   />
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-1.5">

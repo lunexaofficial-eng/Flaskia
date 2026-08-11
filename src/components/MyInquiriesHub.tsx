@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getProxiedImageUrl } from "../utils/imageUtils";
 import {
   MessageSquare,
   Package,
@@ -317,9 +318,10 @@ export default function MyInquiriesHub({
                     <div className="flex items-start gap-4">
                       {inq.product_image ? (
                         <img
-                          src={inq.product_image}
+                          src={getProxiedImageUrl(inq.product_image)}
                           alt={inq.product_name}
                           className="w-12 h-12 object-contain rounded-xl bg-slate-50 p-1 border border-slate-200 shrink-0"
+                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 font-bold text-base">

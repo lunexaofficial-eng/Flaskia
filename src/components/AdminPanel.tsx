@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
+import { getProxiedImageUrl } from "../utils/imageUtils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
@@ -3857,12 +3858,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               <td className="py-4 px-5">
                                 <div className="flex items-center gap-3">
                                   <img
-                                    src={
-                                      p.image ||
-                                      "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=100"
-                                    }
+                                    src={getProxiedImageUrl(p.image)}
                                     alt={p.name}
-                                    className="w-10 h-10 object-cover rounded-lg border border-slate-800 shrink-0  pointer-events-none"
+                                    className="w-10 h-10 object-cover rounded-lg border border-slate-800 shrink-0 pointer-events-none"
+                                    referrerPolicy="no-referrer"
                                   />
                                   <div>
                                     <span className="font-semibold text-white block font-heading">
@@ -8609,9 +8608,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                   </td>
                                   <td className="p-4">
                                     <div className="flex items-center gap-2">
-                                      {inq.product_image && (
+                                      {(inq.product_image || products.find(p => p.id === inq.product_id)?.image) && (
                                         <img
-                                          src={inq.product_image}
+                                          src={getProxiedImageUrl(inq.product_image || products.find(p => p.id === inq.product_id)?.image)}
+                                          referrerPolicy="no-referrer"
                                           alt={inq.product_name}
                                           className="w-10 h-10 object-contain rounded bg-white p-1 border border-slate-700 shrink-0"
                                         />

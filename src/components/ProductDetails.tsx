@@ -5,6 +5,7 @@ import GhsPictogram from "./GhsPictogram";
 import AisSafetyExpert from "./AisSafetyExpert";
 import { useTheme } from "../context/ThemeContext";
 import { useCurrency } from "../context/CurrencyContext";
+import { getProxiedImageUrl } from "../utils/imageUtils";
 import {
   FileText,
   ShoppingCart,
@@ -164,7 +165,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 />
               ) : (
                 <img
-                  src={activeMedia}
+                  src={getProxiedImageUrl(activeMedia)}
                   alt={product.name}
                   className="w-full h-80 object-cover opacity-90"
                   referrerPolicy="no-referrer"
@@ -189,7 +190,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                   className={`shrink-0 w-16 h-16 rounded-xl border-2 overflow-hidden ${activeMedia === product.image ? "border-blue-500" : "border-transparent opacity-70 hover:opacity-100"}`}
                 >
                   <img
-                    src={product.image}
+                    src={getProxiedImageUrl(product.image)}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
@@ -201,7 +202,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     className={`shrink-0 w-16 h-16 rounded-xl border-2 overflow-hidden ${activeMedia === url ? "border-blue-500" : "border-transparent opacity-70 hover:opacity-100"}`}
                   >
                     <img
-                      src={url}
+                      src={getProxiedImageUrl(url)}
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                     />

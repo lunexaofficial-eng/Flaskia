@@ -140,6 +140,43 @@ app.get("/api/db-health", async (req, res) => {
   }
 });
 
+// Image Proxy Endpoint to prevent client-side CORS/hotlinking issues for chemical product images
+app.get("/api/image-proxy", async (req, res) => {
+  try {
+    const imageUrl = req.query.url as string;
+    if (!imageUrl) {
+      return res.status(400).send("Missing image url");
+    }
+
+    if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+      return res.status(400).send("Invalid URL protocol");
+    }
+
+    const response = await fetch(imageUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+      }
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).send("Failed to fetch image");
+    }
+
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return res.send(buffer);
+  } catch (err: any) {
+    console.error("Image proxy error:", err);
+    return res.status(500).send("Image proxy failed");
+  }
+});
+
 // Products SQL Route handlers
 app.get("/api/products", async (req, res) => {
   try {

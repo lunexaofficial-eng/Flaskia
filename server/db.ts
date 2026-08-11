@@ -34,8 +34,20 @@ export function mapCategoryFromDb(row: any) {
   };
 }
 
+export function formatImageProxyUrl(url: string) {
+  if (!url) return "";
+  if (url.startsWith("https://storage.rexvora.com") || url.includes("rexvora.com")) {
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 export function mapProductFromDb(row: any) {
   if (!row) return null;
+  const rawImage = row.image || "";
+  const rawGallery = row.gallery_urls ? (typeof row.gallery_urls === "string" ? JSON.parse(row.gallery_urls) : row.gallery_urls) : [];
+  const galleryUrls = Array.isArray(rawGallery) ? rawGallery.map((g: string) => formatImageProxyUrl(g)) : [];
+
   return {
     id: row.id,
     name: row.name,
@@ -48,9 +60,9 @@ export function mapProductFromDb(row: any) {
     unit: row.unit || "",
     stock: parseInt(row.stock),
     categoryId: row.category_id,
-    image: row.image || "",
+    image: formatImageProxyUrl(rawImage),
     videoUrl: row.video_url || "",
-    galleryUrls: row.gallery_urls ? JSON.parse(row.gallery_urls) : [],
+    galleryUrls: galleryUrls,
     sdsUrl: row.sds_url || "",
     physicalState: row.physical_state || "",
     boilingPoint: row.boiling_point || "",
