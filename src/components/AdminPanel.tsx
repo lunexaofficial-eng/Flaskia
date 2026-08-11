@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Package,
   Tag,
+  Send,
   ShoppingBag,
   Users,
   LogOut,
@@ -1109,6 +1110,9 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
   // B2B Inquiries / RFQs State
   const [inquiriesList, setInquiriesList] = useState<any[]>([]);
   const [inquirySearchQuery, setInquirySearchQuery] = useState<string>("");
+  const [adminReplyText, setAdminReplyText] = useState<{ [id: string]: string }>({});
+  const [activeThreadInquiryId, setActiveThreadInquiryId] = useState<string | null>(null);
+  const [sendingAdminReply, setSendingAdminReply] = useState<boolean>(false);
 
   // Payment Methods State
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -8479,12 +8483,33 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                       All wholesale chemical price quotes and RFQ submissions from IndiaMART B2B marketplace visitors. Review buyer contact information, requested volume, target specs, and update lead status.
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <button
                       onClick={fetchInquiries}
                       className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-2"
                     >
                       <Sparkles className="w-4 h-4 text-emerald-400" /> Refresh Live Leads
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (window.confirm("Are you sure you want to completely clear all inquiries from everywhere in this marketplace?")) {
+                          try {
+                            const token = localStorage.getItem("flaskia_admin_token");
+                            await fetch("/api/admin/inquiries/clear-all", {
+                              method: "POST",
+                              headers: {
+                                "Authorization": `Bearer ${token}`
+                              }
+                            });
+                            fetchInquiries();
+                          } catch (err) {
+                            console.error("Failed to clear inquiries:", err);
+                          }
+                        }
+                      }}
+                      className="px-4 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4 text-rose-400" /> Clear All Inquiries
                     </button>
                     <div className="bg-emerald-950/60 border border-emerald-500/40 px-4 py-2 rounded-xl text-center">
                       <span className="text-[10px] text-emerald-300 font-mono block uppercase">Total Inquiries</span>
@@ -8565,83 +8590,184 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               );
                             })
                             .map((inq) => (
-                              <tr key={inq.id} className="hover:bg-slate-800/40 transition">
-                                <td className="p-4 whitespace-nowrap">
-                                  <span className="font-mono font-bold text-white block">#{inq.id}</span>
-                                  <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
-                                    {new Date(inq.created_at || Date.now()).toLocaleDateString()}
-                                  </span>
-                                </td>
-                                <td className="p-4">
-                                  <div className="font-bold text-white">{inq.buyer_name}</div>
-                                  {inq.company_name && (
-                                    <div className="text-[11px] text-emerald-400 font-medium">{inq.company_name}</div>
-                                  )}
-                                  <div className="text-[11px] text-slate-400 mt-0.5">📞 {inq.buyer_phone}</div>
-                                  <div className="text-[10px] text-slate-500 font-mono">{inq.buyer_email}</div>
-                                  {inq.city && <div className="text-[10px] text-slate-500">{inq.city}, {inq.state}</div>}
-                                </td>
-                                <td className="p-4">
-                                  <div className="flex items-center gap-2">
-                                    {inq.product_image && (
-                                      <img
-                                        src={inq.product_image}
-                                        alt={inq.product_name}
-                                        className="w-10 h-10 object-contain rounded bg-white p-1 border border-slate-700 shrink-0"
-                                      />
+                              <React.Fragment key={inq.id}>
+                                <tr className="hover:bg-slate-800/40 transition">
+                                  <td className="p-4 whitespace-nowrap">
+                                    <span className="font-mono font-bold text-white block">#{inq.id}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
+                                      {new Date(inq.created_at || Date.now()).toLocaleDateString()}
+                                    </span>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="font-bold text-white">{inq.buyer_name}</div>
+                                    {inq.company_name && (
+                                      <div className="text-[11px] text-emerald-400 font-medium">{inq.company_name}</div>
                                     )}
-                                    <div>
-                                      <span className="font-bold text-slate-200 block">{inq.product_name}</span>
-                                      <span className="text-[10px] text-slate-500 font-mono block">Item ID: #{inq.product_id}</span>
+                                    <div className="text-[11px] text-slate-400 mt-0.5">📞 {inq.buyer_phone}</div>
+                                    <div className="text-[10px] text-slate-500 font-mono">{inq.buyer_email}</div>
+                                    {inq.city && <div className="text-[10px] text-slate-500">{inq.city}, {inq.state}</div>}
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                      {inq.product_image && (
+                                        <img
+                                          src={inq.product_image}
+                                          alt={inq.product_name}
+                                          className="w-10 h-10 object-contain rounded bg-white p-1 border border-slate-700 shrink-0"
+                                        />
+                                      )}
+                                      <div>
+                                        <span className="font-bold text-slate-200 block">{inq.product_name}</span>
+                                        <span className="text-[10px] text-slate-500 font-mono block">Item ID: #{inq.product_id}</span>
+                                      </div>
                                     </div>
-                                  </div>
-                                </td>
-                                <td className="p-4 whitespace-nowrap">
-                                  <span className="bg-emerald-950 border border-emerald-800 text-emerald-300 font-mono text-xs font-bold px-2.5 py-1 rounded-lg block w-max">
-                                    {inq.quantity} units
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 font-mono block mt-1">
-                                    {inq.packaging_type || "Standard Pack"}
-                                  </span>
-                                </td>
-                                <td className="p-4 max-w-xs">
-                                  <p className="text-xs text-slate-300 leading-snug line-clamp-3 bg-slate-950/60 p-2 rounded-xl border border-slate-800">
-                                    {inq.message || "Standard B2B Bulk Price Quotation Request"}
-                                  </p>
-                                </td>
-                                <td className="p-4 whitespace-nowrap">
-                                  <select
-                                    value={inq.status || "PENDING"}
-                                    onChange={async (e) => {
-                                      const newStatus = e.target.value;
-                                      try {
-                                        await fetch(`/api/admin/inquiries/${inq.id}`, {
-                                          method: "PUT",
-                                          headers: { "Content-Type": "application/json" },
-                                          body: JSON.stringify({ status: newStatus }),
-                                        });
-                                        fetchInquiries();
-                                      } catch (err) {
-                                        console.error("Failed status update:", err);
-                                      }
-                                    }}
-                                    className={`text-xs font-bold px-3 py-1.5 rounded-xl border font-mono cursor-pointer transition ${
-                                      inq.status === "RESOLVED"
-                                        ? "bg-emerald-950 text-emerald-300 border-emerald-700"
-                                        : inq.status === "RESPONDED"
-                                        ? "bg-blue-950 text-blue-300 border-blue-700"
-                                        : inq.status === "CLOSED"
-                                        ? "bg-slate-900 text-slate-500 border-slate-800"
-                                        : "bg-amber-950 text-amber-300 border-amber-700 animate-pulse"
-                                    }`}
-                                  >
-                                    <option value="PENDING">PENDING</option>
-                                    <option value="RESPONDED">RESPONDED</option>
-                                    <option value="RESOLVED">RESOLVED</option>
-                                    <option value="CLOSED">CLOSED</option>
-                                  </select>
-                                </td>
-                              </tr>
+                                  </td>
+                                  <td className="p-4 whitespace-nowrap">
+                                    <span className="bg-emerald-950 border border-emerald-800 text-emerald-300 font-mono text-xs font-bold px-2.5 py-1 rounded-lg block w-max">
+                                      {inq.quantity} units
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono block mt-1">
+                                      {inq.packaging_type || "Standard Pack"}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 max-w-xs">
+                                    <p className="text-xs text-slate-300 leading-snug line-clamp-3 bg-slate-950/60 p-2 rounded-xl border border-slate-800">
+                                      {inq.notes || inq.message || "Standard B2B Bulk Price Quotation Request"}
+                                    </p>
+                                  </td>
+                                  <td className="p-4 whitespace-nowrap">
+                                    <div className="flex flex-col gap-2">
+                                      <select
+                                        value={inq.status || "PENDING"}
+                                        onChange={async (e) => {
+                                          const newStatus = e.target.value;
+                                          try {
+                                            const token = localStorage.getItem("flaskia_admin_token");
+                                            await fetch(`/api/admin/inquiries/${inq.id}/status`, {
+                                              method: "PUT",
+                                              headers: {
+                                                "Content-Type": "application/json",
+                                                "Authorization": `Bearer ${token}`
+                                              },
+                                              body: JSON.stringify({ status: newStatus }),
+                                            });
+                                            fetchInquiries();
+                                          } catch (err) {
+                                            console.error("Failed status update:", err);
+                                          }
+                                        }}
+                                        className={`text-xs font-bold px-3 py-1.5 rounded-xl border font-mono cursor-pointer transition ${
+                                          inq.status === "RESOLVED" || inq.status === "REPLIED"
+                                            ? "bg-emerald-950 text-emerald-300 border-emerald-700"
+                                            : inq.status === "CLOSED"
+                                            ? "bg-slate-900 text-slate-500 border-slate-800"
+                                            : "bg-amber-950 text-amber-300 border-amber-700 animate-pulse"
+                                        }`}
+                                      >
+                                        <option value="PENDING">PENDING</option>
+                                        <option value="REPLIED">REPLIED</option>
+                                        <option value="RESOLVED">RESOLVED</option>
+                                        <option value="CLOSED">CLOSED</option>
+                                      </select>
+
+                                      <button
+                                        onClick={() => {
+                                          setActiveThreadInquiryId(
+                                            activeThreadInquiryId === inq.id ? null : inq.id
+                                          );
+                                        }}
+                                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                                      >
+                                        <MessageSquare className="w-3.5 h-3.5" />
+                                        <span>{activeThreadInquiryId === inq.id ? "Close Thread" : "Reply Thread"}</span>
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                                {activeThreadInquiryId === inq.id && (
+                                  <tr className="bg-slate-950/90 border-b border-slate-800">
+                                    <td colSpan={6} className="p-5">
+                                      <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-4">
+                                        <div className="flex items-center justify-between text-xs font-bold text-slate-200 border-b border-slate-800 pb-2">
+                                          <span className="flex items-center gap-2">
+                                            <MessageSquare className="w-4 h-4 text-emerald-400" />
+                                            B2B Thread Messages with {inq.buyer_name} ({inq.buyer_email})
+                                          </span>
+                                          <span className="text-[10px] font-mono text-slate-400">ID: {inq.id}</span>
+                                        </div>
+
+                                        {/* Messages */}
+                                        <div className="space-y-2 max-h-60 overflow-y-auto p-2 bg-slate-950 rounded-xl border border-slate-800">
+                                          {(!inq.messages || inq.messages.length === 0) ? (
+                                            <p className="text-slate-500 text-xs italic text-center py-2">
+                                              Initial requirement note: "{inq.notes || inq.message || "Quotation requested"}"
+                                            </p>
+                                          ) : (
+                                            inq.messages.map((m: any) => (
+                                              <div
+                                                key={m.id}
+                                                className={`p-2.5 rounded-xl text-xs ${
+                                                  m.sender_role === "ADMIN"
+                                                    ? "bg-blue-950/80 border border-blue-800 text-blue-200 ml-6"
+                                                    : "bg-slate-800 border border-slate-700 text-slate-200 mr-6"
+                                                }`}
+                                              >
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 mb-1">
+                                                  <span>{m.sender_role === "ADMIN" ? "🛡️ Admin Reply" : `👤 ${m.sender_name}`}</span>
+                                                  <span className="font-mono">{new Date(m.created_at).toLocaleString()}</span>
+                                                </div>
+                                                <p className="whitespace-pre-wrap">{m.message}</p>
+                                              </div>
+                                            ))
+                                          )}
+                                        </div>
+
+                                        {/* Reply Box */}
+                                        <div className="flex gap-2">
+                                          <input
+                                            type="text"
+                                            placeholder="Type official admin reply to customer..."
+                                            value={adminReplyText[inq.id] || ""}
+                                            onChange={(e) =>
+                                              setAdminReplyText((prev) => ({ ...prev, [inq.id]: e.target.value }))
+                                            }
+                                            className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                                          />
+                                          <button
+                                            disabled={sendingAdminReply || !adminReplyText[inq.id]?.trim()}
+                                            onClick={async () => {
+                                              const msg = adminReplyText[inq.id]?.trim();
+                                              if (!msg) return;
+                                              setSendingAdminReply(true);
+                                              try {
+                                                const token = localStorage.getItem("flaskia_admin_token");
+                                                await fetch(`/api/admin/inquiries/${inq.id}/reply`, {
+                                                  method: "POST",
+                                                  headers: {
+                                                    "Content-Type": "application/json",
+                                                    "Authorization": `Bearer ${token}`
+                                                  },
+                                                  body: JSON.stringify({ message: msg, adminName: "Flaskia B2B Support" })
+                                                });
+                                                setAdminReplyText((prev) => ({ ...prev, [inq.id]: "" }));
+                                                fetchInquiries();
+                                              } catch (e) {
+                                                console.error("Admin reply error:", e);
+                                              } finally {
+                                                setSendingAdminReply(false);
+                                              }
+                                            }}
+                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                                          >
+                                            <Send className="w-3.5 h-3.5" />
+                                            <span>Send Reply</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
                             ))
                         )}
                       </tbody>

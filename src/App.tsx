@@ -18,6 +18,7 @@ import CompanyPolicies, { PolicyTab } from "./components/CompanyPolicies";
 import { PRODUCTS, Product } from "./data";
 import CustomerAuth from "./components/CustomerAuth";
 import UserProfile from "./components/UserProfile";
+import MyInquiriesHub from "./components/MyInquiriesHub";
 import CheckoutPromptModal from "./components/CheckoutPromptModal";
 import IndiamartInquiryModal from "./components/IndiamartInquiryModal";
 import { useTheme } from "./context/ThemeContext";
@@ -52,7 +53,7 @@ import {
 
 export default function App() {
   const { isRetail, isIndiamart } = useTheme();
-  const [currentView, setCurrentView] = useState<"store" | "product" | "checkout" | "orders" | "admin" | "policies" | "profile">("store");
+  const [currentView, setCurrentView] = useState<"store" | "product" | "checkout" | "orders" | "inquiries" | "admin" | "policies" | "profile">("store");
   const [activePolicyTab, setActivePolicyTab] = useState<PolicyTab>("about");
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
@@ -1157,6 +1158,16 @@ export default function App() {
               currentUser={currentUser}
             />
           )
+        )}
+
+        {/* VIEW 4B: MY B2B INQUIRIES HUB */}
+        {currentView === "inquiries" && (
+          <MyInquiriesHub
+            currentUser={currentUser}
+            onBackToStore={() => setCurrentView("store")}
+            onSelectProductById={handleSelectProductById}
+            onUpdateUser={handleSetUser}
+          />
         )}
 
 

@@ -240,7 +240,7 @@ async function broadcastNewProductNotification(product: any) {
     const emails = rows.map((r: any) => r.email.toLowerCase().trim());
     console.log(`[Product Broadcast] Broadcasting new product alert to ${emails.length} subscriber emails for: ${product.name}`);
 
-    const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
+    const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -707,6 +707,7 @@ app.delete("/api/admin/payment-methods/:id", checkAdminAuth, async (req, res) =>
 });
 
 // IndiaMART B2B Inquiries & RFQs Endpoints
+// IndiaMART B2B Inquiries & RFQs Endpoints
 app.post("/api/inquiries", async (req, res) => {
   try {
     const {
@@ -721,6 +722,7 @@ app.post("/api/inquiries", async (req, res) => {
       companyName,
       deliveryPincode,
       notes,
+      customerId,
     } = req.body;
 
     if (!productId || !buyerName || !buyerEmail) {
@@ -728,12 +730,14 @@ app.post("/api/inquiries", async (req, res) => {
     }
 
     const id = `INQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const trimmedEmail = buyerEmail.toLowerCase().trim();
+
     await pool.query(
       `
       INSERT INTO inquiries (
         id, product_id, product_name, product_image, price, quantity,
-        buyer_name, buyer_email, buyer_phone, company_name, delivery_pincode, notes, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'PENDING')
+        buyer_name, buyer_email, buyer_phone, company_name, delivery_pincode, notes, status, customer_id, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'PENDING', $13, NOW(), NOW())
     `,
       [
         id,
@@ -743,12 +747,23 @@ app.post("/api/inquiries", async (req, res) => {
         price || "",
         quantity || "1",
         buyerName,
-        buyerEmail,
+        trimmedEmail,
         buyerPhone || "",
         companyName || "",
         deliveryPincode || "",
         notes || "",
+        customerId || null,
       ]
+    );
+
+    // Record initial message in inquiry_messages thread
+    const msgId = `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    await pool.query(
+      `
+      INSERT INTO inquiry_messages (id, inquiry_id, sender_role, sender_name, sender_email, message)
+      VALUES ($1, $2, 'CUSTOMER', $3, $4, $5)
+    `,
+      [msgId, id, buyerName, trimmedEmail, notes || `Requirement quote requested for ${quantity} units of ${productName}.`]
     );
 
     return res.json({
@@ -761,19 +776,198 @@ app.post("/api/inquiries", async (req, res) => {
   }
 });
 
+// GET /api/inquiries (Supports ?live=true for 12-hour ticker expiry)
 app.get("/api/inquiries", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM inquiries ORDER BY created_at DESC");
+    const isLiveOnly = req.query.live === "true";
+    let querySql = "SELECT * FROM inquiries ORDER BY created_at DESC";
+    
+    if (isLiveOnly) {
+      querySql = "SELECT * FROM inquiries WHERE created_at >= NOW() - INTERVAL '12 hours' ORDER BY created_at DESC";
+    }
+
+    const { rows } = await pool.query(querySql);
     return res.json(rows);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
 
+// GET /api/my-inquiries - Returns inquiries strictly for the logged-in customer's email
+app.get("/api/my-inquiries", async (req, res) => {
+  try {
+    const rawEmail = (req.query.email as string) || "";
+    const email = rawEmail.toLowerCase().trim();
+
+    if (!email) {
+      return res.status(400).json({ error: "Customer email is required to retrieve private inquiries." });
+    }
+
+    const { rows } = await pool.query(
+      `
+      SELECT 
+        i.*,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', m.id,
+                'inquiry_id', m.inquiry_id,
+                'sender_role', m.sender_role,
+                'sender_name', m.sender_name,
+                'sender_email', m.sender_email,
+                'message', m.message,
+                'created_at', m.created_at
+              ) ORDER BY m.created_at ASC
+            )
+            FROM inquiry_messages m 
+            WHERE m.inquiry_id = i.id
+          ),
+          '[]'::json
+        ) AS messages
+      FROM inquiries i
+      WHERE LOWER(i.buyer_email) = $1
+      ORDER BY i.created_at DESC
+    `,
+      [email]
+    );
+
+    return res.json(rows);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/inquiries/:id/messages - Customer or Admin sends a reply message in an inquiry thread
+app.post("/api/inquiries/:id/messages", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { senderRole, senderName, senderEmail, message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: "Message content cannot be empty." });
+    }
+
+    const role = senderRole === "ADMIN" ? "ADMIN" : "CUSTOMER";
+    const msgId = `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    await pool.query(
+      `
+      INSERT INTO inquiry_messages (id, inquiry_id, sender_role, sender_name, sender_email, message, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+    `,
+      [msgId, id, role, senderName || (role === "ADMIN" ? "Flaskia Admin" : "Customer"), senderEmail || "", message.trim()]
+    );
+
+    const newStatus = role === "ADMIN" ? "REPLIED" : "IN_PROGRESS";
+    await pool.query("UPDATE inquiries SET status = $1, updated_at = NOW() WHERE id = $2", [newStatus, id]);
+
+    const { rows } = await pool.query(
+      "SELECT * FROM inquiry_messages WHERE inquiry_id = $1 ORDER BY created_at ASC",
+      [id]
+    );
+
+    return res.json({ success: true, messages: rows, status: newStatus });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/inquiries - Admin retrieves all customer inquiries with message threads
 app.get("/api/admin/inquiries", checkAdminAuth, async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM inquiries ORDER BY created_at DESC");
-    return res.json(rows);
+    const { rows } = await pool.query(`
+      SELECT 
+        i.*,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', m.id,
+                'inquiry_id', m.inquiry_id,
+                'sender_role', m.sender_role,
+                'sender_name', m.sender_name,
+                'sender_email', m.sender_email,
+                'message', m.message,
+                'created_at', m.created_at
+              ) ORDER BY m.created_at ASC
+            )
+            FROM inquiry_messages m 
+            WHERE m.inquiry_id = i.id
+          ),
+          '[]'::json
+        ) AS messages
+      FROM inquiries i
+      ORDER BY i.created_at DESC
+    `);
+    return res.json({ success: true, inquiries: rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/inquiries/:id/reply - Admin replies to a customer inquiry and sends email
+app.post("/api/admin/inquiries/:id/reply", checkAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message, adminName } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: "Reply message is required." });
+    }
+
+    const msgId = `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    await pool.query(
+      `
+      INSERT INTO inquiry_messages (id, inquiry_id, sender_role, sender_name, sender_email, message, created_at)
+      VALUES ($1, $2, 'ADMIN', $3, $4, $5, NOW())
+    `,
+      [msgId, id, adminName || "Flaskia Support", "support@flaskia.com", message.trim()]
+    );
+
+    await pool.query("UPDATE inquiries SET status = 'REPLIED', updated_at = NOW() WHERE id = $1", [id]);
+
+    // Send email notification to customer if Resend is active
+    if (resendClient) {
+      try {
+        const inqRes = await pool.query("SELECT buyer_email, buyer_name, product_name FROM inquiries WHERE id = $1", [id]);
+        if (inqRes.rows.length > 0) {
+          const inq = inqRes.rows[0];
+          const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
+          await resendClient.emails.send({
+            from: fromAddress,
+            to: [inq.buyer_email],
+            subject: `💬 Admin Replied to Your Inquiry [${id}] - Flaskia Marketplace`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+                <h2 style="color: #059669; margin-top: 0;">Flaskia Support Replied</h2>
+                <p>Hello <strong>${inq.buyer_name}</strong>,</p>
+                <p>Our administration team has posted a reply regarding your inquiry for <strong>${inq.product_name}</strong>:</p>
+                <div style="background-color: #f8fafc; border-left: 4px solid #10b981; padding: 16px; margin: 20px 0; border-radius: 4px; color: #1e293b; font-size: 14px;">
+                  ${message.replace(/\n/g, "<br/>")}
+                </div>
+                <p style="color: #64748b; font-size: 13px;">You can view and reply to this conversation directly in your <strong>My Inquiries</strong> portal on Flaskia Marketplace.</p>
+              </div>
+            `
+          });
+        }
+      } catch (mailErr) {
+        console.error("[Resend Inquiry Reply Notification Error]", mailErr);
+      }
+    }
+
+    return res.json({ success: true, message: "Reply posted to customer inquiry thread successfully." });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/inquiries/clear-all - Wipe all inquiry records for a clean slate
+app.post("/api/admin/inquiries/clear-all", checkAdminAuth, async (req, res) => {
+  try {
+    await pool.query("DELETE FROM inquiry_messages");
+    await pool.query("DELETE FROM inquiries");
+    return res.json({ success: true, message: "All inquiry records and message threads cleared." });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -783,7 +977,7 @@ app.put("/api/admin/inquiries/:id/status", checkAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    await pool.query("UPDATE inquiries SET status = $1 WHERE id = $2", [status, id]);
+    await pool.query("UPDATE inquiries SET status = $1, updated_at = NOW() WHERE id = $2", [status, id]);
     return res.json({ success: true, id, status });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -1196,7 +1390,7 @@ async function sendSimulatedEmail(targetEmail: string, subject: string, body: st
   // 3. Dispatch real email via official Resend Integration Provider when key is configured
   if (resendClient) {
     try {
-      const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
+      const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
       const mailPayload: any = {
         from: fromAddress,
         to: [targetEmail.toLowerCase().trim()],
@@ -2980,7 +3174,7 @@ app.post("/api/auth/otp/send", async (req, res) => {
 
     if (resendClient) {
       try {
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
         const sendResult = await resendClient.emails.send({
           from: fromAddress,
           to: [lowerEmail],
@@ -3291,7 +3485,7 @@ app.post("/api/profile/otp/send", async (req, res) => {
 
     if (resendClient) {
       try {
-        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <onboarding@resend.dev>";
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
         const sendResult = await resendClient.emails.send({
           from: fromAddress,
           to: [lowerEmail],

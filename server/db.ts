@@ -558,6 +558,24 @@ export async function initDb(frontProducts?: any[]) {
         delivery_pincode VARCHAR(50),
         notes TEXT,
         status VARCHAR(50) DEFAULT 'PENDING',
+        customer_id VARCHAR(100),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS customer_id VARCHAR(100);`);
+    await client.query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`);
+
+    // 19. B2B Inquiry Threaded Messages Table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS inquiry_messages (
+        id VARCHAR(100) PRIMARY KEY,
+        inquiry_id VARCHAR(100) REFERENCES inquiries(id) ON DELETE CASCADE,
+        sender_role VARCHAR(50) NOT NULL,
+        sender_name VARCHAR(255) NOT NULL,
+        sender_email VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
@@ -575,6 +593,8 @@ export async function initDb(frontProducts?: any[]) {
     await client.query("CREATE INDEX IF NOT EXISTS idx_refunds_order ON refunds(order_id)");
     await client.query("CREATE INDEX IF NOT EXISTS idx_invoices_order ON invoices(order_id)");
     await client.query("CREATE INDEX IF NOT EXISTS idx_inquiries_created ON inquiries(created_at DESC)");
+    await client.query("CREATE INDEX IF NOT EXISTS idx_inquiries_buyer_email ON inquiries(LOWER(buyer_email))");
+    await client.query("CREATE INDEX IF NOT EXISTS idx_inquiry_messages_inquiry ON inquiry_messages(inquiry_id)");
 
     await client.query("COMMIT");
     console.log("Tables structure set up successfully on Neon.");

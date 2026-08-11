@@ -141,7 +141,7 @@ export default function Header({
               </button>
 
               <button
-                onClick={() => onNavigate("orders")}
+                onClick={() => onNavigate("inquiries")}
                 className="flex items-center gap-1.5 bg-[#2e7d32] hover:bg-[#1b5e20] text-white font-extrabold px-4 py-2 rounded-xl text-xs transition cursor-pointer shadow-md active:scale-95"
               >
                 <FileText className="w-4 h-4" />

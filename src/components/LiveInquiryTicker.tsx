@@ -46,16 +46,23 @@ export default function LiveInquiryTicker({
   const [isLoading, setIsLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real customer inquiries from backend database
+  // Fetch real customer inquiries from backend database (strictly within last 12 hours)
   useEffect(() => {
     const fetchRealInquiries = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch("/api/inquiries");
+        const res = await fetch("/api/inquiries?live=true");
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
-            const mapped: InquiryItem[] = data.map((item: any) => ({
+            const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
+            const validTwelveHourData = data.filter((item: any) => {
+              if (!item.created_at) return true;
+              const t = new Date(item.created_at).getTime();
+              return !isNaN(t) && t >= twelveHoursAgo;
+            });
+
+            const mapped: InquiryItem[] = validTwelveHourData.map((item: any) => ({
               id: item.id || `INQ-${Math.random()}`,
               product_id: item.product_id || item.productId || "",
               product_name: item.product_name || item.productName || "Chemical Product",
@@ -77,7 +84,13 @@ export default function LiveInquiryTicker({
     };
 
     if (inquiries && inquiries.length > 0) {
-      const mappedProps = inquiries.map((item) => ({
+      const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
+      const filteredProps = inquiries.filter((item) => {
+        if (!item.created_at) return true;
+        const t = new Date(item.created_at).getTime();
+        return !isNaN(t) && t >= twelveHoursAgo;
+      });
+      const mappedProps = filteredProps.map((item) => ({
         ...item,
         time_ago: formatTimeAgo(item.created_at),
       }));
