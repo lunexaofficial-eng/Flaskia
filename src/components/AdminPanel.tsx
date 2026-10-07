@@ -72,6 +72,8 @@ import {
 } from "lucide-react";
 import { PRODUCTS } from "../data";
 import { useTheme } from "../context/ThemeContext";
+import { useAdminTheme } from "../context/AdminThemeContext";
+import { AniixaThemeKey } from "../utils/aniixaTheme";
 
 
 export interface Category {
@@ -1087,6 +1089,18 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
   // Theme Context hook
   const { activeTheme, setTheme, isCyber } = useTheme();
+  
+  // Aniixa GS Admin Panel Theme hook
+  const {
+    adminTheme,
+    adminThemeKey,
+    setAdminThemeKey,
+    availableThemes,
+    glowIntensity,
+    setGlowIntensity,
+  } = useAdminTheme();
+  const [adminThemeSubTab, setAdminThemeSubTab] = useState<"admin-theme" | "store-theme">("admin-theme");
+  const [themeChangeToast, setThemeChangeToast] = useState<string>("");
 
   // Navigation states
   const [lowStockThreshold, setLowStockThreshold] = useState<number>(10);
@@ -1988,6 +2002,16 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     setPressProgress(0);
   };
 
+  const getMediaUrl = (url?: string, id?: string) => {
+    if (!url) return "";
+    let formatted = url;
+    if (formatted.startsWith("r2://") || formatted.includes("xxxxxx")) {
+      const key = id || formatted.split("/").pop() || "";
+      formatted = `/api/uploads/file/${key}`;
+    }
+    return formatted;
+  };
+
   const fetchMediaFiles = async () => {
     try {
       const res = await fetch("/api/uploads", {
@@ -1995,9 +2019,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
           Authorization: `Bearer ${token || localStorage.getItem("lunexa_admin_token")}`,
         },
       });
-      if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("application/json")) {
         const data = await res.json();
-        setMediaFiles(data);
+        setMediaFiles(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error("Error fetching media uploads:", err);
@@ -2045,13 +2070,21 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
           Authorization: `Bearer ${adminToken}`,
         },
       });
-      const data = await res.json();
-      if (data.success && Array.isArray(data.inquiries)) {
-        setInquiriesList(data.inquiries);
-      } else if (Array.isArray(data)) {
-        setInquiriesList(data);
-      } else {
-        const pubRes = await fetch("/api/inquiries");
+      const contentType = res.headers.get("content-type");
+      if (res.ok && contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.inquiries)) {
+          setInquiriesList(data.inquiries);
+          return;
+        } else if (Array.isArray(data)) {
+          setInquiriesList(data);
+          return;
+        }
+      }
+
+      const pubRes = await fetch("/api/inquiries");
+      const pubContentType = pubRes.headers.get("content-type");
+      if (pubRes.ok && pubContentType && pubContentType.includes("application/json")) {
         const pubData = await pubRes.json();
         if (Array.isArray(pubData)) {
           setInquiriesList(pubData);
@@ -3059,26 +3092,58 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         </div>
       ) : (
         // 2. MAIN LOGGED-IN ADMINISTRATIVE SYSTEM INTERFACE
-        <div className="flex-1 flex flex-col md:flex-row min-h-screen admin-selectable-wrapper">
+        <div 
+          className="flex-1 flex flex-col md:flex-row min-h-screen admin-selectable-wrapper transition-colors duration-300"
+          style={{ backgroundColor: adminTheme.bgBase }}
+        >
           <style>{`
             .admin-selectable-wrapper, .admin-selectable-wrapper * {
               user-select: text !important;
             }
           `}</style>
           {/* SIDE NAVIGATION PANEL */}
-          <aside className="w-full md:w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0">
+          <aside 
+            className="w-full md:w-64 border-r flex flex-col justify-between shrink-0 transition-colors duration-300"
+            style={{ 
+              backgroundColor: adminTheme.bgSidebar, 
+              borderColor: adminTheme.borderBase 
+            }}
+          >
             <div className="p-6 space-y-8">
-              {/* Site Logo */}
+              {/* Site Logo & Aniixa GS Theme Identity Lockup */}
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl">
+                <div 
+                  className="p-2.5 rounded-xl border transition-all duration-300"
+                  style={{ 
+                    backgroundColor: adminTheme.badgeBg, 
+                    borderColor: adminTheme.borderActive,
+                    color: adminTheme.primaryColor,
+                    boxShadow: glowIntensity === "none" ? "none" : `0 0 15px ${adminTheme.accentGlow}`
+                  }}
+                >
                   <Activity className="w-5 h-5" />
                 </div>
                 <div>
-                  <h1 className="text-sm font-semibold tracking-wider text-rose-400 font-mono">
-                    LUNEXA HUB
-                  </h1>
-                  <span className="text-[9px] text-slate-500 block -mt-1 font-mono uppercase">
-                    Operator Active
+                  <div className="flex items-center gap-1.5">
+                    <h1 
+                      className="text-sm font-bold tracking-wider font-mono"
+                      style={{ color: adminTheme.primaryColor }}
+                    >
+                      ANIIXA GS
+                    </h1>
+                    <span 
+                      className="text-[9px] font-bold px-1.5 py-0.2 rounded font-mono"
+                      style={{ 
+                        backgroundColor: adminTheme.badgeBg, 
+                        color: adminTheme.badgeText,
+                        border: `1px solid ${adminTheme.borderActive}`
+                      }}
+                    >
+                      {adminTheme.emoji}
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-400 block -mt-0.5 font-mono uppercase">
+                    Admin Panel Hub
                   </span>
                 </div>
               </div>
@@ -3136,8 +3201,9 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   },
                   {
                     id: "themes",
-                    label: "Theme Manager",
+                    label: "Theme & Aniixa GS",
                     icon: Palette,
+                    highlight: true,
                   },
                   {
                     id: "inquiries",
@@ -3155,9 +3221,15 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         setActiveTab(item.id as any);
                         setSearchQuery("");
                       }}
+                      style={isActive ? {
+                        background: adminTheme.btnGradient,
+                        color: adminTheme.btnTextColor,
+                        boxShadow: glowIntensity === "none" ? "none" : `0 4px 18px ${adminTheme.accentGlow}`,
+                        borderColor: adminTheme.borderActive
+                      } : undefined}
                       className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold cursor-pointer transition ${
                         isActive
-                          ? "bg-rose-600 border border-rose-500 text-white shadow-lg shadow-rose-900/10"
+                          ? "border font-bold scale-[1.02]"
                           : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
                       }`}
                     >
@@ -3177,16 +3249,40 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
             </div>
 
             {/* Operator Footprint block */}
-            <div className="p-5 border-t border-slate-800 space-y-4">
-              <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-1.5">
-                <span className="text-[9px] text-slate-500 font-mono uppercase block tracking-wider">
-                  SECURE ADVISER RECON
-                </span>
-                <span className="text-xs text-rose-300 font-mono block truncate font-medium">
-                  lunexa.official@gmail.com
+            <div 
+              className="p-5 border-t space-y-4"
+              style={{ borderColor: adminTheme.borderBase }}
+            >
+              <div 
+                className="p-3 rounded-xl space-y-1.5 border"
+                style={{ 
+                  backgroundColor: adminTheme.bgCard,
+                  borderColor: adminTheme.borderBase
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] text-slate-400 font-mono uppercase block tracking-wider">
+                    ANIIXA GS THEME
+                  </span>
+                  <span 
+                    className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded"
+                    style={{ 
+                      backgroundColor: adminTheme.badgeBg, 
+                      color: adminTheme.badgeText,
+                      border: `1px solid ${adminTheme.borderActive}` 
+                    }}
+                  >
+                    {adminTheme.badge}
+                  </span>
+                </div>
+                <span 
+                  className="text-xs font-mono block truncate font-medium"
+                  style={{ color: adminTheme.primaryColor }}
+                >
+                  {adminTheme.name}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-mono block">
-                  ● ACTIVE GHS CLEARED
+                  ● 1-CLICK THEME READY
                 </span>
               </div>
               <div className="flex gap-2">
@@ -3208,30 +3304,50 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
           </aside>
 
           {/* DYNAMIC SCREEN AREA VIEWPORT */}
-          <main className="flex-1 bg-slate-950 p-6 md:p-8 space-y-8 overflow-y-auto">
-            {/* SECTION: ADMIN HEADER BAR */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+          <main 
+            className="flex-1 p-6 md:p-8 space-y-8 overflow-y-auto transition-colors duration-300"
+            style={{ backgroundColor: adminTheme.bgBase }}
+          >
+            {/* SECTION: ADMIN HEADER BAR WITH QUICK 1-CLICK ANIIXA GS THEME SWITCHER */}
+            <div 
+              className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-5 transition-colors duration-300"
+              style={{ borderColor: adminTheme.borderBase }}
+            >
               <div>
-                <h2 className="text-xl md:text-2xl font-light text-white tracking-tight font-heading">
-                  {activeTab === "overview" && "Marketplace Control Board"}
-                  {activeTab === "products" && "Analytical Reagents Registry"}
-                  {activeTab === "categories" && "Reagent Categories Catalog"}
-                  {activeTab === "orders" && "Fulfillment Dispatch Ledger"}
-                  {activeTab === "customers" &&
-                    "Registered Research Institutions"}
-                  {activeTab === "faqs" && "Help & FAQ Content Hub"}
-                  {activeTab === "homepage" && "Marketplace Homepage Editor"}
-                  {activeTab === "database" && "PostgreSQL Engine Manager"}
-                  {activeTab === "storage" && "Cloudflare R2 Storage Bucket"}
-                  {activeTab === "policies" && "Company & Regulatory Policies Hub"}
-                  {activeTab === "checkout" && "Checkout Customizer & Settlement Ledger"}
-                  {activeTab === "payments" && "Payment Gateways Configuration"}
-                  {activeTab === "themes" && "Marketplace Theme & Visual Identity"}
-                  {activeTab === "inquiries" && "IndiaMART B2B RFQ Inquiries Ledger"}
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl md:text-2xl font-light text-white tracking-tight font-heading">
+                    {activeTab === "overview" && "Marketplace Control Board"}
+                    {activeTab === "products" && "Analytical Reagents Registry"}
+                    {activeTab === "categories" && "Reagent Categories Catalog"}
+                    {activeTab === "orders" && "Fulfillment Dispatch Ledger"}
+                    {activeTab === "customers" &&
+                      "Registered Research Institutions"}
+                    {activeTab === "faqs" && "Help & FAQ Content Hub"}
+                    {activeTab === "homepage" && "Marketplace Homepage Editor"}
+                    {activeTab === "database" && "PostgreSQL Engine Manager"}
+                    {activeTab === "storage" && "Cloudflare R2 Storage Bucket"}
+                    {activeTab === "policies" && "Company & Regulatory Policies Hub"}
+                    {activeTab === "checkout" && "Checkout Customizer & Settlement Ledger"}
+                    {activeTab === "payments" && "Payment Gateways Configuration"}
+                    {activeTab === "themes" && "Admin Panel Theme (Aniixa GS) & Marketplace Visuals"}
+                    {activeTab === "inquiries" && "IndiaMART B2B RFQ Inquiries Ledger"}
+                  </h2>
+                  <span 
+                    className="hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5 rounded-full border"
+                    style={{ 
+                      backgroundColor: adminTheme.badgeBg, 
+                      color: adminTheme.badgeText,
+                      borderColor: adminTheme.borderActive 
+                    }}
+                  >
+                    Aniixa GS
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
                   {activeTab === "inquiries"
                     ? "Manage wholesale chemical RFQs, buyer contact leads, price quotes, and IndiaMART B2B customer submissions."
+                    : activeTab === "themes"
+                    ? "Instant 1-Click Aniixa GS Admin Panel Theme Switcher & Global Storefront Visual Themes."
                     : activeTab === "faqs"
                     ? "Manage safety descriptors, transport guidelines, and customer compliance articles."
                     : activeTab === "homepage"
@@ -3250,35 +3366,105 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                 </p>
               </div>
 
-              {/* Global search component inside workspace */}
-              {activeTab !== "overview" &&
-                activeTab !== "database" &&
-                activeTab !== "storage" && (
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search ledger nomenclature..."
-                      className="w-full pl-9.5 pr-4 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition"
-                    />
-                  </div>
-                )}
-
-              {activeTab === "overview" && (
-                <button
-                  onClick={loadAllData}
-                  disabled={isLoadingData}
-                  className="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl cursor-pointer flex items-center gap-2  active:scale-97 transition"
+              {/* Top Bar Quick Controls: 1-Click Aniixa GS Theme Switcher & Search */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* 1-Click Aniixa GS Quick Switcher Bar */}
+                <div 
+                  className="flex items-center gap-1.5 p-1.5 rounded-2xl border"
+                  style={{ 
+                    backgroundColor: adminTheme.bgCard,
+                    borderColor: adminTheme.borderBase 
+                  }}
+                  title="1-Click Aniixa GS Admin Theme Switcher"
                 >
-                  <RefreshCw
-                    className={`w-3.5 h-3.5 text-rose-500 ${isLoadingData ? "animate-spin" : ""}`}
-                  />
-                  Sync Database
-                </button>
-              )}
+                  <span className="text-[10px] text-slate-400 font-mono font-semibold px-2 uppercase flex items-center gap-1 hidden sm:flex">
+                    <Palette className="w-3 h-3" style={{ color: adminTheme.primaryColor }} />
+                    Theme:
+                  </span>
+                  {availableThemes.map((t) => {
+                    const isSelected = adminThemeKey === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          setAdminThemeKey(t.id as AniixaThemeKey);
+                          setThemeChangeToast(`Applied ${t.name} in 1 click!`);
+                          setTimeout(() => setThemeChangeToast(""), 3000);
+                        }}
+                        style={isSelected ? {
+                          backgroundColor: t.primaryColor,
+                          color: t.btnTextColor,
+                          boxShadow: `0 0 10px ${t.accentGlow}`,
+                        } : {}}
+                        className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition cursor-pointer flex items-center gap-1 ${
+                          isSelected
+                            ? "font-bold scale-105"
+                            : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                        }`}
+                        title={`Switch to ${t.name} in 1-Click`}
+                      >
+                        <span>{t.emoji}</span>
+                        <span className="hidden xl:inline text-[10px]">{t.name.replace("Aniixa GS • ", "")}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Global search component inside workspace */}
+                {activeTab !== "overview" &&
+                  activeTab !== "database" &&
+                  activeTab !== "storage" &&
+                  activeTab !== "themes" && (
+                    <div className="relative w-full sm:w-56">
+                      <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search records..."
+                        className="w-full pl-9.5 pr-4 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none transition"
+                        style={{ borderColor: adminTheme.borderBase }}
+                      />
+                    </div>
+                  )}
+
+                {activeTab === "overview" && (
+                  <button
+                    onClick={loadAllData}
+                    disabled={isLoadingData}
+                    style={{ 
+                      borderColor: adminTheme.borderBase,
+                      backgroundColor: adminTheme.bgCard 
+                    }}
+                    className="px-4 py-2 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl cursor-pointer flex items-center gap-2 active:scale-97 transition border"
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${isLoadingData ? "animate-spin" : ""}`}
+                      style={{ color: adminTheme.primaryColor }}
+                    />
+                    Sync Database
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Quick Toast Notification for Theme Switch */}
+            {themeChangeToast && (
+              <div 
+                className="p-3 rounded-xl border flex items-center justify-between text-xs font-mono animate-fade-in"
+                style={{ 
+                  backgroundColor: adminTheme.badgeBg, 
+                  borderColor: adminTheme.borderActive,
+                  color: adminTheme.badgeText 
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 animate-spin" style={{ color: adminTheme.primaryColor }} />
+                  <span className="font-semibold">{themeChangeToast}</span>
+                </div>
+                <span className="text-[10px] uppercase tracking-wider opacity-75">Instant Live Transition</span>
+              </div>
+            )}
 
             {dataError && (
               <div className="bg-yellow-500/10 border border-yellow-500/25 text-yellow-300 text-xs p-4 rounded-xl flex items-center gap-3">
@@ -6426,9 +6612,9 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                 <button
                                   className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white"
                                   onClick={() => {
-                                    navigator.clipboard.writeText(
-                                      lastUploadedUrl,
-                                    );
+                                    const raw = getMediaUrl(lastUploadedUrl);
+                                    const full = raw.startsWith("/") ? window.location.origin + raw : raw;
+                                    navigator.clipboard.writeText(full);
                                     setCopiedId("last_upload");
                                     setTimeout(() => setCopiedId(""), 2000);
                                   }}
@@ -6441,7 +6627,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                   )}
                                 </button>
                                 <a
-                                  href={lastUploadedUrl}
+                                  href={getMediaUrl(lastUploadedUrl)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white"
@@ -6452,7 +6638,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               </div>
                             </div>
                             <p className="text-[10px] text-blue-300 font-mono break-all leading-tight pr-6">
-                              {lastUploadedUrl}
+                              {getMediaUrl(lastUploadedUrl)}
                             </p>
                           </div>
                         )}
@@ -6647,12 +6833,12 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                           <div className="aspect-video relative bg-slate-900 flex items-center justify-center overflow-hidden">
                                             {item.type === "video" ? (
                                               <video
-                                                src={item.url}
+                                                src={getMediaUrl(item.url, item.id)}
                                                 className="w-full h-full object-cover opacity-80"
                                               />
                                             ) : (
                                               <img
-                                                src={item.url}
+                                                src={getMediaUrl(item.url, item.id)}
                                                 alt={item.originalName}
                                                 className="w-full h-full object-cover transition duration-350 group-hover:scale-105"
                                                 referrerPolicy="no-referrer"
@@ -6669,8 +6855,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                                   type="button"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
+                                                    const raw = getMediaUrl(item.url, item.id);
+                                                    const full = raw.startsWith("/") ? window.location.origin + raw : raw;
                                                     navigator.clipboard.writeText(
-                                                      item.url,
+                                                      full,
                                                     );
                                                     setCopiedId(item.id);
                                                     setTimeout(
@@ -6688,7 +6876,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                                   )}
                                                 </button>
                                                 <a
-                                                  href={item.url}
+                                                  href={getMediaUrl(item.url, item.id)}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
                                                   onClick={(e) =>
@@ -8123,364 +8311,700 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
               </div>
             )}
 
-            {/* 13. THEME MANAGER TAB PANEL */}
+            {/* 13. THEME MANAGER & ANIIXA GS ADMIN PANEL THEME TAB PANEL */}
             {activeTab === "themes" && (
               <div className="space-y-8 animate-fade-in">
                 {/* Header Banner */}
-                <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2 font-heading">
-                      <Palette className="w-5 h-5 text-rose-500" />
-                      E-Commerce Marketplace Theme Manager
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                      Select and apply a global marketplace visual theme in one click. Updating the theme instantly transforms the whole marketplace layout including Header, Hero Section, Product Cards, Product Details, Checkout, Order Tracker, Customer Auth, User Profile, and Admin Panel.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 bg-slate-950 px-4 py-2.5 rounded-2xl border border-slate-800">
-                    <span className="text-[11px] text-slate-400 font-mono uppercase tracking-wider">Active Marketplace Theme:</span>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider font-mono ${
-                      activeTheme === "indiamart"
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
-                        : activeTheme === "retail" || activeTheme === "cyber"
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.3)]"
-                        : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                    }`}>
-                      {activeTheme === "indiamart"
-                        ? "🇮🇳 IndiaMART B2B Procurement"
-                        : activeTheme === "retail" || activeTheme === "cyber"
-                        ? "🛒 Amazon & Flipkart Retail"
-                        : "🌿 Emerald Classic"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Theme Options Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Theme 1: Emerald Classic */}
-                  <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
-                    activeTheme === "emerald"
-                      ? "bg-slate-900 border-emerald-500/60 ring-2 ring-emerald-500/30 shadow-2xl"
-                      : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
-                  }`}>
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">🌿</span>
-                            <h3 className="text-base font-bold text-white font-heading">
-                              Emerald & Slate Classic
-                            </h3>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                            A clean, highly readable, corporate marketplace design featuring high-contrast light layouts, refined emerald badges, crisp product cards, and balanced spacing.
-                          </p>
-                        </div>
-                        {activeTheme === "emerald" && (
-                          <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0">
-                            Current Active
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Color Palette Swatches */}
-                      <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
-                        <span className="text-[10px] uppercase tracking-wider font-mono text-slate-400 block font-semibold">
-                          Color Palette Swatches
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#059669</div>
-                          <div className="flex-1 h-7 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#0F172A</div>
-                          <div className="flex-1 h-7 rounded-lg bg-white border border-slate-300 flex items-center justify-center text-[10px] text-slate-800 font-mono font-bold shadow-xs">#FFFFFF</div>
-                          <div className="flex-1 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] text-slate-600 font-mono font-bold shadow-xs">#F1F5F9</div>
-                        </div>
-                      </div>
-
-                      {/* Mini Component Live Mockup Preview */}
-                      <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 uppercase tracking-wider border-b border-slate-800/80 pb-2">
-                          <span>Live Mini Card Mockup</span>
-                          <span className="text-emerald-400">Emerald Light UI</span>
-                        </div>
-                        <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-sm space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold uppercase">≥99.5% Purity</span>
-                            <span className="text-xs font-bold text-slate-900">$120.00</span>
-                          </div>
-                          <h4 className="text-xs font-bold text-slate-800 font-heading">High-Purity Reagent Specimen</h4>
-                          <p className="text-[10px] text-slate-500">ACS Grade Reagent | CAS 7758-99-8</p>
-                          <div className="pt-2 flex gap-2">
-                            <div className="flex-1 bg-emerald-600 text-white text-[10px] font-bold py-1.5 rounded-lg text-center shadow-xs">
-                              Add to Procurement
-                            </div>
-                            <div className="bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-bold px-2.5 py-1.5 rounded-lg">
-                              View SDS
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="pt-6 border-t border-slate-800 flex gap-3 mt-4">
-                      <button
-                        onClick={() => {
-                          setTheme("emerald");
-                          fetch("/api/homepage", {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ active_theme: "emerald" }),
-                          }).catch(() => {});
+                <div 
+                  className="p-6 md:p-8 rounded-3xl border flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-all duration-300"
+                  style={{ 
+                    backgroundColor: adminTheme.bgCard,
+                    borderColor: adminTheme.borderBase,
+                    boxShadow: glowIntensity === "none" ? "none" : `0 10px 30px ${adminTheme.accentGlow}`
+                  }}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5">
+                      <div 
+                        className="p-2.5 rounded-2xl border transition-all"
+                        style={{ 
+                          backgroundColor: adminTheme.badgeBg,
+                          borderColor: adminTheme.borderActive,
+                          color: adminTheme.primaryColor 
                         }}
-                        disabled={activeTheme === "emerald"}
-                        className={`flex-1 py-3 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
-                          activeTheme === "emerald"
-                            ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
-                            : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 active:scale-98"
-                        }`}
                       >
-                        {activeTheme === "emerald" ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>Currently Applied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4" />
-                            <span>Apply Emerald Theme in 1-Click</span>
-                          </>
-                        )}
-                      </button>
+                        <Palette className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-xl font-bold text-white font-heading">
+                            Admin Panel Theme Studio • Aniixa GS
+                          </h2>
+                          <span 
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-mono border"
+                            style={{ 
+                              backgroundColor: adminTheme.badgeBg, 
+                              color: adminTheme.badgeText,
+                              borderColor: adminTheme.borderActive 
+                            }}
+                          >
+                            1-Click System
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Change the entire visual aesthetics of your Admin Panel or Storefront in just one click.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Theme 2: Amazon & Flipkart Retail Powerhouse */}
-                  <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
-                    activeTheme === "retail" || activeTheme === "cyber"
-                      ? "bg-slate-900 border-amber-500/60 ring-2 ring-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)]"
-                      : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
-                  }`}>
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">🛒</span>
-                            <h3 className="text-base font-bold text-white font-heading">
-                              Amazon & Flipkart Retail Powerhouse
-                            </h3>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                            An authentic high-converting retail e-commerce theme modeled directly after Amazon and Flipkart. Features prominent deal banners, star ratings, discount tags (25% OFF), pincode delivery estimators, strikethrough MRP, bank offer badges, and multi-step retail checkout.
-                          </p>
-                        </div>
-                        {(activeTheme === "retail" || activeTheme === "cyber") && (
-                          <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0 shadow-[0_0_10px_rgba(245,158,11,0.3)]">
-                            Current Active
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Color Palette Swatches */}
-                      <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
-                        <span className="text-[10px] uppercase tracking-wider font-mono text-amber-400 block font-semibold">
-                          Color Palette Swatches
+                  {/* Active Theme Stats Pill */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div 
+                      className="flex items-center gap-2.5 px-4 py-3 rounded-2xl border"
+                      style={{ 
+                        backgroundColor: adminTheme.bgSidebar,
+                        borderColor: adminTheme.borderActive 
+                      }}
+                    >
+                      <span className="text-xl">{adminTheme.emoji}</span>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-mono uppercase block">Active Admin Panel Theme</span>
+                        <span 
+                          className="text-xs font-bold font-mono"
+                          style={{ color: adminTheme.primaryColor }}
+                        >
+                          {adminTheme.name}
                         </span>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-7 rounded-lg bg-[#2874f0] flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#2874F0</div>
-                          <div className="flex-1 h-7 rounded-lg bg-[#febd69] flex items-center justify-center text-[10px] text-slate-900 font-mono font-bold shadow-xs">#FEBD69</div>
-                          <div className="flex-1 h-7 rounded-lg bg-[#ff9f00] flex items-center justify-center text-[10px] text-slate-950 font-mono font-bold shadow-xs">#FF9F00</div>
-                          <div className="flex-1 h-7 rounded-lg bg-[#131921] border border-slate-700 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#131921</div>
-                        </div>
                       </div>
-
-                      {/* Mini Component Live Mockup Preview */}
-                      <div className="bg-slate-950 p-4 rounded-2xl border border-amber-500/20 space-y-3 relative overflow-hidden">
-                        <div className="flex items-center justify-between text-[11px] font-mono text-amber-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-                          <span>Live Mini Flipkart Card Mockup</span>
-                          <span className="text-amber-300">Retail UI</span>
-                        </div>
-                        <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-md space-y-2 relative">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded uppercase">25% OFF</span>
-                            <span className="text-[10px] bg-[#2874f0] text-white font-black px-2 py-0.5 rounded">✓ Assured</span>
-                          </div>
-                          <h4 className="text-xs font-bold text-slate-900 font-sans">High-Purity ACS Reagent</h4>
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#388e3c] text-white text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">4.8 ★</span>
-                            <span className="text-[10px] text-slate-500">(1,248)</span>
-                          </div>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-sm font-extrabold text-slate-900">$89.00</span>
-                            <span className="text-xs text-slate-400 line-through">$120.00</span>
-                          </div>
-                          <div className="pt-1 flex gap-2">
-                            <div className="flex-1 bg-[#ff9f00] text-slate-950 font-extrabold text-[10px] py-1.5 rounded text-center shadow-xs">
-                              Add to Cart
-                            </div>
-                            <div className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2.5 py-1.5 rounded">
-                              Buy Now
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="pt-6 border-t border-slate-800 flex gap-3 mt-4">
-                      <button
-                        onClick={() => {
-                          setTheme("retail");
-                          fetch("/api/homepage", {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ active_theme: "retail" }),
-                          }).catch(() => {});
-                        }}
-                        disabled={activeTheme === "retail" || activeTheme === "cyber"}
-                        className={`flex-1 py-3 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
-                          activeTheme === "retail" || activeTheme === "cyber"
-                            ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
-                            : "bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 font-extrabold shadow-lg shadow-amber-950/40 active:scale-98"
-                        }`}
-                      >
-                        {activeTheme === "retail" || activeTheme === "cyber" ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                            <span>Currently Applied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4 text-slate-950" />
-                            <span>Apply Amazon/Flipkart Retail Theme in 1-Click</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Theme 3: IndiaMART B2B Procurement Platform */}
-                  <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
-                    activeTheme === "indiamart"
-                      ? "bg-slate-900 border-emerald-500/60 ring-2 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
-                      : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
-                  }`}>
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">🇮🇳</span>
-                            <h3 className="text-base font-bold text-white font-heading">
-                              IndiaMART B2B Procurement
-                            </h3>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                            Sleek IndiaMART B2B marketplace theme with animated hero banner, marketplace security badges, wholesale bulk MOQ pricing, and RFQ inquiry popup system. Direct card checkout is replaced with B2B inquiry submissions stored live in the database.
-                          </p>
-                        </div>
-                        {activeTheme === "indiamart" && (
-                          <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
-                            Current Active
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Color Palette Swatches */}
-                      <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
-                        <span className="text-[10px] uppercase tracking-wider font-mono text-emerald-400 block font-semibold">
-                          Color Palette Swatches
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-7 rounded-lg bg-[#2e7d32] flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#2E7D32</div>
-                          <div className="flex-1 h-7 rounded-lg bg-[#00a699] flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#00A699</div>
-                          <div className="flex-1 h-7 rounded-lg bg-[#1b5e20] flex items-center justify-center text-[10px] text-emerald-200 font-mono font-bold shadow-xs">#1B5E20</div>
-                          <div className="flex-1 h-7 rounded-lg bg-[#2b3445] border border-slate-700 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#2B3445</div>
-                        </div>
-                      </div>
-
-                      {/* Mini Component Live Mockup Preview */}
-                      <div className="bg-slate-950 p-4 rounded-2xl border border-emerald-500/20 space-y-3 relative overflow-hidden">
-                        <div className="flex items-center justify-between text-[11px] font-mono text-emerald-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-                          <span>Live IndiaMART B2B RFQ Mockup</span>
-                          <span className="text-emerald-300">B2B RFQ UI</span>
-                        </div>
-                        <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-md space-y-2 relative">
-                          <div className="flex justify-between items-center bg-[#1b5e20] text-white px-2 py-0.5 rounded text-[9px] font-mono">
-                            <span>🔒 256-Bit SSL Encrypted</span>
-                            <span>Official Store</span>
-                          </div>
-                          <h4 className="text-xs font-bold text-slate-900 font-sans">High-Purity Lab Reagent</h4>
-                          <div className="flex items-center justify-between text-[10px] text-slate-600 font-mono">
-                            <span>Purity: 99.8% ACS</span>
-                            <span className="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200 font-bold">MOQ: 1 Pack</span>
-                          </div>
-                          <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center">
-                            <span className="text-xs font-black text-[#2e7d32] font-mono">$120.00 / Pack</span>
-                            <span className="text-[9px] text-emerald-700 font-bold">Tiered Volume Pricing</span>
-                          </div>
-                          <div className="pt-1">
-                            <div className="w-full bg-gradient-to-r from-[#2e7d32] to-[#00a699] text-white font-black text-[10px] py-1.5 rounded text-center shadow-xs uppercase tracking-wider">
-                              Get Best Price
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="pt-6 border-t border-slate-800 flex gap-3 mt-4">
-                      <button
-                        onClick={() => {
-                          setTheme("indiamart");
-                          fetch("/api/homepage", {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ active_theme: "indiamart" }),
-                          }).catch(() => {});
-                        }}
-                        disabled={activeTheme === "indiamart"}
-                        className={`flex-1 py-3 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
-                          activeTheme === "indiamart"
-                            ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
-                            : "bg-gradient-to-r from-[#2e7d32] to-[#00a699] hover:from-[#1b5e20] hover:to-[#00897b] text-white font-extrabold shadow-lg shadow-emerald-950/40 active:scale-98"
-                        }`}
-                      >
-                        {activeTheme === "indiamart" ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>Currently Applied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4 text-white" />
-                            <span>Apply IndiaMART B2B Theme in 1-Click</span>
-                          </>
-                        )}
-                      </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Theme Comparison Summary Card */}
-                <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800 space-y-4">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2 font-heading">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    Global Theme Architecture Status
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-1">
-                      <span className="text-[10px] text-slate-400 font-mono uppercase block">Real-time Persistence</span>
-                      <p className="text-slate-200 font-medium">Synced with Browser LocalStorage and Database Settings</p>
+                {/* Sub-Tabs: Aniixa GS Admin Panel Themes vs Public Storefront Themes */}
+                <div 
+                  className="flex items-center gap-2 p-1.5 rounded-2xl border w-fit"
+                  style={{ 
+                    backgroundColor: adminTheme.bgCard,
+                    borderColor: adminTheme.borderBase 
+                  }}
+                >
+                  <button
+                    onClick={() => setAdminThemeSubTab("admin-theme")}
+                    style={adminThemeSubTab === "admin-theme" ? {
+                      background: adminTheme.btnGradient,
+                      color: adminTheme.btnTextColor,
+                      boxShadow: glowIntensity === "none" ? "none" : `0 2px 10px ${adminTheme.accentGlow}`
+                    } : {}}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+                      adminThemeSubTab === "admin-theme"
+                        ? "font-extrabold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>🎨 Aniixa GS • Admin Panel Themes ({availableThemes.length} Designs)</span>
+                  </button>
+                  <button
+                    onClick={() => setAdminThemeSubTab("store-theme")}
+                    style={adminThemeSubTab === "store-theme" ? {
+                      background: adminTheme.btnGradient,
+                      color: adminTheme.btnTextColor,
+                      boxShadow: glowIntensity === "none" ? "none" : `0 2px 10px ${adminTheme.accentGlow}`
+                    } : {}}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+                      adminThemeSubTab === "store-theme"
+                        ? "font-extrabold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>🌐 Storefront Public Themes (3 Modes)</span>
+                  </button>
+                </div>
+
+                {/* SUBTAB 1: ANIIXA GS ADMIN PANEL THEMES */}
+                {adminThemeSubTab === "admin-theme" && (
+                  <div className="space-y-8 animate-fade-in">
+                    {/* Lighting & Glow Intensity Controller */}
+                    <div 
+                      className="p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      style={{ 
+                        backgroundColor: adminTheme.bgCard,
+                        borderColor: adminTheme.borderBase 
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Zap className="w-4 h-4" style={{ color: adminTheme.primaryColor }} />
+                        <div>
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                            Aniixa GS Ambient Lighting & Glow FX
+                          </h4>
+                          <p className="text-[11px] text-slate-400">
+                            Adjust luminescence halos, neon rim-lighting, and focus rings
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+                        {[
+                          { id: "vibrant", label: "✨ Vibrant Glow" },
+                          { id: "subtle", label: "🌤️ Subtle Ambient" },
+                          { id: "none", label: "⬛ Clean Flat" },
+                        ].map((mode) => (
+                          <button
+                            key={mode.id}
+                            onClick={() => setGlowIntensity(mode.id as any)}
+                            style={glowIntensity === mode.id ? {
+                              backgroundColor: adminTheme.primaryColor,
+                              color: adminTheme.btnTextColor,
+                            } : {}}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                              glowIntensity === mode.id
+                                ? "font-bold shadow-xs"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            {mode.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-1">
-                      <span className="text-[10px] text-slate-400 font-mono uppercase block">Scope Coverage</span>
-                      <p className="text-slate-200 font-medium">Whole Marketplace + Header, Product Details, Checkout, Tracker & Admin</p>
+
+                    {/* Aniixa GS Themes Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {availableThemes.map((theme) => {
+                        const isCurrentActive = adminThemeKey === theme.id;
+                        return (
+                          <div
+                            key={theme.id}
+                            className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between relative overflow-hidden group ${
+                              isCurrentActive
+                                ? "ring-2 scale-[1.01]"
+                                : "hover:border-slate-700"
+                            }`}
+                            style={{
+                              backgroundColor: theme.bgCard,
+                              borderColor: isCurrentActive ? theme.borderActive : theme.borderBase,
+                              boxShadow: isCurrentActive && glowIntensity !== "none"
+                                ? `0 10px 30px ${theme.accentGlow}`
+                                : "none"
+                            }}
+                          >
+                            <div className="space-y-4">
+                              {/* Header & Badges */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-2xl">{theme.emoji}</span>
+                                    <h3 className="text-base font-bold text-white font-heading">
+                                      {theme.name}
+                                    </h3>
+                                  </div>
+                                  <p 
+                                    className="text-[11px] font-medium mt-1 leading-snug line-clamp-2"
+                                    style={{ color: theme.secondaryColor }}
+                                  >
+                                    {theme.tagline}
+                                  </p>
+                                </div>
+                                <span 
+                                  className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-full border shrink-0 font-mono"
+                                  style={{ 
+                                    backgroundColor: theme.badgeBg, 
+                                    color: theme.badgeText,
+                                    borderColor: theme.borderActive 
+                                  }}
+                                >
+                                  {isCurrentActive ? "Active Now" : theme.badge}
+                                </span>
+                              </div>
+
+                              <p className="text-xs text-slate-400 leading-relaxed font-light">
+                                {theme.description}
+                              </p>
+
+                              {/* Color Palette Swatches */}
+                              <div 
+                                className="p-3 rounded-2xl border space-y-2"
+                                style={{ 
+                                  backgroundColor: theme.bgBase,
+                                  borderColor: theme.borderBase 
+                                }}
+                              >
+                                <div className="flex items-center justify-between text-[9.5px] uppercase tracking-wider font-mono text-slate-400 font-semibold">
+                                  <span>Palette Tokens</span>
+                                  <span style={{ color: theme.primaryColor }}>{theme.primaryColor}</span>
+                                </div>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {theme.paletteSwatches.map((swatch, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="h-6 rounded-lg flex items-center justify-center text-[9px] font-mono font-bold border border-white/10 truncate px-1"
+                                      style={{ 
+                                        backgroundColor: swatch,
+                                        color: idx < 2 ? theme.btnTextColor : "#ffffff" 
+                                      }}
+                                      title={swatch}
+                                    >
+                                      {swatch}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Interactive Mini Dashboard Mockup Preview */}
+                              <div 
+                                className="p-3.5 rounded-2xl border space-y-2.5"
+                                style={{ 
+                                  backgroundColor: theme.bgSidebar,
+                                  borderColor: theme.borderBase 
+                                }}
+                              >
+                                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 border-b border-slate-800/80 pb-1.5">
+                                  <span>Admin Panel UI Preview</span>
+                                  <span style={{ color: theme.primaryColor }}>Live Mockup</span>
+                                </div>
+                                <div 
+                                  className="p-3 rounded-xl border space-y-2"
+                                  style={{ 
+                                    backgroundColor: theme.bgCard,
+                                    borderColor: theme.borderBase 
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span 
+                                      className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase"
+                                      style={{ 
+                                        backgroundColor: theme.badgeBg, 
+                                        color: theme.badgeText 
+                                      }}
+                                    >
+                                      Reagents Registry
+                                    </span>
+                                    <span 
+                                      className="text-xs font-bold font-mono"
+                                      style={{ color: theme.primaryColor }}
+                                    >
+                                      24 Active
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <div 
+                                      className="flex-1 py-1 px-2 rounded-lg text-[10px] font-bold text-center truncate"
+                                      style={{ 
+                                        background: theme.btnGradient,
+                                        color: theme.btnTextColor 
+                                      }}
+                                    >
+                                      Execute Query
+                                    </div>
+                                    <div className="bg-slate-900 border border-slate-800 text-slate-300 text-[10px] font-semibold py-1 px-2 rounded-lg">
+                                      Inspect
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 1-Click Apply Button */}
+                            <div className="pt-5 mt-4 border-t" style={{ borderColor: theme.borderBase }}>
+                              <button
+                                onClick={() => {
+                                  setAdminThemeKey(theme.id);
+                                  setThemeChangeToast(`Switched Admin Panel to ${theme.name} in 1 click!`);
+                                  setTimeout(() => setThemeChangeToast(""), 3000);
+                                }}
+                                disabled={isCurrentActive}
+                                style={isCurrentActive ? {
+                                  backgroundColor: theme.bgBase,
+                                  color: theme.textAccent,
+                                  borderColor: theme.borderActive 
+                                } : {
+                                  background: theme.btnGradient,
+                                  color: theme.btnTextColor,
+                                  boxShadow: glowIntensity === "none" ? "none" : `0 4px 15px ${theme.accentGlow}`
+                                }}
+                                className={`w-full py-3 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-98 border ${
+                                  isCurrentActive
+                                    ? "cursor-default"
+                                    : "hover:opacity-95"
+                                }`}
+                              >
+                                {isCurrentActive ? (
+                                  <>
+                                    <CheckCircle2 className="w-4 h-4" style={{ color: theme.primaryColor }} />
+                                    <span>Active Aniixa GS Theme</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-4 h-4" />
+                                    <span>Apply {theme.name.replace("Aniixa GS • ", "")} in 1-Click</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-1">
-                      <span className="text-[10px] text-slate-400 font-mono uppercase block">Responsive Layout</span>
-                      <p className="text-slate-200 font-medium">Fully Responsive Mobile, Tablet & Desktop Grid System</p>
+
+                    {/* Aniixa GS System Architecture Status Card */}
+                    <div 
+                      className="p-6 rounded-3xl border space-y-4"
+                      style={{ 
+                        backgroundColor: adminTheme.bgCard,
+                        borderColor: adminTheme.borderBase 
+                      }}
+                    >
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2 font-heading">
+                        <ShieldCheck className="w-4 h-4" style={{ color: adminTheme.primaryColor }} />
+                        Aniixa GS Theme Engine Architecture
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div 
+                          className="p-4 rounded-2xl border space-y-1"
+                          style={{ 
+                            backgroundColor: adminTheme.bgBase,
+                            borderColor: adminTheme.borderBase 
+                          }}
+                        >
+                          <span className="text-[10px] text-slate-400 font-mono uppercase block">1-Click Instant Render</span>
+                          <p className="text-slate-200 font-medium">Dynamic CSS variables update without page refreshes or delays.</p>
+                        </div>
+                        <div 
+                          className="p-4 rounded-2xl border space-y-1"
+                          style={{ 
+                            backgroundColor: adminTheme.bgBase,
+                            borderColor: adminTheme.borderBase 
+                          }}
+                        >
+                          <span className="text-[10px] text-slate-400 font-mono uppercase block">Storage Persistence</span>
+                          <p className="text-slate-200 font-medium">Preferences are cached in localStorage and synced across sessions.</p>
+                        </div>
+                        <div 
+                          className="p-4 rounded-2xl border space-y-1"
+                          style={{ 
+                            backgroundColor: adminTheme.bgBase,
+                            borderColor: adminTheme.borderBase 
+                          }}
+                        >
+                          <span className="text-[10px] text-slate-400 font-mono uppercase block">Adaptive Layout</span>
+                          <p className="text-slate-200 font-medium">All sidebars, cards, tables, terminals, and modals seamlessly adapt.</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* SUBTAB 2: STOREFRONT PUBLIC THEMES */}
+                {adminThemeSubTab === "store-theme" && (
+                  <div className="space-y-8 animate-fade-in">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* Theme 1: Emerald Classic */}
+                      <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
+                        activeTheme === "emerald"
+                          ? "bg-slate-900 border-emerald-500/60 ring-2 ring-emerald-500/30 shadow-2xl"
+                          : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
+                      }`}>
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">🌿</span>
+                                <h3 className="text-base font-bold text-white font-heading">
+                                  Emerald & Slate Classic
+                                </h3>
+                              </div>
+                              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                A clean, highly readable, corporate marketplace design featuring high-contrast light layouts, refined emerald badges, crisp product cards, and balanced spacing.
+                              </p>
+                            </div>
+                            {activeTheme === "emerald" && (
+                              <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0">
+                                Current Active
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Color Palette Swatches */}
+                          <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
+                            <span className="text-[10px] uppercase tracking-wider font-mono text-slate-400 block font-semibold">
+                              Color Palette Swatches
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#059669</div>
+                              <div className="flex-1 h-7 rounded-lg bg-slate-900 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#0F172A</div>
+                              <div className="flex-1 h-7 rounded-lg bg-white border border-slate-300 flex items-center justify-center text-[10px] text-slate-800 font-mono font-bold shadow-xs">#FFFFFF</div>
+                              <div className="flex-1 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] text-slate-600 font-mono font-bold shadow-xs">#F1F5F9</div>
+                            </div>
+                          </div>
+
+                          {/* Mini Component Live Mockup Preview */}
+                          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 uppercase tracking-wider border-b border-slate-800/80 pb-2">
+                              <span>Live Mini Card Mockup</span>
+                              <span className="text-emerald-400">Emerald Light UI</span>
+                            </div>
+                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-sm space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold uppercase">≥99.5% Purity</span>
+                                <span className="text-xs font-bold text-slate-900">$120.00</span>
+                              </div>
+                              <h4 className="text-xs font-bold text-slate-800 font-heading">High-Purity Reagent Specimen</h4>
+                              <p className="text-[10px] text-slate-500">ACS Grade Reagent | CAS 7758-99-8</p>
+                              <div className="pt-2 flex gap-2">
+                                <div className="flex-1 bg-emerald-600 text-white text-[10px] font-bold py-1.5 rounded-lg text-center shadow-xs">
+                                  Add to Procurement
+                                </div>
+                                <div className="bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-bold px-2.5 py-1.5 rounded-lg">
+                                  View SDS
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <div className="pt-6 border-t border-slate-800 flex gap-3 mt-4">
+                          <button
+                            onClick={() => {
+                              setTheme("emerald");
+                              fetch("/api/homepage", {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ active_theme: "emerald" }),
+                              }).catch(() => {});
+                            }}
+                            disabled={activeTheme === "emerald"}
+                            className={`flex-1 py-3 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
+                              activeTheme === "emerald"
+                                ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 active:scale-98"
+                            }`}
+                          >
+                            {activeTheme === "emerald" ? (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                <span>Currently Applied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4" />
+                                <span>Apply Emerald Theme in 1-Click</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Theme 2: Amazon & Flipkart Retail Powerhouse */}
+                      <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
+                        activeTheme === "retail" || activeTheme === "cyber"
+                          ? "bg-slate-900 border-amber-500/60 ring-2 ring-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)]"
+                          : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
+                      }`}>
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">🛒</span>
+                                <h3 className="text-base font-bold text-white font-heading">
+                                  Amazon & Flipkart Retail Powerhouse
+                                </h3>
+                              </div>
+                              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                An authentic high-converting retail e-commerce theme modeled directly after Amazon and Flipkart. Features prominent deal banners, star ratings, discount tags (25% OFF), pincode delivery estimators, strikethrough MRP, bank offer badges, and multi-step retail checkout.
+                              </p>
+                            </div>
+                            {(activeTheme === "retail" || activeTheme === "cyber") && (
+                              <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0 shadow-[0_0_10px_rgba(245,158,11,0.3)]">
+                                Current Active
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Color Palette Swatches */}
+                          <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
+                            <span className="text-[10px] uppercase tracking-wider font-mono text-amber-400 block font-semibold">
+                              Color Palette Swatches
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-7 rounded-lg bg-[#2874f0] flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#2874F0</div>
+                              <div className="flex-1 h-7 rounded-lg bg-[#febd69] flex items-center justify-center text-[10px] text-slate-900 font-mono font-bold shadow-xs">#FEBD69</div>
+                              <div className="flex-1 h-7 rounded-lg bg-[#ff9f00] flex items-center justify-center text-[10px] text-slate-950 font-mono font-bold shadow-xs">#FF9F00</div>
+                              <div className="flex-1 h-7 rounded-lg bg-[#131921] border border-slate-700 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#131921</div>
+                            </div>
+                          </div>
+
+                          {/* Mini Component Live Mockup Preview */}
+                          <div className="bg-slate-950 p-4 rounded-2xl border border-amber-500/20 space-y-3 relative overflow-hidden">
+                            <div className="flex items-center justify-between text-[11px] font-mono text-amber-400 uppercase tracking-wider border-b border-slate-800 pb-2">
+                              <span>Live Mini Flipkart Card Mockup</span>
+                              <span className="text-amber-300">Retail UI</span>
+                            </div>
+                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-md space-y-2 relative">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded uppercase">25% OFF</span>
+                                <span className="text-[10px] bg-[#2874f0] text-white font-black px-2 py-0.5 rounded">✓ Assured</span>
+                              </div>
+                              <h4 className="text-xs font-bold text-slate-900 font-sans">High-Purity ACS Reagent</h4>
+                              <div className="flex items-center gap-2">
+                                <span className="bg-[#388e3c] text-white text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">4.8 ★</span>
+                                <span className="text-[10px] text-slate-500">(1,248)</span>
+                              </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-extrabold text-slate-900">$89.00</span>
+                                <span className="text-xs text-slate-400 line-through">$120.00</span>
+                              </div>
+                              <div className="pt-1 flex gap-2">
+                                <div className="flex-1 bg-[#ff9f00] text-slate-950 font-extrabold text-[10px] py-1.5 rounded text-center shadow-xs">
+                                  Add to Cart
+                                </div>
+                                <div className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2.5 py-1.5 rounded">
+                                  Buy Now
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <div className="pt-6 border-t border-slate-800 flex gap-3 mt-4">
+                          <button
+                            onClick={() => {
+                              setTheme("retail");
+                              fetch("/api/homepage", {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ active_theme: "retail" }),
+                              }).catch(() => {});
+                            }}
+                            disabled={activeTheme === "retail" || activeTheme === "cyber"}
+                            className={`flex-1 py-3 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
+                              activeTheme === "retail" || activeTheme === "cyber"
+                                ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                                : "bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 font-extrabold shadow-lg shadow-amber-950/40 active:scale-98"
+                            }`}
+                          >
+                            {activeTheme === "retail" || activeTheme === "cyber" ? (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                                <span>Currently Applied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 text-slate-950" />
+                                <span>Apply Amazon/Flipkart Retail Theme in 1-Click</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Theme 3: IndiaMART B2B Procurement Platform */}
+                      <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
+                        activeTheme === "indiamart"
+                          ? "bg-slate-900 border-emerald-500/60 ring-2 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+                          : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
+                      }`}>
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">🇮🇳</span>
+                                <h3 className="text-base font-bold text-white font-heading">
+                                  IndiaMART B2B Procurement
+                                </h3>
+                              </div>
+                              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                Sleek IndiaMART B2B marketplace theme with animated hero banner, marketplace security badges, wholesale bulk MOQ pricing, and RFQ inquiry popup system. Direct card checkout is replaced with B2B inquiry submissions stored live in the database.
+                              </p>
+                            </div>
+                            {activeTheme === "indiamart" && (
+                              <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                                Current Active
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Color Palette Swatches */}
+                          <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
+                            <span className="text-[10px] uppercase tracking-wider font-mono text-emerald-400 block font-semibold">
+                              Color Palette Swatches
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-7 rounded-lg bg-[#2e7d32] flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#2E7D32</div>
+                              <div className="flex-1 h-7 rounded-lg bg-[#00a699] flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#00A699</div>
+                              <div className="flex-1 h-7 rounded-lg bg-[#1b5e20] flex items-center justify-center text-[10px] text-emerald-200 font-mono font-bold shadow-xs">#1B5E20</div>
+                              <div className="flex-1 h-7 rounded-lg bg-[#2b3445] border border-slate-700 flex items-center justify-center text-[10px] text-white font-mono font-bold shadow-xs">#2B3445</div>
+                            </div>
+                          </div>
+
+                          {/* Mini Component Live Mockup Preview */}
+                          <div className="bg-slate-950 p-4 rounded-2xl border border-emerald-500/20 space-y-3 relative overflow-hidden">
+                            <div className="flex items-center justify-between text-[11px] font-mono text-emerald-400 uppercase tracking-wider border-b border-slate-800 pb-2">
+                              <span>Live IndiaMART B2B RFQ Mockup</span>
+                              <span className="text-emerald-300">B2B RFQ UI</span>
+                            </div>
+                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-md space-y-2 relative">
+                              <div className="flex justify-between items-center bg-[#1b5e20] text-white px-2 py-0.5 rounded text-[9px] font-mono">
+                                <span>🔒 256-Bit SSL Encrypted</span>
+                                <span>Official Store</span>
+                              </div>
+                              <h4 className="text-xs font-bold text-slate-900 font-sans">High-Purity Lab Reagent</h4>
+                              <div className="flex items-center justify-between text-[10px] text-slate-600 font-mono">
+                                <span>Purity: 99.8% ACS</span>
+                                <span className="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200 font-bold">MOQ: 1 Pack</span>
+                              </div>
+                              <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center">
+                                <span className="text-xs font-black text-[#2e7d32] font-mono">$120.00 / Pack</span>
+                                <span className="text-[9px] text-emerald-700 font-bold">Tiered Volume Pricing</span>
+                              </div>
+                              <div className="pt-1">
+                                <div className="w-full bg-gradient-to-r from-[#2e7d32] to-[#00a699] text-white font-black text-[10px] py-1.5 rounded text-center shadow-xs uppercase tracking-wider">
+                                  Get Best Price
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <div className="pt-6 border-t border-slate-800 flex gap-3 mt-4">
+                          <button
+                            onClick={() => {
+                              setTheme("indiamart");
+                              fetch("/api/homepage", {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ active_theme: "indiamart" }),
+                              }).catch(() => {});
+                            }}
+                            disabled={activeTheme === "indiamart"}
+                            className={`flex-1 py-3 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
+                              activeTheme === "indiamart"
+                                ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                                : "bg-gradient-to-r from-[#2e7d32] to-[#00a699] hover:from-[#1b5e20] hover:to-[#00897b] text-white font-extrabold shadow-lg shadow-emerald-950/40 active:scale-98"
+                            }`}
+                          >
+                            {activeTheme === "indiamart" ? (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                <span>Currently Applied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 text-white" />
+                                <span>Apply IndiaMART B2B Theme in 1-Click</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

@@ -237,7 +237,8 @@ export default function App() {
   const fetchInquiries = async () => {
     try {
       const res = await fetch("/api/inquiries");
-      if (res.ok) {
+      const contentType = res.headers.get("content-type");
+      if (res.ok && contentType && contentType.includes("application/json")) {
         const data = await res.json();
         if (Array.isArray(data)) {
           setInquiriesList(data);

@@ -12,12 +12,14 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import fs from "fs";
 import multer from "multer";
 import { Resend } from "resend";
 import { z } from "zod";
 import {
   S3Client,
   PutObjectCommand,
+  GetObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
@@ -4128,6 +4130,21 @@ app.post("/api/admin/db/reset", checkAdminAuth, async (req, res) => {
 
 // --- CLOUDFLARE R2 UPLOAD ENDPOINT ---
 
+// Ensure local storage directory exists for file uploads fallback
+const localUploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(localUploadsDir)) {
+  try {
+    fs.mkdirSync(localUploadsDir, { recursive: true });
+  } catch (err) {
+    console.error("Failed creating local uploads directory:", err);
+  }
+}
+
+// Serve local uploads folder statically as fallback
+app.use("/uploads", express.static(localUploadsDir));
+
+// --- CLOUDFLARE R2 UPLOAD & MEDIA PROXY ENDPOINTS ---
+
 // Configure S3 Client for Cloudflare R2
 let r2Client: S3Client | null = null;
 if (
@@ -4147,27 +4164,103 @@ if (
   console.log("Cloudflare R2 Client initialized successfully.");
 } else {
   console.warn(
-    "Cloudflare R2 configurations are missing. File uploads will be disabled.",
+    "Cloudflare R2 configurations missing or incomplete. Local disk fallback storage will be active.",
   );
 }
 
-// Memory storage for multer (buffer files before uploading to R2)
+// Memory storage for multer (buffer files before saving)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
 }); // 50MB max limit
+
+// GET /api/uploads/file/:key - Stream & serve R2 / local uploaded files seamlessly with correct headers
+const handleServeFile = async (req: express.Request, res: express.Response) => {
+  const { key } = req.params;
+  if (!key) {
+    return res.status(400).send("Missing file key");
+  }
+
+  // Sanitize key to prevent path traversal
+  const safeKey = path.basename(key);
+  const localFilePath = path.join(localUploadsDir, safeKey);
+
+  // 1. Try local disk first
+  if (fs.existsSync(localFilePath)) {
+    return res.sendFile(localFilePath);
+  }
+
+  // 2. Try Cloudflare R2 if client is configured
+  if (r2Client && process.env.R2_BUCKET_NAME) {
+    try {
+      const getCmd = new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: safeKey,
+      });
+      const r2Response = await r2Client.send(getCmd);
+
+      if (r2Response.ContentType) {
+        res.setHeader("Content-Type", r2Response.ContentType);
+      } else {
+        const ext = path.extname(safeKey).toLowerCase();
+        if ([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".avif"].includes(ext)) {
+          res.setHeader("Content-Type", `image/${ext.replace(".", "") === "jpg" ? "jpeg" : ext.replace(".", "")}`);
+        } else if ([".mp4", ".webm", ".mov", ".ogg"].includes(ext)) {
+          res.setHeader("Content-Type", `video/${ext.replace(".", "")}`);
+        } else if (ext === ".pdf") {
+          res.setHeader("Content-Type", "application/pdf");
+        }
+      }
+
+      res.setHeader("Cache-Control", "public, max-age=31536000");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+
+      if (r2Response.Body) {
+        // Transform stream bytes and return
+        const byteArray = await r2Response.Body.transformToByteArray();
+        const buffer = Buffer.from(byteArray);
+
+        // Cache locally for faster future requests
+        try {
+          fs.writeFileSync(localFilePath, buffer);
+        } catch (e) {
+          // ignore cache write error
+        }
+
+        return res.send(buffer);
+      }
+    } catch (err: any) {
+      console.warn(`R2 fetch attempt failed for key ${safeKey}:`, err.message || err);
+    }
+  }
+
+  // 3. Check database record for external URL redirect
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM media_uploads WHERE id = $1 OR url LIKE $2",
+      [safeKey, `%${safeKey}`]
+    );
+    if (rows.length > 0 && rows[0].url) {
+      const dbUrl = rows[0].url;
+      if (dbUrl.startsWith("http://") || dbUrl.startsWith("https://")) {
+        return res.redirect(dbUrl);
+      }
+    }
+  } catch (err) {
+    // Ignore db query error
+  }
+
+  return res.status(404).send("File not found in storage or R2 bucket.");
+};
+
+app.get("/api/uploads/file/:key", handleServeFile);
+app.get("/api/r2/file/:key", handleServeFile);
 
 app.post(
   "/api/upload",
   checkAdminAuth,
   upload.single("file"),
   async (req, res) => {
-    if (!r2Client) {
-      return res.status(503).json({
-        error: "Storage service (R2) is not configured on the server.",
-      });
-    }
-
     if (!req.file) {
       return res.status(400).json({ error: "No file was uploaded." });
     }
@@ -4176,19 +4269,38 @@ app.post(
       const fileExtension = path.extname(req.file.originalname);
       const uniqueFileName = `${uuidv4()}${fileExtension}`;
 
-      const putCmd = new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME!,
-        Key: uniqueFileName,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-      });
+      // Save local disk copy
+      const localPath = path.join(localUploadsDir, uniqueFileName);
+      try {
+        fs.writeFileSync(localPath, req.file.buffer);
+      } catch (err) {
+        console.error("Local disk save error:", err);
+      }
 
-      await r2Client.send(putCmd);
+      // Upload to Cloudflare R2 if client is configured
+      let uploadedToR2 = false;
+      if (r2Client && process.env.R2_BUCKET_NAME) {
+        try {
+          const putCmd = new PutObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: uniqueFileName,
+            Body: req.file.buffer,
+            ContentType: req.file.mimetype,
+          });
+          await r2Client.send(putCmd);
+          uploadedToR2 = true;
+        } catch (r2Err: any) {
+          console.error("Cloudflare R2 Upload warning:", r2Err);
+        }
+      }
 
-      // If R2_PUBLIC_URL is provided, construct the public URL, otherwise return the key
-      const fileUrl = process.env.R2_PUBLIC_URL
-        ? `${process.env.R2_PUBLIC_URL}/${uniqueFileName}`
-        : `r2://${process.env.R2_BUCKET_NAME}/${uniqueFileName}`;
+      // Determine public URL
+      const r2Pub = process.env.R2_PUBLIC_URL?.trim();
+      const hasValidPublicUrl = r2Pub && r2Pub.startsWith("http") && !r2Pub.includes("xxxxxx");
+
+      const fileUrl = (uploadedToR2 && hasValidPublicUrl)
+        ? `${r2Pub.replace(/\/+$/, "")}/${uniqueFileName}`
+        : `/api/uploads/file/${uniqueFileName}`;
 
       let uploadType = "image";
       const mime = req.file.mimetype || "";
@@ -4210,8 +4322,9 @@ app.post(
 
       return res.json({
         success: true,
-        message:
-          "File uploaded successfully to Cloudflare R2 and registered in database.",
+        message: uploadedToR2
+          ? "File uploaded successfully to Cloudflare R2 and registered in database."
+          : "File saved to persistent storage and registered in database.",
         url: fileUrl,
         key: uniqueFileName,
         originalName: req.file.originalname,
@@ -4219,9 +4332,9 @@ app.post(
         mimetype: req.file.mimetype,
       });
     } catch (err: any) {
-      console.error("Cloudflare R2 Upload Error:", err);
+      console.error("Upload Error:", err);
       return res.status(500).json({
-        error: "Failed to upload file to Cloudflare R2 storage: " + err.message,
+        error: "Failed to upload file: " + err.message,
       });
     }
   },
@@ -4231,12 +4344,6 @@ app.post(
   "/api/upload-public",
   upload.single("file"),
   async (req, res) => {
-    if (!r2Client) {
-      return res.status(503).json({
-        error: "Storage service (R2) is not configured on the server. Please contact an admin.",
-      });
-    }
-
     if (!req.file) {
       return res.status(400).json({ error: "No file was uploaded." });
     }
@@ -4254,18 +4361,37 @@ app.post(
       const fileExtension = path.extname(req.file.originalname);
       const uniqueFileName = `proof_${Date.now()}_${uuidv4()}${fileExtension}`;
 
-      const putCmd = new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME!,
-        Key: uniqueFileName,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-      });
+      // Save local copy
+      const localPath = path.join(localUploadsDir, uniqueFileName);
+      try {
+        fs.writeFileSync(localPath, req.file.buffer);
+      } catch (err) {
+        console.error("Local disk save error:", err);
+      }
 
-      await r2Client.send(putCmd);
+      // Upload to R2 if available
+      let uploadedToR2 = false;
+      if (r2Client && process.env.R2_BUCKET_NAME) {
+        try {
+          const putCmd = new PutObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: uniqueFileName,
+            Body: req.file.buffer,
+            ContentType: req.file.mimetype,
+          });
+          await r2Client.send(putCmd);
+          uploadedToR2 = true;
+        } catch (r2Err) {
+          console.error("Public R2 Upload warning:", r2Err);
+        }
+      }
 
-      const fileUrl = process.env.R2_PUBLIC_URL
-        ? `${process.env.R2_PUBLIC_URL}/${uniqueFileName}`
-        : `r2://${process.env.R2_BUCKET_NAME}/${uniqueFileName}`;
+      const r2Pub = process.env.R2_PUBLIC_URL?.trim();
+      const hasValidPublicUrl = r2Pub && r2Pub.startsWith("http") && !r2Pub.includes("xxxxxx");
+
+      const fileUrl = (uploadedToR2 && hasValidPublicUrl)
+        ? `${r2Pub.replace(/\/+$/, "")}/${uniqueFileName}`
+        : `/api/uploads/file/${uniqueFileName}`;
 
       return res.json({
         success: true,
@@ -4284,49 +4410,61 @@ app.get("/api/uploads", checkAdminAuth, async (req, res) => {
     const { rows } = await pool.query(
       'SELECT id, url, type, original_name as "originalName", uploaded_at as "uploadedAt" FROM media_uploads ORDER BY uploaded_at DESC',
     );
-    return res.json(rows);
+
+    const formattedRows = rows.map((item) => {
+      let finalUrl = item.url || "";
+      if (!finalUrl || finalUrl.startsWith("r2://") || finalUrl.includes("xxxxxx")) {
+        const fileKey = item.id || (finalUrl ? finalUrl.split("/").pop() : "");
+        finalUrl = `/api/uploads/file/${fileKey}`;
+      }
+      return {
+        ...item,
+        url: finalUrl,
+      };
+    });
+
+    return res.json(formattedRows);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// Admin: Delete a media upload permanently from database and Cloudflare R2
+// Admin: Delete a media upload permanently from database, local disk, and Cloudflare R2
 app.delete("/api/uploads/:id", checkAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const safeKey = path.basename(id);
 
-    // First check if it exists in database
-    const { rows } = await pool.query(
-      "SELECT * FROM media_uploads WHERE id = $1",
-      [id],
-    );
-    if (rows.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "Media file not found in database registry." });
+    // Delete local disk copy if exists
+    const localPath = path.join(localUploadsDir, safeKey);
+    if (fs.existsSync(localPath)) {
+      try {
+        fs.unlinkSync(localPath);
+      } catch (e) {
+        console.error("Error unlinking local file:", e);
+      }
     }
 
-    // Try deleting from Cloudflare R2
-    if (r2Client) {
+    // Delete from Cloudflare R2 if available
+    if (r2Client && process.env.R2_BUCKET_NAME) {
       try {
         const delCmd = new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME!,
-          Key: id,
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: safeKey,
         });
         await r2Client.send(delCmd);
       } catch (r2Err: any) {
         console.error("Cloudflare R2 Delete Object failed:", r2Err);
-        // Continue database deletion so UI remains clean and operational
       }
     }
 
     // Delete from PostgreSQL database
-    await pool.query("DELETE FROM media_uploads WHERE id = $1", [id]);
+    await pool.query("DELETE FROM media_uploads WHERE id = $1", [safeKey]);
 
     return res.json({
       success: true,
       message:
-        "Media deleted permanently from Cloudflare R2 and database registry.",
+        "Media deleted permanently from storage and database registry.",
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

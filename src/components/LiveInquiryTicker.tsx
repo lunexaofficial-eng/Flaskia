@@ -52,7 +52,8 @@ export default function LiveInquiryTicker({
       try {
         setIsLoading(true);
         const res = await fetch("/api/inquiries?live=true");
-        if (res.ok) {
+        const contentType = res.headers.get("content-type");
+        if (res.ok && contentType && contentType.includes("application/json")) {
           const data = await res.json();
           if (Array.isArray(data)) {
             const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
