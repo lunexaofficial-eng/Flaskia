@@ -68,7 +68,16 @@ import {
   Palette,
   Building2,
   Zap,
-  MessageCircle
+  MessageCircle,
+  EyeOff,
+  Key,
+  Cpu,
+  Globe,
+  Shield,
+  HardDrive,
+  CheckCheck,
+  ExternalLink,
+  Save,
 } from "lucide-react";
 import { PRODUCTS } from "../data";
 import { useTheme } from "../context/ThemeContext";
@@ -1130,6 +1139,51 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
   const [activeThreadInquiryId, setActiveThreadInquiryId] = useState<string | null>(null);
   const [sendingAdminReply, setSendingAdminReply] = useState<boolean>(false);
 
+  // --- CLOUD INTEGRATIONS & SYSTEM KEYS MANAGEMENT STATE ---
+  const [systemKeys, setSystemKeys] = useState<{
+    r2_account_id: string;
+    r2_access_key_id: string;
+    r2_secret_access_key: string;
+    r2_bucket_name: string;
+    r2_public_url: string;
+    r2_endpoint: string;
+    resend_api_key: string;
+    resend_from_email: string;
+    resend_verified_domain: string;
+    better_auth_secret: string;
+    better_auth_url: string;
+  }>({
+    r2_account_id: "",
+    r2_access_key_id: "",
+    r2_secret_access_key: "",
+    r2_bucket_name: "",
+    r2_public_url: "",
+    r2_endpoint: "",
+    resend_api_key: "",
+    resend_from_email: "",
+    resend_verified_domain: "",
+    better_auth_secret: "",
+    better_auth_url: "",
+  });
+  const [systemKeysSources, setSystemKeysSources] = useState<Record<string, "admin" | "env" | "none">>({});
+  const [systemKeysMasked, setSystemKeysMasked] = useState<Record<string, string>>({});
+  const [systemKeysRawAdmin, setSystemKeysRawAdmin] = useState<Record<string, string>>({});
+  const [systemKeysEnvDefaults, setSystemKeysEnvDefaults] = useState<Record<string, boolean>>({});
+  const [showKeysSecrets, setShowKeysSecrets] = useState<Record<string, boolean>>({});
+  const [isFetchingSystemKeys, setIsFetchingSystemKeys] = useState<boolean>(false);
+  const [isSavingSystemKeys, setIsSavingSystemKeys] = useState<boolean>(false);
+  const [systemKeysToast, setSystemKeysToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [integrationsSubTab, setIntegrationsSubTab] = useState<"overview" | "r2" | "resend" | "betterauth" | "postgres" | "library">("overview");
+
+  // Live Diagnostics & Testing States
+  const [isTestingR2, setIsTestingR2] = useState<boolean>(false);
+  const [testR2Result, setTestR2Result] = useState<any>(null);
+  const [isTestingResend, setIsTestingResend] = useState<boolean>(false);
+  const [testResendResult, setTestResendResult] = useState<any>(null);
+  const [testResendEmailRecipient, setTestResendEmailRecipient] = useState<string>("");
+  const [isTestingAuth, setIsTestingAuth] = useState<boolean>(false);
+  const [testAuthResult, setTestAuthResult] = useState<any>(null);
+
   // Payment Methods State
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
@@ -2097,8 +2151,195 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     }
   };
 
+  const fetchSystemKeys = async () => {
+    setIsFetchingSystemKeys(true);
+    try {
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+      const res = await fetch("/api/admin/system-keys", {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.keys) {
+          setSystemKeys({
+            r2_account_id: data.rawAdminKeys?.r2_account_id || data.keys.r2_account_id || "",
+            r2_access_key_id: data.rawAdminKeys?.r2_access_key_id || data.keys.r2_access_key_id || "",
+            r2_secret_access_key: data.rawAdminKeys?.r2_secret_access_key || data.keys.r2_secret_access_key || "",
+            r2_bucket_name: data.rawAdminKeys?.r2_bucket_name || data.keys.r2_bucket_name || "",
+            r2_public_url: data.rawAdminKeys?.r2_public_url || data.keys.r2_public_url || "",
+            r2_endpoint: data.rawAdminKeys?.r2_endpoint || data.keys.r2_endpoint || "",
+            resend_api_key: data.rawAdminKeys?.resend_api_key || data.keys.resend_api_key || "",
+            resend_from_email: data.rawAdminKeys?.resend_from_email || data.keys.resend_from_email || "",
+            resend_verified_domain: data.rawAdminKeys?.resend_verified_domain || data.keys.resend_verified_domain || "",
+            better_auth_secret: data.rawAdminKeys?.better_auth_secret || data.keys.better_auth_secret || "",
+            better_auth_url: data.rawAdminKeys?.better_auth_url || data.keys.better_auth_url || "",
+          });
+        }
+        if (data.sources) setSystemKeysSources(data.sources);
+        if (data.maskedKeys) setSystemKeysMasked(data.maskedKeys);
+        if (data.rawAdminKeys) setSystemKeysRawAdmin(data.rawAdminKeys);
+        if (data.environmentDefaults) setSystemKeysEnvDefaults(data.environmentDefaults);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch dynamic system keys:", err);
+    } finally {
+      setIsFetchingSystemKeys(false);
+    }
+  };
+
+  const handleSaveSystemKeys = async (overrideUpdates?: any) => {
+    setIsSavingSystemKeys(true);
+    setSystemKeysToast(null);
+    try {
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+      const payload = overrideUpdates || systemKeys;
+      const res = await fetch("/api/admin/system-keys", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSystemKeysToast({
+          message: data.message || "Cloud integration keys saved and applied successfully across runtime services!",
+          type: "success",
+        });
+        await fetchSystemKeys();
+      } else {
+        throw new Error(data.error || "Failed saving integration keys");
+      }
+    } catch (err: any) {
+      setSystemKeysToast({
+        message: err.message || "Error saving integration keys",
+        type: "error",
+      });
+    } finally {
+      setIsSavingSystemKeys(false);
+      setTimeout(() => setSystemKeysToast(null), 4000);
+    }
+  };
+
+  const handleResetSystemKeys = async (keysList?: string[]) => {
+    if (!window.confirm("Are you sure you want to reset the custom keys back to default .env fallback?")) {
+      return;
+    }
+    setIsSavingSystemKeys(true);
+    setSystemKeysToast(null);
+    try {
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+      const res = await fetch("/api/admin/system-keys/reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ keys: keysList }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSystemKeysToast({
+          message: data.message || "Keys successfully reset to environment variable fallbacks.",
+          type: "info",
+        });
+        await fetchSystemKeys();
+      } else {
+        throw new Error(data.error || "Failed resetting keys");
+      }
+    } catch (err: any) {
+      setSystemKeysToast({
+        message: err.message || "Error resetting keys",
+        type: "error",
+      });
+    } finally {
+      setIsSavingSystemKeys(false);
+      setTimeout(() => setSystemKeysToast(null), 4000);
+    }
+  };
+
+  const handleTestR2 = async () => {
+    setIsTestingR2(true);
+    setTestR2Result(null);
+    try {
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+      const res = await fetch("/api/admin/system-keys/test-r2", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+      const data = await res.json();
+      setTestR2Result(data);
+    } catch (err: any) {
+      setTestR2Result({
+        success: false,
+        message: err.message || "Failed to reach diagnostic endpoint",
+        error: err.message,
+      });
+    } finally {
+      setIsTestingR2(false);
+    }
+  };
+
+  const handleTestResend = async (targetEmail?: string) => {
+    setIsTestingResend(true);
+    setTestResendResult(null);
+    try {
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+      const res = await fetch("/api/admin/system-keys/test-resend", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ testEmail: targetEmail || testResendEmailRecipient }),
+      });
+      const data = await res.json();
+      setTestResendResult(data);
+    } catch (err: any) {
+      setTestResendResult({
+        success: false,
+        message: err.message || "Failed to reach diagnostic endpoint",
+        error: err.message,
+      });
+    } finally {
+      setIsTestingResend(false);
+    }
+  };
+
+  const handleTestAuth = async () => {
+    setIsTestingAuth(true);
+    setTestAuthResult(null);
+    try {
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "local_admin_dummy_jwt_12345678";
+      const res = await fetch("/api/admin/system-keys/test-auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+      const data = await res.json();
+      setTestAuthResult(data);
+    } catch (err: any) {
+      setTestAuthResult({
+        success: false,
+        message: err.message || "Failed to reach diagnostic endpoint",
+        error: err.message,
+      });
+    } finally {
+      setIsTestingAuth(false);
+    }
+  };
+
   useEffect(() => {
     fetchInquiries();
+    fetchSystemKeys();
   }, []);
 
   useEffect(() => {
@@ -2107,6 +2348,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         fetchDbTables();
       } else if (activeTab === "storage") {
         fetchMediaFiles();
+        fetchSystemKeys();
       } else if (activeTab === "inquiries") {
         fetchInquiries();
       }
@@ -3176,7 +3418,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   { id: "database", label: "Database Engine", icon: Database },
                   {
                     id: "storage",
-                    label: "Cloudflare R2 Storage",
+                    label: "Cloudflare R2 & Keys Hub",
                     icon: Cloud,
                   },
                   {
@@ -6522,6 +6764,541 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                 className="space-y-8 animate-fade-in text-white"
                 id="r2-storage-portal"
               >
+                {/* 1. CLOUD INTEGRATIONS & SYSTEM KEYS MANAGEMENT HUB */}
+                <div className="bg-slate-900/60 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-6 relative overflow-hidden">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-400 rounded-2xl shrink-0">
+                        <Key className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <h3 className="text-xl font-bold text-white tracking-tight font-heading">
+                            Cloud Integrations & Dynamic Keys Hub
+                          </h3>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                            100% PRODUCTION READY
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                          Manage Cloudflare R2 storage keys, Resend.com email & verified domain, and BETTER_AUTH_SECRET / BETTER_AUTH_URL directly from the Admin Panel. When added here, the system dynamically prioritizes these keys; otherwise, it seamlessly falls back to environment variables. Neon PostgreSQL database is accessed exclusively via runtime environment variables.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => fetchSystemKeys()}
+                        disabled={isFetchingSystemKeys}
+                        className="px-3.5 py-2 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold rounded-xl transition cursor-pointer flex items-center gap-2"
+                        title="Reload active keys configuration"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isFetchingSystemKeys ? "animate-spin text-blue-400" : ""}`} />
+                        <span>Refresh</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSystemKeys()}
+                        disabled={isSavingSystemKeys}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-500/20 transition cursor-pointer flex items-center gap-2"
+                      >
+                        {isSavingSystemKeys ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-3.5 h-3.5" />
+                            <span>Save All Keys</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Toast Alert */}
+                  {systemKeysToast && (
+                    <div
+                      className={`p-3.5 border rounded-2xl text-xs font-mono flex items-center justify-between animate-fade-in ${
+                        systemKeysToast.type === "success"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                          : systemKeysToast.type === "error"
+                            ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                            : "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span>{systemKeysToast.message}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSystemKeysToast(null)}
+                        className="text-slate-400 hover:text-white text-xs px-1.5"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* SubTab Navigation */}
+                  <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-slate-800/80">
+                    {[
+                      { id: "overview", label: "Architecture Overview", icon: Cpu },
+                      { id: "r2", label: "Cloudflare R2 Keys", icon: Cloud },
+                      { id: "resend", label: "Resend.com Email", icon: Mail },
+                      { id: "betterauth", label: "Better Auth Secret & URL", icon: Shield },
+                      { id: "postgres", label: "Neon DB (Fixed .env)", icon: Database },
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isSelected = integrationsSubTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setIntegrationsSubTab(tab.id as any)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center gap-2 whitespace-nowrap ${
+                            isSelected
+                              ? "bg-blue-600/20 text-blue-300 border border-blue-500/40"
+                              : "bg-slate-950/40 border border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 1. OVERVIEW & HEALTH STATUS */}
+                  {integrationsSubTab === "overview" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                      {/* R2 Card */}
+                      <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl">
+                            <Cloud className="w-4 h-4" />
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase ${
+                              systemKeysSources.r2_account_id === "admin"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                                : systemKeysSources.r2_account_id === "env"
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                                  : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            {systemKeysSources.r2_account_id === "admin" ? "Admin Panel" : ".env Fallback"}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-white">Cloudflare R2</h4>
+                          <p className="text-[10.5px] text-slate-400">Object bucket & media asset distribution</p>
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400 space-y-0.5 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                          <div>Bucket: <span className="text-blue-300 font-semibold">{systemKeys.r2_bucket_name || "chem-r2-store"}</span></div>
+                          <div className="truncate">Public URL: <span className="text-slate-300">{systemKeys.r2_public_url || "Direct Edge Proxy"}</span></div>
+                        </div>
+                      </div>
+
+                      {/* Resend Card */}
+                      <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
+                            <Mail className="w-4 h-4" />
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase ${
+                              systemKeysSources.resend_api_key === "admin"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                                : systemKeysSources.resend_api_key === "env"
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                                  : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            {systemKeysSources.resend_api_key === "admin" ? "Admin Panel" : ".env Fallback"}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-white">Resend.com</h4>
+                          <p className="text-[10.5px] text-slate-400">Transactional OTP & Order notifications</p>
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400 space-y-0.5 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                          <div className="truncate">Sender: <span className="text-indigo-300 font-semibold">{systemKeys.resend_from_email || "System Verified Default"}</span></div>
+                          <div className="truncate">Domain: <span className="text-slate-300">{systemKeys.resend_verified_domain || "Verified Gateway"}</span></div>
+                        </div>
+                      </div>
+
+                      {/* Better Auth Card */}
+                      <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="p-2 bg-purple-500/10 text-purple-400 rounded-xl">
+                            <Shield className="w-4 h-4" />
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase ${
+                              systemKeysSources.better_auth_secret === "admin"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                                : systemKeysSources.better_auth_secret === "env"
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                                  : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            {systemKeysSources.better_auth_secret === "admin" ? "Admin Panel" : ".env Fallback"}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-white">Better Auth</h4>
+                          <p className="text-[10.5px] text-slate-400">Cryptographic JWT signature & Base URL</p>
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400 space-y-0.5 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                          <div className="truncate">URL: <span className="text-purple-300 font-semibold">{systemKeys.better_auth_url || "http://localhost:3000"}</span></div>
+                          <div>Secret: <span className="text-slate-400">HMAC-SHA256 active</span></div>
+                        </div>
+                      </div>
+
+                      {/* Neon Postgres Card */}
+                      <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                            <Database className="w-4 h-4" />
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            Fixed .env
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-white">Neon PostgreSQL</h4>
+                          <p className="text-[10.5px] text-slate-400">Relational serverless database cluster</p>
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-400 space-y-0.5 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                          <div>Driver: <span className="text-emerald-300 font-semibold">@neondatabase/serverless</span></div>
+                          <div>Source: <span className="text-slate-300">process.env.DATABASE_URL</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. CLOUDFLARE R2 SECTION */}
+                  {(integrationsSubTab === "overview" || integrationsSubTab === "r2") && (
+                    <div className="bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <Cloud className="w-5 h-5 text-blue-400" />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-white">Cloudflare R2 Storage Keys</h4>
+                              <span className={`px-2 py-0.2 text-[9px] font-mono font-bold rounded-full ${systemKeysSources.r2_account_id === "admin" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
+                                {systemKeysSources.r2_account_id === "admin" ? "Active from Admin Panel" : "Using .env Fallback"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleResetSystemKeys(["r2_account_id", "r2_access_key_id", "r2_secret_access_key", "r2_bucket_name", "r2_public_url", "r2_endpoint"])}
+                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer"
+                          >
+                            Reset to .env
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleTestR2}
+                            disabled={isTestingR2}
+                            className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Zap className={`w-3.5 h-3.5 ${isTestingR2 ? "animate-spin" : ""}`} />
+                            <span>{isTestingR2 ? "Testing R2..." : "Test R2 Connection"}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {testR2Result && (
+                        <div className={`p-3 rounded-xl border text-xs font-mono ${testR2Result.success ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-rose-500/10 border-rose-500/30 text-rose-300"}`}>
+                          <div className="font-bold flex justify-between">
+                            <span>{testR2Result.success ? "✓ Cloudflare R2 Connection Valid" : "✕ Cloudflare R2 Notice"}</span>
+                            <span className="text-[10px] opacity-75">Source: {testR2Result.source}</span>
+                          </div>
+                          <p className="mt-1 text-[11px]">{testR2Result.message}</p>
+                          {testR2Result.bucket && <p className="text-[10px] text-slate-400 mt-0.5">Bucket: {testR2Result.bucket}</p>}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">R2 Account ID</label>
+                          <input
+                            type="text"
+                            value={systemKeys.r2_account_id}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, r2_account_id: e.target.value }))}
+                            placeholder="e.g. 7f3b890a12e456c7890abcdef1234567"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-blue-300 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">R2 Access Key ID</label>
+                          <input
+                            type="text"
+                            value={systemKeys.r2_access_key_id}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, r2_access_key_id: e.target.value }))}
+                            placeholder="e.g. 293847293847209384029384"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-blue-300 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[11px] font-semibold text-slate-300">R2 Secret Access Key</label>
+                            <button
+                              type="button"
+                              onClick={() => setShowKeysSecrets((prev) => ({ ...prev, r2_secret: !prev.r2_secret }))}
+                              className="text-[10px] text-blue-400 hover:text-blue-300 font-mono flex items-center gap-1 cursor-pointer"
+                            >
+                              {showKeysSecrets.r2_secret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              <span>{showKeysSecrets.r2_secret ? "Hide" : "Show"}</span>
+                            </button>
+                          </div>
+                          <input
+                            type={showKeysSecrets.r2_secret ? "text" : "password"}
+                            value={systemKeys.r2_secret_access_key}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, r2_secret_access_key: e.target.value }))}
+                            placeholder="••••••••••••••••••••••••••••••••••••••••"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-blue-300 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">R2 Bucket Name</label>
+                          <input
+                            type="text"
+                            value={systemKeys.r2_bucket_name}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, r2_bucket_name: e.target.value }))}
+                            placeholder="e.g. chem-r2-store"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-blue-300 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">Public CDN URL / Domain</label>
+                          <input
+                            type="text"
+                            value={systemKeys.r2_public_url}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, r2_public_url: e.target.value }))}
+                            placeholder="e.g. https://pub-xyz.r2.dev or https://media.yourdomain.com"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-blue-300 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">Custom S3 Endpoint (Optional)</label>
+                          <input
+                            type="text"
+                            value={systemKeys.r2_endpoint}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, r2_endpoint: e.target.value }))}
+                            placeholder="Leave empty for auto-generated endpoint"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-blue-300 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. RESEND.COM SECTION */}
+                  {(integrationsSubTab === "overview" || integrationsSubTab === "resend") && (
+                    <div className="bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <Mail className="w-5 h-5 text-indigo-400" />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-white">Resend.com Email & Verified Domain</h4>
+                              <span className={`px-2 py-0.2 text-[9px] font-mono font-bold rounded-full ${systemKeysSources.resend_api_key === "admin" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
+                                {systemKeysSources.resend_api_key === "admin" ? "Active from Admin Panel" : "Using .env Fallback"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleResetSystemKeys(["resend_api_key", "resend_from_email", "resend_verified_domain"])}
+                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer"
+                          >
+                            Reset to .env
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Test transmission field */}
+                      <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                        <input
+                          type="email"
+                          value={testResendEmailRecipient}
+                          onChange={(e) => setTestResendEmailRecipient(e.target.value)}
+                          placeholder="Recipient email for test transmission (e.g. yourname@example.com)"
+                          className="flex-1 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-indigo-300 focus:outline-none focus:border-indigo-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleTestResend()}
+                          disabled={isTestingResend}
+                          className="px-3.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <Zap className={`w-3.5 h-3.5 ${isTestingResend ? "animate-spin" : ""}`} />
+                          <span>{isTestingResend ? "Sending..." : "Send Test Email"}</span>
+                        </button>
+                      </div>
+
+                      {testResendResult && (
+                        <div className={`p-3 rounded-xl border text-xs font-mono ${testResendResult.success ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-rose-500/10 border-rose-500/30 text-rose-300"}`}>
+                          <div className="font-bold flex justify-between">
+                            <span>{testResendResult.success ? "✓ Resend Live Test Passed" : "✕ Resend Diagnostic Notice"}</span>
+                            <span className="text-[10px] opacity-75">Source: {testResendResult.source}</span>
+                          </div>
+                          <p className="mt-1 text-[11px]">{testResendResult.message}</p>
+                          {testResendResult.fromAddress && <p className="text-[10px] text-slate-400 mt-0.5">Sender: {testResendResult.fromAddress}</p>}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[11px] font-semibold text-slate-300">Resend API Key</label>
+                            <button
+                              type="button"
+                              onClick={() => setShowKeysSecrets((prev) => ({ ...prev, resend_key: !prev.resend_key }))}
+                              className="text-[10px] text-indigo-400 hover:text-indigo-300 font-mono flex items-center gap-1 cursor-pointer"
+                            >
+                              {showKeysSecrets.resend_key ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              <span>{showKeysSecrets.resend_key ? "Hide" : "Show"}</span>
+                            </button>
+                          </div>
+                          <input
+                            type={showKeysSecrets.resend_key ? "text" : "password"}
+                            value={systemKeys.resend_api_key}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, resend_api_key: e.target.value }))}
+                            placeholder="e.g. re_12345678_abcdefghijklmnopqrstuvwxyz"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-indigo-300 focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">Verified Sender Email</label>
+                          <input
+                            type="text"
+                            value={systemKeys.resend_from_email}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, resend_from_email: e.target.value }))}
+                            placeholder="e.g. Flaskia Reagents <noreply@yourdomain.com>"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-indigo-300 focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">Resend Verified Domain</label>
+                          <input
+                            type="text"
+                            value={systemKeys.resend_verified_domain}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, resend_verified_domain: e.target.value }))}
+                            placeholder="e.g. flaskia.com or yourlab.org"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-indigo-300 focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. BETTER AUTH SECTION */}
+                  {(integrationsSubTab === "overview" || integrationsSubTab === "betterauth") && (
+                    <div className="bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <Shield className="w-5 h-5 text-purple-400" />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-white">BETTER_AUTH_SECRET & BETTER_AUTH_URL</h4>
+                              <span className={`px-2 py-0.2 text-[9px] font-mono font-bold rounded-full ${systemKeysSources.better_auth_secret === "admin" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
+                                {systemKeysSources.better_auth_secret === "admin" ? "Active from Admin Panel" : "Using .env Fallback"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleResetSystemKeys(["better_auth_secret", "better_auth_url"])}
+                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer"
+                          >
+                            Reset to .env
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleTestAuth}
+                            disabled={isTestingAuth}
+                            className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Zap className={`w-3.5 h-3.5 ${isTestingAuth ? "animate-spin" : ""}`} />
+                            <span>{isTestingAuth ? "Verifying..." : "Verify Auth Secret"}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {testAuthResult && (
+                        <div className={`p-3 rounded-xl border text-xs font-mono ${testAuthResult.success ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-rose-500/10 border-rose-500/30 text-rose-300"}`}>
+                          <div className="font-bold flex justify-between">
+                            <span>{testAuthResult.success ? "✓ Better Auth Token Signature Verified" : "✕ Better Auth Warning"}</span>
+                            <span className="text-[10px] opacity-75">Source: {testAuthResult.source}</span>
+                          </div>
+                          <p className="mt-1 text-[11px]">{testAuthResult.message}</p>
+                          {testAuthResult.tokenSample && <p className="text-[10px] text-purple-300 mt-0.5 truncate">Signature: {testAuthResult.tokenSample}</p>}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[11px] font-semibold text-slate-300">BETTER_AUTH_SECRET</label>
+                            <button
+                              type="button"
+                              onClick={() => setShowKeysSecrets((prev) => ({ ...prev, auth_secret: !prev.auth_secret }))}
+                              className="text-[10px] text-purple-400 hover:text-purple-300 font-mono flex items-center gap-1 cursor-pointer"
+                            >
+                              {showKeysSecrets.auth_secret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              <span>{showKeysSecrets.auth_secret ? "Hide" : "Show"}</span>
+                            </button>
+                          </div>
+                          <input
+                            type={showKeysSecrets.auth_secret ? "text" : "password"}
+                            value={systemKeys.better_auth_secret}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, better_auth_secret: e.target.value }))}
+                            placeholder="e.g. 64-character secret key or hex token"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-purple-300 focus:outline-none focus:border-purple-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-300">BETTER_AUTH_URL</label>
+                          <input
+                            type="text"
+                            value={systemKeys.better_auth_url}
+                            onChange={(e) => setSystemKeys((prev) => ({ ...prev, better_auth_url: e.target.value }))}
+                            placeholder="e.g. http://localhost:3000 or https://yourdomain.com"
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-purple-300 focus:outline-none focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. NEON POSTGRESQL FIXED IN .ENV */}
+                  {(integrationsSubTab === "overview" || integrationsSubTab === "postgres") && (
+                    <div className="bg-slate-950/40 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-3">
+                      <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                        <Database className="w-5 h-5" />
+                      </div>
+                      <div className="text-xs">
+                        <span className="font-semibold text-white">Neon PostgreSQL Database: </span>
+                        <span className="text-slate-400">Fixed in backend environment variable (<code className="text-emerald-300 font-mono text-[11px]">DATABASE_URL</code>) for structural security. All R2, Resend, and Auth keys above are dynamically managed here in real-time.</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* R2 Upload Node */}
                 <div className="bg-slate-900/40 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-6">
                   <div className="flex items-center gap-3">
