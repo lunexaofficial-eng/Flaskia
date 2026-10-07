@@ -38,25 +38,11 @@ if (typeof jsPDFConstructor !== "function") {
 }
 
 import { PRODUCTS } from "./src/data.js";
-import {
-  getResolvedSystemKeys,
-  getDynamicR2Client,
-  getDynamicResendClient,
-  getDynamicBetterAuth,
-  invalidateSystemKeysCache,
-  saveSystemKeys,
-  resetSystemKeys,
-  testCloudflareR2Connection,
-  testResendConnection,
-  testBetterAuthSecret,
-  maskSecretKey,
-  SystemKeysConfig
-} from "./server/dynamicServices.js";
 
 dotenv.config();
 
-// Configure dynamic Resend API Client on Startup (used for verified OTP & transactional dispatch)
-export let resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Configure Resend API Client on Startup (used for verified OTP & transactional dispatch)
+export const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const app = express();
 const PORT = 3000;
@@ -402,13 +388,11 @@ async function broadcastNewProductNotification(product: any) {
       </html>
     `;
 
-    const { client: dynamicResend, fromEmail } = await getDynamicResendClient();
-
-    if (dynamicResend) {
+    if (resendClient) {
       for (const targetEmail of emails) {
         try {
-          await dynamicResend.emails.send({
-            from: fromEmail,
+          await resendClient.emails.send({
+            from: fromAddress,
             to: [targetEmail],
             subject: `🔥 New Arrival: ${product.name} Now Available on Flaskia`,
             html: emailHtml,
@@ -419,7 +403,7 @@ async function broadcastNewProductNotification(product: any) {
         }
       }
     } else {
-      console.log(`[DEV MODE PRODUCT BROADCAST] No active Resend client. Would send new product email to ${emails.length} subscriber emails:`, emails);
+      console.log(`[DEV MODE PRODUCT BROADCAST] No RESEND_API_KEY. Would send new product email to ${emails.length} subscriber emails:`, emails);
     }
   } catch (err: any) {
     console.error("Error broadcasting product notification email:", err);
@@ -1479,11 +1463,11 @@ async function sendSimulatedEmail(targetEmail: string, subject: string, body: st
   }
 
   // 3. Dispatch real email via official Resend Integration Provider when key is configured
-  const { client: dynamicResend, fromEmail } = await getDynamicResendClient();
-  if (dynamicResend) {
+  if (resendClient) {
     try {
+      const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
       const mailPayload: any = {
-        from: fromEmail,
+        from: fromAddress,
         to: [targetEmail.toLowerCase().trim()],
         subject: subject,
         html: body
@@ -1499,7 +1483,7 @@ async function sendSimulatedEmail(targetEmail: string, subject: string, body: st
         ];
       }
 
-      const sendResult = await dynamicResend.emails.send(mailPayload);
+      const sendResult = await resendClient.emails.send(mailPayload);
       if (sendResult.error) {
         console.error(`[Resend Error] Failed to deliver email via Resend to ${targetEmail}:`, sendResult.error);
       } else {
@@ -1509,7 +1493,7 @@ async function sendSimulatedEmail(targetEmail: string, subject: string, body: st
       console.error(`[Resend Exception] Failed to deliver real email via Resend to ${targetEmail}:`, err);
     }
   } else {
-    console.log(`[Resend Debug] Simulated email log saved. Set Resend API key in Admin Panel or .env to trigger real email dispatch to: ${targetEmail}`);
+    console.log(`[Resend Debug] Simulated email log saved. Set RESEND_API_KEY environment variable to trigger real email dispatch to: ${targetEmail}`);
   }
 }
 
@@ -3263,12 +3247,11 @@ app.post("/api/auth/otp/send", async (req, res) => {
     let sentWithResend = false;
     let resendMessage = "";
 
-    const { client: dynamicResend, fromEmail } = await getDynamicResendClient();
-
-    if (dynamicResend) {
+    if (resendClient) {
       try {
-        const sendResult = await dynamicResend.emails.send({
-          from: fromEmail,
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
+        const sendResult = await resendClient.emails.send({
+          from: fromAddress,
           to: [lowerEmail],
           subject: `🔐 Your Access Code: ${code} - Flaskia Marketplace`,
           html: `
@@ -3575,12 +3558,11 @@ app.post("/api/profile/otp/send", async (req, res) => {
     let sentWithResend = false;
     let resendMessage = "";
 
-    const { client: dynamicResend, fromEmail } = await getDynamicResendClient();
-
-    if (dynamicResend) {
+    if (resendClient) {
       try {
-        const sendResult = await dynamicResend.emails.send({
-          from: fromEmail,
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>";
+        const sendResult = await resendClient.emails.send({
+          from: fromAddress,
           to: [lowerEmail],
           subject: `Secure Profile Verification: ${code} - Flaskia`,
           html: `
@@ -4146,142 +4128,6 @@ app.post("/api/admin/db/reset", checkAdminAuth, async (req, res) => {
   }
 });
 
-// --- DYNAMIC CLOUD INTEGRATIONS & SYSTEM KEYS MANAGEMENT ENDPOINTS ---
-
-// Admin: Get all resolved system keys with active source indicators and security masking
-app.get("/api/admin/system-keys", checkAdminAuth, async (req, res) => {
-  try {
-    const { keys, sources, rawAdminKeys } = await getResolvedSystemKeys();
-
-    const maskedKeys: Record<string, string> = {
-      r2_account_id: keys.r2_account_id || "",
-      r2_access_key_id: keys.r2_access_key_id || "",
-      r2_secret_access_key: maskSecretKey(keys.r2_secret_access_key),
-      r2_bucket_name: keys.r2_bucket_name || "",
-      r2_public_url: keys.r2_public_url || "",
-      r2_endpoint: keys.r2_endpoint || "",
-      resend_api_key: maskSecretKey(keys.resend_api_key),
-      resend_from_email: keys.resend_from_email || "",
-      resend_verified_domain: keys.resend_verified_domain || "",
-      better_auth_secret: maskSecretKey(keys.better_auth_secret),
-      better_auth_url: keys.better_auth_url || "",
-    };
-
-    return res.json({
-      success: true,
-      keys,
-      sources,
-      maskedKeys,
-      rawAdminKeys,
-      environmentDefaults: {
-        has_r2_account_id: !!process.env.R2_ACCOUNT_ID,
-        has_r2_access_key_id: !!process.env.R2_ACCESS_KEY_ID,
-        has_r2_secret_access_key: !!process.env.R2_SECRET_ACCESS_KEY,
-        has_r2_bucket_name: !!process.env.R2_BUCKET_NAME,
-        has_r2_public_url: !!process.env.R2_PUBLIC_URL,
-        has_resend_api_key: !!process.env.RESEND_API_KEY,
-        has_resend_from_email: !!process.env.RESEND_FROM_EMAIL,
-        has_resend_verified_domain: !!process.env.RESEND_VERIFIED_DOMAIN,
-        has_better_auth_secret: !!(process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET),
-        has_better_auth_url: !!process.env.BETTER_AUTH_URL,
-      },
-    });
-  } catch (err: any) {
-    console.error("Error fetching system keys:", err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// Admin: Save or update dynamic system keys directly from the Admin Panel
-app.post("/api/admin/system-keys", checkAdminAuth, async (req, res) => {
-  try {
-    const updates = req.body;
-    if (!updates || typeof updates !== "object") {
-      return res.status(400).json({ error: "Invalid payload format. Expected JSON object with key-value pairs." });
-    }
-
-    await saveSystemKeys(updates);
-
-    const { keys, sources, rawAdminKeys } = await getResolvedSystemKeys();
-    return res.json({
-      success: true,
-      message: "System integration keys saved and applied successfully across runtime services.",
-      keys,
-      sources,
-      rawAdminKeys,
-    });
-  } catch (err: any) {
-    console.error("Error saving system keys:", err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// Admin: Reset specific or all integration keys back to .env fallback
-app.post("/api/admin/system-keys/reset", checkAdminAuth, async (req, res) => {
-  try {
-    const { keys: targetKeys } = req.body;
-    await resetSystemKeys(Array.isArray(targetKeys) ? targetKeys : undefined);
-
-    const { keys, sources, rawAdminKeys } = await getResolvedSystemKeys();
-    return res.json({
-      success: true,
-      message: "Dynamic keys successfully reset to environment variable fallbacks.",
-      keys,
-      sources,
-      rawAdminKeys,
-    });
-  } catch (err: any) {
-    console.error("Error resetting system keys:", err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// Admin: Live test Cloudflare R2 Connection & Bucket Access
-app.post("/api/admin/system-keys/test-r2", checkAdminAuth, async (req, res) => {
-  try {
-    const result = await testCloudflareR2Connection();
-    return res.json(result);
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      latencyMs: 0,
-      message: "Internal test error: " + err.message,
-      error: err.message,
-    });
-  }
-});
-
-// Admin: Live test Resend API & Verified Domain (optionally dispatch real test email)
-app.post("/api/admin/system-keys/test-resend", checkAdminAuth, async (req, res) => {
-  try {
-    const { testEmail } = req.body;
-    const result = await testResendConnection(testEmail);
-    return res.json(result);
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      latencyMs: 0,
-      message: "Internal test error: " + err.message,
-      error: err.message,
-    });
-  }
-});
-
-// Admin: Live test Better Auth & Security Secret Benchmark
-app.post("/api/admin/system-keys/test-auth", checkAdminAuth, async (req, res) => {
-  try {
-    const result = await testBetterAuthSecret();
-    return res.json(result);
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      latencyMs: 0,
-      message: "Internal test error: " + err.message,
-      error: err.message,
-    });
-  }
-});
-
 // --- CLOUDFLARE R2 UPLOAD ENDPOINT ---
 
 // Ensure local storage directory exists for file uploads fallback
@@ -4297,31 +4143,30 @@ if (!fs.existsSync(localUploadsDir)) {
 // Serve local uploads folder statically as fallback
 app.use("/uploads", express.static(localUploadsDir));
 
-// --- CLOUDFLARE R2 UPLOAD & DYNAMIC STORAGE ENDPOINTS ---
+// --- CLOUDFLARE R2 UPLOAD & MEDIA PROXY ENDPOINTS ---
 
-// PUT /api/admin/system-keys - Also support PUT for saving dynamic integration keys
-app.put("/api/admin/system-keys", checkAdminAuth, async (req, res) => {
-  try {
-    const updates = req.body;
-    if (!updates || typeof updates !== "object") {
-      return res.status(400).json({ error: "Invalid payload format. Expected JSON object with key-value pairs." });
-    }
-
-    await saveSystemKeys(updates);
-
-    const { keys, sources, rawAdminKeys } = await getResolvedSystemKeys();
-    return res.json({
-      success: true,
-      message: "System integration keys saved and applied successfully across runtime services.",
-      keys,
-      sources,
-      rawAdminKeys,
-    });
-  } catch (err: any) {
-    console.error("Error saving system keys:", err);
-    return res.status(500).json({ error: err.message });
-  }
-});
+// Configure S3 Client for Cloudflare R2
+let r2Client: S3Client | null = null;
+if (
+  process.env.R2_ACCOUNT_ID &&
+  process.env.R2_ACCESS_KEY_ID &&
+  process.env.R2_SECRET_ACCESS_KEY &&
+  process.env.R2_BUCKET_NAME
+) {
+  r2Client = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+  console.log("Cloudflare R2 Client initialized successfully.");
+} else {
+  console.warn(
+    "Cloudflare R2 configurations missing or incomplete. Local disk fallback storage will be active.",
+  );
+}
 
 // Memory storage for multer (buffer files before saving)
 const upload = multer({
@@ -4345,15 +4190,14 @@ const handleServeFile = async (req: express.Request, res: express.Response) => {
     return res.sendFile(localFilePath);
   }
 
-  // 2. Try dynamic Cloudflare R2
-  const { client: activeR2, bucketName } = await getDynamicR2Client();
-  if (activeR2 && bucketName) {
+  // 2. Try Cloudflare R2 if client is configured
+  if (r2Client && process.env.R2_BUCKET_NAME) {
     try {
       const getCmd = new GetObjectCommand({
-        Bucket: bucketName,
+        Bucket: process.env.R2_BUCKET_NAME,
         Key: safeKey,
       });
-      const r2Response = await activeR2.send(getCmd);
+      const r2Response = await r2Client.send(getCmd);
 
       if (r2Response.ContentType) {
         res.setHeader("Content-Type", r2Response.ContentType);
@@ -4372,9 +4216,11 @@ const handleServeFile = async (req: express.Request, res: express.Response) => {
       res.setHeader("Access-Control-Allow-Origin", "*");
 
       if (r2Response.Body) {
+        // Transform stream bytes and return
         const byteArray = await r2Response.Body.transformToByteArray();
         const buffer = Buffer.from(byteArray);
 
+        // Cache locally for faster future requests
         try {
           fs.writeFileSync(localFilePath, buffer);
         } catch (e) {
@@ -4384,7 +4230,7 @@ const handleServeFile = async (req: express.Request, res: express.Response) => {
         return res.send(buffer);
       }
     } catch (err: any) {
-      console.warn(`R2 dynamic fetch attempt failed for key ${safeKey}:`, err.message || err);
+      console.warn(`R2 fetch attempt failed for key ${safeKey}:`, err.message || err);
     }
   }
 
@@ -4431,30 +4277,29 @@ app.post(
         console.error("Local disk save error:", err);
       }
 
-      // Upload to dynamic Cloudflare R2 if configured
+      // Upload to Cloudflare R2 if client is configured
       let uploadedToR2 = false;
-      const { client: activeR2, bucketName, publicUrl: customPublicUrl } = await getDynamicR2Client();
-
-      if (activeR2 && bucketName) {
+      if (r2Client && process.env.R2_BUCKET_NAME) {
         try {
           const putCmd = new PutObjectCommand({
-            Bucket: bucketName,
+            Bucket: process.env.R2_BUCKET_NAME,
             Key: uniqueFileName,
             Body: req.file.buffer,
             ContentType: req.file.mimetype,
           });
-          await activeR2.send(putCmd);
+          await r2Client.send(putCmd);
           uploadedToR2 = true;
         } catch (r2Err: any) {
-          console.error("Cloudflare R2 Dynamic Upload warning:", r2Err);
+          console.error("Cloudflare R2 Upload warning:", r2Err);
         }
       }
 
       // Determine public URL
-      const hasValidPublicUrl = customPublicUrl && customPublicUrl.startsWith("http") && !customPublicUrl.includes("xxxxxx");
+      const r2Pub = process.env.R2_PUBLIC_URL?.trim();
+      const hasValidPublicUrl = r2Pub && r2Pub.startsWith("http") && !r2Pub.includes("xxxxxx");
 
       const fileUrl = (uploadedToR2 && hasValidPublicUrl)
-        ? `${customPublicUrl.replace(/\/+$/, "")}/${uniqueFileName}`
+        ? `${r2Pub.replace(/\/+$/, "")}/${uniqueFileName}`
         : `/api/uploads/file/${uniqueFileName}`;
 
       let uploadType = "image";
@@ -4503,6 +4348,7 @@ app.post(
       return res.status(400).json({ error: "No file was uploaded." });
     }
 
+    // Limit proof image to 5MB
     if (req.file.buffer.byteLength > 5 * 1024 * 1024) {
       return res.status(400).json({ error: "File size exceeds 5MB limit." });
     }
@@ -4515,6 +4361,7 @@ app.post(
       const fileExtension = path.extname(req.file.originalname);
       const uniqueFileName = `proof_${Date.now()}_${uuidv4()}${fileExtension}`;
 
+      // Save local copy
       const localPath = path.join(localUploadsDir, uniqueFileName);
       try {
         fs.writeFileSync(localPath, req.file.buffer);
@@ -4522,28 +4369,28 @@ app.post(
         console.error("Local disk save error:", err);
       }
 
+      // Upload to R2 if available
       let uploadedToR2 = false;
-      const { client: activeR2, bucketName, publicUrl: customPublicUrl } = await getDynamicR2Client();
-
-      if (activeR2 && bucketName) {
+      if (r2Client && process.env.R2_BUCKET_NAME) {
         try {
           const putCmd = new PutObjectCommand({
-            Bucket: bucketName,
+            Bucket: process.env.R2_BUCKET_NAME,
             Key: uniqueFileName,
             Body: req.file.buffer,
             ContentType: req.file.mimetype,
           });
-          await activeR2.send(putCmd);
+          await r2Client.send(putCmd);
           uploadedToR2 = true;
         } catch (r2Err) {
           console.error("Public R2 Upload warning:", r2Err);
         }
       }
 
-      const hasValidPublicUrl = customPublicUrl && customPublicUrl.startsWith("http") && !customPublicUrl.includes("xxxxxx");
+      const r2Pub = process.env.R2_PUBLIC_URL?.trim();
+      const hasValidPublicUrl = r2Pub && r2Pub.startsWith("http") && !r2Pub.includes("xxxxxx");
 
       const fileUrl = (uploadedToR2 && hasValidPublicUrl)
-        ? `${customPublicUrl.replace(/\/+$/, "")}/${uniqueFileName}`
+        ? `${r2Pub.replace(/\/+$/, "")}/${uniqueFileName}`
         : `/api/uploads/file/${uniqueFileName}`;
 
       return res.json({
@@ -4598,15 +4445,14 @@ app.delete("/api/uploads/:id", checkAdminAuth, async (req, res) => {
       }
     }
 
-    // Delete from dynamic Cloudflare R2 if available
-    const { client: activeR2, bucketName } = await getDynamicR2Client();
-    if (activeR2 && bucketName) {
+    // Delete from Cloudflare R2 if available
+    if (r2Client && process.env.R2_BUCKET_NAME) {
       try {
         const delCmd = new DeleteObjectCommand({
-          Bucket: bucketName,
+          Bucket: process.env.R2_BUCKET_NAME,
           Key: safeKey,
         });
-        await activeR2.send(delCmd);
+        await r2Client.send(delCmd);
       } catch (r2Err: any) {
         console.error("Cloudflare R2 Delete Object failed:", r2Err);
       }

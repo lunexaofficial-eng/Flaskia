@@ -12,16 +12,13 @@ import App from './App.tsx';
 import './index.css';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import { CurrencyProvider } from './context/CurrencyContext.tsx';
-import { AdminThemeProvider } from './context/AdminThemeContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      <AdminThemeProvider>
-        <CurrencyProvider>
-          <App />
-        </CurrencyProvider>
-      </AdminThemeProvider>
+      <CurrencyProvider>
+        <App />
+      </CurrencyProvider>
     </ThemeProvider>
   </StrictMode>,
 );
