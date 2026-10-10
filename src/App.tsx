@@ -102,13 +102,13 @@ export default function App() {
   useEffect(() => {
     fetch("/api/categories")
       .then(res => res.ok ? res.json() : [])
-      .then(data => setAppCategories(data))
+      .then(data => setAppCategories(Array.isArray(data) ? data : []))
       .catch(console.error);
     
     fetch("/api/products")
       .then(res => res.ok ? res.json() : [])
       .then(data => {
-        if (data && data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
           setAppProducts(data);
         } else {
           setAppProducts(PRODUCTS); // Fallback to local data

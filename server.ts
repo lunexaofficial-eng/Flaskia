@@ -63,6 +63,73 @@ import {
   saveBatchStoredApiKeys,
 } from "./server/db.js";
 
+// --- SERVERLESS & COLD-START AUTO-INITIALIZATION GUARD ---
+let dbInitPromise: Promise<void> | null = null;
+let dbInitialized = false;
+
+export async function ensureDbInitialized() {
+  if (dbInitialized) return;
+  if (!dbInitPromise) {
+    dbInitPromise = (async () => {
+      try {
+        // Quick check if core tables exist; if not, or on initial boot, run full idempotent initDb
+        const check = await pool.query(`
+          SELECT
+            to_regclass('public.products') AS products_tbl,
+            to_regclass('public.categories') AS categories_tbl,
+            to_regclass('public.customers') AS customers_tbl,
+            to_regclass('public.orders') AS orders_tbl,
+            to_regclass('public.homepage_config') AS homepage_tbl,
+            to_regclass('public.inquiries') AS inquiries_tbl,
+            to_regclass('public.system_api_keys') AS api_keys_tbl
+        `);
+        const row = check.rows[0] || {};
+        const missingAny =
+          !row.products_tbl ||
+          !row.categories_tbl ||
+          !row.customers_tbl ||
+          !row.orders_tbl ||
+          !row.homepage_tbl ||
+          !row.inquiries_tbl ||
+          !row.api_keys_tbl;
+
+        if (missingAny) {
+          console.log("New or uninitialized PostgreSQL database detected. Running initDb(PRODUCTS)...");
+          await initDb(PRODUCTS);
+        } else {
+          // Even if tables exist, ensure baseline seed if products table is empty
+          const prodCount = await pool.query("SELECT COUNT(*) FROM products");
+          if (parseInt(prodCount.rows[0].count) === 0) {
+            await initDb(PRODUCTS);
+          }
+        }
+        dbInitialized = true;
+      } catch (err) {
+        console.error("Auto-initDb check failed, attempting full initDb:", err);
+        try {
+          await initDb(PRODUCTS);
+          dbInitialized = true;
+        } catch (innerErr) {
+          console.error("Full initDb recovery error:", innerErr);
+        }
+      } finally {
+        dbInitPromise = null;
+      }
+    })();
+  }
+  await dbInitPromise;
+}
+
+// Middleware to guarantee PostgreSQL schema & seed data exist before any /api route executes (critical for Vercel serverless & fresh Neon DBs)
+app.use("/api", async (req, res, next) => {
+  try {
+    await ensureDbInitialized();
+  } catch (e) {
+    console.error("Database initialization middleware warning:", e);
+  }
+  next();
+});
+
 import {
   getDynamicR2Client,
   getDynamicResendClient,
@@ -1997,7 +2064,7 @@ app.get("/api/admin/invoices", checkAdminAuth, async (req, res) => {
     const { rows } = await pool.query("SELECT i.*, o.order_id as local_order_no, o.date as order_date, o.currency FROM invoices i LEFT JOIN orders o ON i.order_id = o.id ORDER BY i.created_at DESC");
     return res.json(rows);
   } catch (err: any) {
-    return res.status(555).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -3950,6 +4017,7 @@ function checkAdminAuth(
 
 app.get("/api/admin/db/tables", checkAdminAuth, async (req, res) => {
   try {
+    await ensureDbInitialized();
     const tables = [
       {
         name: "categories",
@@ -3979,12 +4047,37 @@ app.get("/api/admin/db/tables", checkAdminAuth, async (req, res) => {
         name: "homepage_config",
         desc: "Editable landing content, watermark branding parameters, and footnote licenses",
       },
+      {
+        name: "inquiries",
+        desc: "B2B wholesale RFQ inquiries and customer quote requests",
+      },
+      {
+        name: "inquiry_messages",
+        desc: "Threaded messages between B2B customers and administration",
+      },
+      {
+        name: "company_policies",
+        desc: "Storefront company policies, terms, privacy, and shipping rules",
+      },
+      {
+        name: "media_uploads",
+        desc: "Cloudflare R2 & persistent storage media asset registry",
+      },
+      {
+        name: "system_api_keys",
+        desc: "Dynamic third-party API keys & service integration credentials",
+      },
     ];
 
     const results = [];
     for (const tbl of tables) {
-      const countRes = await pool.query(`SELECT COUNT(*) FROM ${tbl.name}`);
-      const count = parseInt(countRes.rows[0].count);
+      let count = 0;
+      try {
+        const countRes = await pool.query(`SELECT COUNT(*) FROM ${tbl.name}`);
+        count = parseInt(countRes.rows[0].count) || 0;
+      } catch (_) {
+        count = 0;
+      }
 
       const colRes = await pool.query(
         `
@@ -4037,22 +4130,41 @@ app.post("/api/admin/db/query", checkAdminAuth, async (req, res) => {
 app.post("/api/admin/db/reset", checkAdminAuth, async (req, res) => {
   const client = await pool.connect();
   try {
+    dbInitialized = false;
     await client.query("BEGIN");
 
+    await client.query("DROP TABLE IF EXISTS inquiry_messages CASCADE");
+    await client.query("DROP TABLE IF EXISTS inquiries CASCADE");
     await client.query("DROP TABLE IF EXISTS tracking_updates CASCADE");
     await client.query("DROP TABLE IF EXISTS shipments CASCADE");
     await client.query("DROP TABLE IF EXISTS order_items CASCADE");
+    await client.query("DROP TABLE IF EXISTS invoices CASCADE");
+    await client.query("DROP TABLE IF EXISTS refunds CASCADE");
+    await client.query("DROP TABLE IF EXISTS payments CASCADE");
+    await client.query("DROP TABLE IF EXISTS payment_webhooks CASCADE");
     await client.query("DROP TABLE IF EXISTS orders CASCADE");
     await client.query("DROP TABLE IF EXISTS products CASCADE");
     await client.query("DROP TABLE IF EXISTS categories CASCADE");
+    await client.query("DROP TABLE IF EXISTS admin_sessions CASCADE");
+    await client.query("DROP TABLE IF EXISTS login_logs CASCADE");
+    await client.query("DROP TABLE IF EXISTS addresses CASCADE");
+    await client.query("DROP TABLE IF EXISTS customer_otps CASCADE");
     await client.query("DROP TABLE IF EXISTS customers CASCADE");
     await client.query("DROP TABLE IF EXISTS faqs CASCADE");
     await client.query("DROP TABLE IF EXISTS homepage_config CASCADE");
+    await client.query("DROP TABLE IF EXISTS company_policies CASCADE");
+    await client.query("DROP TABLE IF EXISTS payment_methods CASCADE");
 
     await client.query("COMMIT");
     client.release();
 
     await initDb(PRODUCTS);
+    dbInitialized = true;
+    invalidateCache("products");
+    invalidateCache("categories");
+    invalidateCache("homepage");
+    invalidateCache("policies");
+    invalidateCache("faqs");
 
     return res.json({
       success: true,
@@ -4359,8 +4471,10 @@ app.post("/api/admin/api-keys/generate-secret", checkAdminAuth, async (req, res)
 
 // --- CLOUDFLARE R2 UPLOAD ENDPOINT ---
 
-// Ensure local storage directory exists for file uploads fallback
-const localUploadsDir = path.join(process.cwd(), "uploads");
+// Ensure local storage directory exists for file uploads fallback (use /tmp/uploads on Vercel serverless)
+const localUploadsDir = process.env.VERCEL
+  ? path.join("/tmp", "uploads")
+  : path.join(process.cwd(), "uploads");
 if (!fs.existsSync(localUploadsDir)) {
   try {
     fs.mkdirSync(localUploadsDir, { recursive: true });
@@ -4685,7 +4799,7 @@ app.delete("/api/uploads/:id", checkAdminAuth, async (req, res) => {
 const startServer = async () => {
   // Initialize live PostgreSQL schema and seed baseline dataset collections when empty
   try {
-    await initDb(PRODUCTS);
+    await ensureDbInitialized();
     console.log(
       "PostgreSQL database setup and seeding verified on Neon startup.",
     );

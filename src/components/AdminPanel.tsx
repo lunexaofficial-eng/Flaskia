@@ -1518,16 +1518,28 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
       };
 
       const payRes = await fetch("/api/admin/payments", { headers });
-      if (payRes.ok) setPaymentsLog(await payRes.json());
+      if (payRes.ok) {
+        const payData = await payRes.json();
+        setPaymentsLog(Array.isArray(payData) ? payData : []);
+      }
 
       const whRes = await fetch("/api/admin/payment-webhooks", { headers });
-      if (whRes.ok) setWebhooksLog(await whRes.json());
+      if (whRes.ok) {
+        const whData = await whRes.json();
+        setWebhooksLog(Array.isArray(whData) ? whData : []);
+      }
 
       const refRes = await fetch("/api/admin/refunds", { headers });
-      if (refRes.ok) setRefundsLog(await refRes.json());
+      if (refRes.ok) {
+        const refData = await refRes.json();
+        setRefundsLog(Array.isArray(refData) ? refData : []);
+      }
 
       const invRes = await fetch("/api/admin/invoices", { headers });
-      if (invRes.ok) setInvoicesLog(await invRes.json());
+      if (invRes.ok) {
+        const invData = await invRes.json();
+        setInvoicesLog(Array.isArray(invData) ? invData : []);
+      }
     } catch (e) {
       console.error("Error reading administrative logs:", e);
     }
@@ -1945,7 +1957,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
       const res = await fetch("/api/admin/db/tables", { headers });
       if (res.ok) {
         const data = await res.json();
-        setDbTables(data);
+        setDbTables(Array.isArray(data) ? data : []);
       } else {
         const txt = await res.text();
         console.error("Failed to load DB tables:", txt);
@@ -3867,9 +3879,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         <tbody className="text-xs text-slate-300 divide-y divide-slate-800/40">
                           {products.map((p) => {
                             const isLow = p.stock < 10;
+                            const ghsList = Array.isArray(p.ghsPictograms) ? p.ghsPictograms : [];
                             const isToxic =
-                              p.ghsPictograms.includes("toxic") ||
-                              p.ghsPictograms.includes("corrosive");
+                              ghsList.includes("toxic") ||
+                              ghsList.includes("corrosive");
                             return (
                               <tr
                                 key={p.id}
@@ -3893,7 +3906,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                 </td>
                                 <td className="py-3.5">
                                   <div className="flex gap-1">
-                                    {p.ghsPictograms.map((pt, idx) => (
+                                    {ghsList.map((pt, idx) => (
                                       <span
                                         key={idx}
                                         className={`uppercase font-mono text-[8.5px] px-1.5 py-0.5 rounded leading-none ${
