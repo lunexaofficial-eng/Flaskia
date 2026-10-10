@@ -18,13 +18,13 @@ export default function NfpaDiamond({
   // NFPA 704 standard hazard diamond drawn in an beautiful SVG box
   return (
     <div className="flex flex-col items-center p-3 bg-white border border-slate-200 rounded-2xl max-w-[200px] shadow-xs" id="nfpa-container">
-      <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium mb-2 font-heading">NFPA 704 Rating</div>
+      <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium mb-2 font-heading">NFPA 704 Einstufung</div>
       <svg
         width={size}
         height={size}
         viewBox="0 0 100 100"
         className="drop-shadow-lg"
-        aria-label={`NFPA 704 Hazard Diamond. Health: ${health}, Flammability: ${flammability}, Instability: ${instability}, Special: ${special || "None"}`}
+        aria-label={`NFPA 704 Gefahrendiamant. Gesundheit: ${health}, Entzündbarkeit: ${flammability}, Instabilität: ${instability}, Besonderes: ${special || "Keine"}`}
       >
         {/* Diamond frame rotated 45 degrees or composed of 4 colored polygons */}
         
@@ -34,7 +34,7 @@ export default function NfpaDiamond({
           fill="#ef4444"
           className="transition-colors duration-200 cursor-help"
         >
-          <title>{`Flammability: ${flammability}`}</title>
+          <title>{`Entzündbarkeit: ${flammability}`}</title>
         </polygon>
         {/* Health (Blue) - Left */}
         <polygon
@@ -42,7 +42,7 @@ export default function NfpaDiamond({
           fill="#3b82f6"
           className="transition-colors duration-200 cursor-help"
         >
-          <title>{`Health Hazard: ${health}`}</title>
+          <title>{`Gesundheitsgefahr: ${health}`}</title>
         </polygon>
         {/* Instability (Yellow) - Right */}
         <polygon
@@ -50,7 +50,7 @@ export default function NfpaDiamond({
           fill="#eab308"
           className="transition-colors duration-200 cursor-help"
         >
-          <title>{`Instability: ${instability}`}</title>
+          <title>{`Instabilität: ${instability}`}</title>
         </polygon>
         {/* Special (White) - Bottom */}
         <polygon
@@ -58,7 +58,7 @@ export default function NfpaDiamond({
           fill="#f4f4f5"
           className="transition-colors duration-200 cursor-help"
         >
-          <title>{`Special Hazard: ${special || "None"}`}</title>
+          <title>{`Besondere Gefahr: ${special || "Keine"}`}</title>
         </polygon>
 
         {/* Text values */}

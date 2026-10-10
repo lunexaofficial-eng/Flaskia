@@ -1,5 +1,6 @@
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
+import { getProxiedImageUrl } from "../utils/imageUtils";
 import CurrencySelector from "./CurrencySelector";
 import {
   ShoppingBag,
@@ -27,6 +28,7 @@ interface HeaderProps {
   appBrandBadge?: string;
   appSubtitle?: string;
   appLogoIcon?: string;
+  appLogoUrl?: string;
   currentUser?: any;
   onLogout?: () => void;
   onOpenInquiry?: (product?: any) => void;
@@ -67,11 +69,13 @@ export default function Header({
   onOpenHelp,
   appName = "Flaskia",
   appLogoIcon = "FlaskConical",
+  appLogoUrl = "",
   currentUser,
   onLogout,
   onOpenInquiry,
 }: HeaderProps) {
-  const { isIndiamart } = useTheme();
+  const { isIndiamart, isRetail } = useTheme();
+  const isNoCartAuthTheme = isRetail || isIndiamart;
   const TargetIcon = getLogoIcon(appLogoIcon);
 
   return (
@@ -85,9 +89,17 @@ export default function Header({
           onClick={() => onNavigate("store")}
           className="flex items-center gap-2.5 cursor-pointer group shrink-0"
         >
-          <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center group-hover:bg-[#0747a6] transition-colors">
-            <TargetIcon className="w-5 h-5 text-white stroke-[2]" />
-          </div>
+          {appLogoUrl ? (
+            <img
+              src={getProxiedImageUrl(appLogoUrl)}
+              alt={appName}
+              className="h-9 w-auto max-w-[160px] object-contain rounded-lg"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center group-hover:bg-[#0747a6] transition-colors">
+              <TargetIcon className="w-5 h-5 text-white stroke-[2]" />
+            </div>
+          )}
           <span className="text-lg font-bold tracking-tight text-slate-900 font-heading">
             {appName}
           </span>
@@ -99,7 +111,7 @@ export default function Header({
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by chemical name, CAS number, or formula..."
+              placeholder="Suche nach Chemikalienname, CAS-Nummer oder Formel..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="w-full pl-9 pr-8 py-2 text-xs text-slate-900 bg-slate-50 border border-slate-200 rounded-lg outline-none placeholder-slate-400 focus:bg-white focus:border-[#0052cc] focus:ring-2 focus:ring-[#0052cc]/10 transition-all"
@@ -108,7 +120,7 @@ export default function Header({
               <button
                 onClick={() => onSearchChange("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
-                aria-label="Clear search"
+                aria-label="Suche löschen"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -127,10 +139,10 @@ export default function Header({
                   : "hover:text-slate-900"
               }`}
             >
-              Catalog
+              Katalog
             </button>
 
-            {isIndiamart ? (
+            {isNoCartAuthTheme ? (
               <button
                 onClick={() => onNavigate("inquiries")}
                 className={`cursor-pointer transition-colors py-1 ${
@@ -139,7 +151,7 @@ export default function Header({
                     : "hover:text-slate-900"
                 }`}
               >
-                Inquiries
+                Anfragen
               </button>
             ) : (
               <button
@@ -150,7 +162,7 @@ export default function Header({
                     : "hover:text-slate-900"
                 }`}
               >
-                Orders
+                Bestellungen
               </button>
             )}
 
@@ -158,7 +170,7 @@ export default function Header({
               onClick={onOpenHelp}
               className="cursor-pointer hover:text-slate-900 transition-colors py-1"
             >
-              Safety & FAQ
+              Sicherheit & FAQ
             </button>
           </nav>
 
@@ -167,7 +179,7 @@ export default function Header({
           <div className="flex items-center gap-2.5">
             <CurrencySelector align="right" />
 
-            {!isIndiamart && (
+            {!isNoCartAuthTheme && (
               currentUser ? (
                 <div className="hidden md:flex items-center gap-2">
                   <button
@@ -178,14 +190,14 @@ export default function Header({
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     }`}
                   >
-                    {currentUser.displayName || currentUser.email?.split("@")[0] || "Account"}
+                    {currentUser.displayName || currentUser.email?.split("@")[0] || "Konto"}
                   </button>
                   {onLogout && (
                     <button
                       onClick={onLogout}
                       className="text-xs font-medium text-slate-500 hover:text-rose-600 px-2 py-1.5 cursor-pointer transition-colors"
                     >
-                      Sign Out
+                      Abmelden
                     </button>
                   )}
                 </div>
@@ -194,27 +206,18 @@ export default function Header({
                   onClick={() => onNavigate("orders")}
                   className="hidden md:inline-flex px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
                 >
-                  Sign In
+                  Anmelden
                 </button>
               )
             )}
 
-            {isIndiamart ? (
-              <button
-                onClick={() => {
-                  if (onOpenInquiry) onOpenInquiry();
-                }}
-                className="px-4 py-2 bg-[#0052cc] hover:bg-[#0747a6] text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-              >
-                Request Quote
-              </button>
-            ) : (
+            {!isNoCartAuthTheme && (
               <button
                 onClick={() => onNavigate("checkout")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#0052cc] hover:bg-[#0747a6] text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap"
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
-                <span>Cart</span>
+                <span>Warenkorb</span>
                 {cartCount > 0 && (
                   <span className="font-mono text-[11px] font-bold bg-white/20 px-1.5 py-0.2 rounded">
                     {cartCount}
@@ -232,7 +235,7 @@ export default function Header({
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search reagents, CAS #, or formula..."
+            placeholder="Suche nach Reagenzien, CAS-Nr. oder Formel..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-9 pr-8 py-2 text-xs text-slate-900 bg-slate-50 border border-slate-200 rounded-lg outline-none placeholder-slate-400 focus:bg-white focus:border-[#0052cc]"

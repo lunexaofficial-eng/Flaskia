@@ -58,6 +58,7 @@ import {
   ShieldAlert,
   Cloud,
   UploadCloud,
+  Globe,
   Copy,
   Link,
   Truck,
@@ -1396,6 +1397,8 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     appBrandBadge: "",
     appSubtitle: "",
     appLogoIcon: "",
+    appLogoUrl: "",
+    footerLogoUrl: "",
     appFaviconUrl: "",
     adminWhatsappNumber: "",
 
@@ -1419,6 +1422,86 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     paypal_currency: "USD",
   });
   const [isSavingHomepage, setIsSavingHomepage] = useState<boolean>(false);
+  const [uploadingBrandAsset, setUploadingBrandAsset] = useState<
+    "headerLogo" | "footerLogo" | "favicon" | null
+  >(null);
+  const [brandUploadStatus, setBrandUploadStatus] = useState<{
+    field: "headerLogo" | "footerLogo" | "favicon";
+    message: string;
+    isError?: boolean;
+  } | null>(null);
+
+  const handleBrandAssetR2Upload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    targetField: "appLogoUrl" | "footerLogoUrl" | "appFaviconUrl",
+    assetType: "headerLogo" | "footerLogo" | "favicon"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBrandAsset(assetType);
+    setBrandUploadStatus({
+      field: assetType,
+      message: "Uploading to Cloudflare R2 Storage...",
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const adminToken =
+        token ||
+        localStorage.getItem("lunexa_admin_token") ||
+        "local_admin_dummy_jwt_12345678";
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.url) {
+        const uploadedUrl = data.url;
+        const updatedForm = {
+          ...homepageForm,
+          [targetField]: uploadedUrl,
+        };
+        setHomepageForm(updatedForm);
+
+        // Immediately persist to PostgreSQL homepage_config so it's live right away
+        await fetch("/api/homepage", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ [targetField]: uploadedUrl }),
+        });
+
+        setBrandUploadStatus({
+          field: assetType,
+          message: `Uploaded to Cloudflare R2 & applied live (${data.originalName})`,
+        });
+        fetchMediaFiles();
+      } else {
+        setBrandUploadStatus({
+          field: assetType,
+          message: data.error || "Upload failed",
+          isError: true,
+        });
+      }
+    } catch (err: any) {
+      setBrandUploadStatus({
+        field: assetType,
+        message: "Upload error: " + (err.message || String(err)),
+        isError: true,
+      });
+    } finally {
+      setUploadingBrandAsset(null);
+      e.target.value = "";
+    }
+  };
 
   // Financial Ledger Logs State
   const [paymentsLog, setPaymentsLog] = useState<any[]>([]);
@@ -1635,6 +1718,8 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         appBrandBadge: homeData.appBrandBadge || "PRO",
         appSubtitle: homeData.appSubtitle || "Academic Supply Direct",
         appLogoIcon: homeData.appLogoIcon || "FlaskConical",
+        appLogoUrl: homeData.appLogoUrl || "",
+        footerLogoUrl: homeData.footerLogoUrl || "",
         appFaviconUrl:
           homeData.appFaviconUrl ||
           "https://img.icons8.com/color/48/chemistry.png",
@@ -1737,6 +1822,8 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         appBrandBadge: "PRO",
         appSubtitle: "Academic Supply Direct",
         appLogoIcon: "FlaskConical",
+        appLogoUrl: "",
+        footerLogoUrl: "",
         appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
 
         // Default footer variables
@@ -5332,49 +5419,301 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Launcher Logo Icon
-                          </label>
-                          <select
-                            value={homepageForm.appLogoIcon}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appLogoIcon: e.target.value,
-                              }))
-                            }
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition cursor-pointer"
-                          >
-                            <option value="FlaskConical">Flask Conical</option>
-                            <option value="Award">Award Badge</option>
-                            <option value="Activity">Pulse Activity</option>
-                            <option value="ShieldCheck">Verified Shield</option>
-                            <option value="Globe">Global Network</option>
-                            <option value="Cpu">Microchip CPU</option>
-                            <option value="Sparkles">Sparkles Star</option>
-                            <option value="Beaker">Beaker Tube</option>
-                            <option value="Heart">Care Heart</option>
-                          </select>
+                      <div className="grid grid-cols-1 gap-4 pt-2 border-t border-slate-800/60">
+                        {/* 1A. Website Header Logo Upload (Cloudflare R2) */}
+                        <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-3.5 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <label className="block text-[10px] font-bold text-rose-400 uppercase tracking-wider">
+                                Website Header Logo (Cloudflare R2 Upload)
+                              </label>
+                              <p className="text-[9.5px] text-slate-500">
+                                Upload PNG, SVG, WEBP or JPG logo for the top navigation bar
+                              </p>
+                            </div>
+                            {homepageForm.appLogoUrl && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setHomepageForm((prev) => ({ ...prev, appLogoUrl: "" }));
+                                  const adminToken = token || localStorage.getItem("lunexa_admin_token") || "";
+                                  await fetch("/api/homepage", {
+                                    method: "PUT",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${adminToken}`,
+                                    },
+                                    body: JSON.stringify({ appLogoUrl: "" }),
+                                  });
+                                }}
+                                className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove Logo
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                              {homepageForm.appLogoUrl ? (
+                                <img
+                                  src={getProxiedImageUrl(homepageForm.appLogoUrl)}
+                                  alt="Header Logo Preview"
+                                  className="w-full h-full object-contain p-1"
+                                />
+                              ) : (
+                                <Image className="w-5 h-5 text-slate-600" />
+                              )}
+                            </div>
+
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <label className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-[10.5px] font-bold rounded-lg cursor-pointer transition inline-flex items-center gap-1.5 shrink-0 shadow-xs">
+                                  {uploadingBrandAsset === "headerLogo" ? (
+                                    <>
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                      <span>Uploading to R2...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UploadCloud className="w-3.5 h-3.5" />
+                                      <span>Upload Header Logo</span>
+                                    </>
+                                  )}
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      handleBrandAssetR2Upload(e, "appLogoUrl", "headerLogo")
+                                    }
+                                    disabled={uploadingBrandAsset === "headerLogo"}
+                                    className="hidden"
+                                  />
+                                </label>
+                                <input
+                                  type="text"
+                                  value={homepageForm.appLogoUrl}
+                                  onChange={(e) =>
+                                    setHomepageForm((prev) => ({
+                                      ...prev,
+                                      appLogoUrl: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Or paste R2 / direct image URL..."
+                                  className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[11px] text-white font-mono focus:outline-none focus:border-rose-500"
+                                />
+                              </div>
+                              {brandUploadStatus?.field === "headerLogo" && (
+                                <p
+                                  className={`text-[10px] font-mono ${
+                                    brandUploadStatus.isError ? "text-rose-400" : "text-emerald-400"
+                                  }`}
+                                >
+                                  {brandUploadStatus.message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Browser Favicon URL
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={homepageForm.appFaviconUrl}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appFaviconUrl: e.target.value,
-                              }))
-                            }
-                            placeholder="e.g. https://icons8.com/chemistry"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                          />
+
+                        {/* 1B. Website Footer Logo Upload (Cloudflare R2) */}
+                        <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-3.5 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <label className="block text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                                Footer Website Logo (Cloudflare R2 Upload)
+                              </label>
+                              <p className="text-[9.5px] text-slate-500">
+                                Dedicated logo for the marketplace footer (falls back to Header Logo if empty)
+                              </p>
+                            </div>
+                            {homepageForm.footerLogoUrl && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setHomepageForm((prev) => ({ ...prev, footerLogoUrl: "" }));
+                                  const adminToken = token || localStorage.getItem("lunexa_admin_token") || "";
+                                  await fetch("/api/homepage", {
+                                    method: "PUT",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${adminToken}`,
+                                    },
+                                    body: JSON.stringify({ footerLogoUrl: "" }),
+                                  });
+                                }}
+                                className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove Footer Logo
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                              {homepageForm.footerLogoUrl || homepageForm.appLogoUrl ? (
+                                <img
+                                  src={getProxiedImageUrl(
+                                    homepageForm.footerLogoUrl || homepageForm.appLogoUrl
+                                  )}
+                                  alt="Footer Logo Preview"
+                                  className="w-full h-full object-contain p-1"
+                                />
+                              ) : (
+                                <Image className="w-5 h-5 text-slate-600" />
+                              )}
+                            </div>
+
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <label className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10.5px] font-bold rounded-lg cursor-pointer transition inline-flex items-center gap-1.5 shrink-0 shadow-xs">
+                                  {uploadingBrandAsset === "footerLogo" ? (
+                                    <>
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                      <span>Uploading to R2...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UploadCloud className="w-3.5 h-3.5" />
+                                      <span>Upload Footer Logo</span>
+                                    </>
+                                  )}
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      handleBrandAssetR2Upload(e, "footerLogoUrl", "footerLogo")
+                                    }
+                                    disabled={uploadingBrandAsset === "footerLogo"}
+                                    className="hidden"
+                                  />
+                                </label>
+                                <input
+                                  type="text"
+                                  value={homepageForm.footerLogoUrl}
+                                  onChange={(e) =>
+                                    setHomepageForm((prev) => ({
+                                      ...prev,
+                                      footerLogoUrl: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Or paste R2 / direct footer logo URL..."
+                                  className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[11px] text-white font-mono focus:outline-none focus:border-indigo-500"
+                                />
+                              </div>
+                              {brandUploadStatus?.field === "footerLogo" && (
+                                <p
+                                  className={`text-[10px] font-mono ${
+                                    brandUploadStatus.isError ? "text-rose-400" : "text-emerald-400"
+                                  }`}
+                                >
+                                  {brandUploadStatus.message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 1C. Browser Favicon Upload (Cloudflare R2) & Fallback Icon */}
+                        <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-3.5 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <label className="block text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                                Browser Tab Favicon (Cloudflare R2 Upload)
+                              </label>
+                              <p className="text-[9.5px] text-slate-500">
+                                Upload ICO, PNG or SVG favicon for browser tabs and bookmarks
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-slate-500 uppercase font-mono">
+                                Fallback Icon:
+                              </span>
+                              <select
+                                value={homepageForm.appLogoIcon}
+                                onChange={(e) =>
+                                  setHomepageForm((prev) => ({
+                                    ...prev,
+                                    appLogoIcon: e.target.value,
+                                  }))
+                                }
+                                className="px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[10px] text-white focus:outline-none focus:border-rose-500 cursor-pointer"
+                              >
+                                <option value="FlaskConical">Flask Conical</option>
+                                <option value="Award">Award Badge</option>
+                                <option value="Activity">Pulse Activity</option>
+                                <option value="ShieldCheck">Verified Shield</option>
+                                <option value="Globe">Global Network</option>
+                                <option value="Cpu">Microchip CPU</option>
+                                <option value="Sparkles">Sparkles Star</option>
+                                <option value="Beaker">Beaker Tube</option>
+                                <option value="Heart">Care Heart</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                              {homepageForm.appFaviconUrl ? (
+                                <img
+                                  src={getProxiedImageUrl(homepageForm.appFaviconUrl)}
+                                  alt="Favicon Preview"
+                                  className="w-7 h-7 object-contain"
+                                />
+                              ) : (
+                                <Globe className="w-5 h-5 text-slate-600" />
+                              )}
+                            </div>
+
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <label className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10.5px] font-bold rounded-lg cursor-pointer transition inline-flex items-center gap-1.5 shrink-0 shadow-xs">
+                                  {uploadingBrandAsset === "favicon" ? (
+                                    <>
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                      <span>Uploading to R2...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UploadCloud className="w-3.5 h-3.5" />
+                                      <span>Upload Favicon</span>
+                                    </>
+                                  )}
+                                  <input
+                                    type="file"
+                                    accept="image/*,.ico"
+                                    onChange={(e) =>
+                                      handleBrandAssetR2Upload(e, "appFaviconUrl", "favicon")
+                                    }
+                                    disabled={uploadingBrandAsset === "favicon"}
+                                    className="hidden"
+                                  />
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={homepageForm.appFaviconUrl}
+                                  onChange={(e) =>
+                                    setHomepageForm((prev) => ({
+                                      ...prev,
+                                      appFaviconUrl: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Or paste R2 / direct favicon URL..."
+                                  className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[11px] text-white font-mono focus:outline-none focus:border-emerald-500"
+                                />
+                              </div>
+                              {brandUploadStatus?.field === "favicon" && (
+                                <p
+                                  className={`text-[10px] font-mono ${
+                                    brandUploadStatus.isError ? "text-rose-400" : "text-emerald-400"
+                                  }`}
+                                >
+                                  {brandUploadStatus.message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

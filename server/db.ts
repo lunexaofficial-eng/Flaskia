@@ -1294,41 +1294,67 @@ export async function initDb(frontProducts?: any[]) {
     if (parseInt(homeConfigCheck.rows[0].count) === 0) {
       console.log("Seeding initial homepage config...");
       const defaultHomepageConfig: Record<string, string> = {
-        heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
-        heroTitle: "High-Purity Laboratory Reagents & Supplies",
+        heroTag: "FDA & OSHA GHS-KONFORME BESCHAFFUNG",
+        heroTitle: "Hochreine Laborreagenzien & Chemikalienbedarf",
         heroDescription:
-          "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+          "Flaskia vertreibt analytische Chemikalien, Pufferlösungen und zertifizierte Borosilikatglasgeräte der Klasse A exklusiv für akademische Synthese, Forschungsmodellierung und Bildungslabore.",
         heroStat1Value: "≤18 MΩ·cm",
-        heroStat1Label: "Methylene conductivity standard",
+        heroStat1Label: "Methylen-Leitfähigkeitsstandard",
         heroStat2Value: "100%",
-        heroStat2Label: "SDS / GHS Clear Documentation",
+        heroStat2Label: "SDB / GHS Klare Dokumentation",
         heroImageUrl:
           "/src/assets/images/chemical_hero_banner_1780924768442.png",
-        heroImageAlt: "High Purity Research Chemistry Lab Illustration",
-        heroWatermarkTitle: "CHEMLABS REAGENT CELL",
-        heroWatermarkBadge: "Sandbox Portal",
-        complianceBtnText: "Open Safety & FAQ Manual",
+        heroImageAlt: "Hochreines Forschungschemielabor Illustration",
+        heroWatermarkTitle: "CHEMLABS REAGENZIENZELLE",
+        heroWatermarkBadge: "Direktportal",
+        complianceBtnText: "Sicherheits- & FAQ-Handbuch öffnen",
         complianceEmoji: "🔐",
-        complianceTitle: "GHS Custody compliance assurance:",
+        complianceTitle: "GHS-Konformitätszusicherung:",
         complianceText:
-          "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+          "Flaskia überwacht Sicherheitsprofile kontinuierlich. Die Dokumentation zur sicheren Handhabung entspricht internationalen Chemiestandards.",
         appName: "Flaskia",
         appBrandBadge: "PRO",
-        appSubtitle: "Academic Supply Direct",
+        appSubtitle: "Laborbedarf Direkt",
         appLogoIcon: "FlaskConical",
+        appLogoUrl: "",
+        footerLogoUrl: "",
         appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
         footerCompanyName: "Flaskia Supplies International Co.",
         footerLicence1: "OSHA ID: 44321-REAG",
-        footerLicence2: "EPA LICENSE: 7385-CHEM",
-        footerLicence3: "DOT TRANSPORT: CLASS 9",
+        footerLicence2: "EPA LIZENZ: 7385-CHEM",
+        footerLicence3: "GEFAHRGUT: KLASSE 9",
         footerCopyright:
-          "Flaskia. Educational Material Logistics. Sandbox Checkout Portal.",
+          "Flaskia. Logistik für Laborchemikalien & Lehrmaterialien. Alle Rechte vorbehalten.",
       };
 
       for (const key of Object.keys(defaultHomepageConfig)) {
         await client.query(
           "INSERT INTO homepage_config (key, value) VALUES ($1, $2)",
           [key, defaultHomepageConfig[key]],
+        );
+      }
+    } else {
+      // Migrate existing untouched English default homepage_config values to German
+      const germanMigrations: Array<[string, string, string]> = [
+        ["heroTag", "FDA & OSHA GHS COMPLIANT PROCUREMENT", "FDA & OSHA GHS-KONFORME BESCHAFFUNG"],
+        ["heroTitle", "High-Purity Laboratory Reagents & Supplies", "Hochreine Laborreagenzien & Chemikalienbedarf"],
+        ["heroDescription", "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.", "Flaskia vertreibt analytische Chemikalien, Pufferlösungen und zertifizierte Borosilikatglasgeräte der Klasse A exklusiv für akademische Synthese, Forschungsmodellierung und Bildungslabore."],
+        ["heroStat1Label", "Methylene conductivity standard", "Methylen-Leitfähigkeitsstandard"],
+        ["heroStat2Label", "SDS / GHS Clear Documentation", "SDB / GHS Klare Dokumentation"],
+        ["heroWatermarkTitle", "CHEMLABS REAGENT CELL", "CHEMLABS REAGENZIENZELLE"],
+        ["heroWatermarkBadge", "Sandbox Portal", "Direktportal"],
+        ["complianceBtnText", "Open Safety & FAQ Manual", "Sicherheits- & FAQ-Handbuch öffnen"],
+        ["complianceTitle", "GHS Custody compliance assurance:", "GHS-Konformitätszusicherung:"],
+        ["complianceText", "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.", "Flaskia überwacht Sicherheitsprofile kontinuierlich. Die Dokumentation zur sicheren Handhabung entspricht internationalen Chemiestandards."],
+        ["appSubtitle", "Academic Supply Direct", "Laborbedarf Direkt"],
+        ["footerLicence2", "EPA LICENSE: 7385-CHEM", "EPA LIZENZ: 7385-CHEM"],
+        ["footerLicence3", "DOT TRANSPORT: CLASS 9", "GEFAHRGUT: KLASSE 9"],
+        ["footerCopyright", "Flaskia. Educational Material Logistics. Sandbox Checkout Portal.", "Flaskia. Logistik für Laborchemikalien & Lehrmaterialien. Alle Rechte vorbehalten."],
+      ];
+      for (const [k, oldEng, newDe] of germanMigrations) {
+        await client.query(
+          "UPDATE homepage_config SET value = $1 WHERE key = $2 AND value = $3",
+          [newDe, k, oldEng]
         );
       }
     }

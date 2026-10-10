@@ -23,6 +23,7 @@ import {
   Lock,
 } from "lucide-react";
 import CustomerAuth from "./CustomerAuth";
+import { useTheme } from "../context/ThemeContext";
 
 export interface InquiryMessage {
   id: string;
@@ -66,6 +67,8 @@ export default function MyInquiriesHub({
   onSelectProductById,
   onUpdateUser,
 }: MyInquiriesHubProps) {
+  const { isIndiamart, isRetail } = useTheme();
+  const isNoCartAuthTheme = isRetail || isIndiamart;
   const [inquiries, setInquiries] = useState<InquiryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -75,8 +78,9 @@ export default function MyInquiriesHub({
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [manualEmail, setManualEmail] = useState<string>("");
+  const [emailInput, setEmailInput] = useState<string>("");
 
-  const activeEmail = currentUser?.email || manualEmail;
+  const activeEmail = (!isNoCartAuthTheme && currentUser?.email) ? currentUser.email : manualEmail;
 
   const fetchMyInquiries = async (showRefreshSpinner = false) => {
     if (!activeEmail) {
@@ -164,17 +168,17 @@ export default function MyInquiriesHub({
           <button
             onClick={onBackToStore}
             className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition cursor-pointer"
-            title="Return to store catalog"
+            title="Zurück zum Katalog"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 font-heading">
               <MessageSquare className="w-6 h-6 text-emerald-600" />
-              My B2B Inquiry Center
+              Mein B2B-Anfragezentrum
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Track active price quotes, RFQs, and communicate directly with Flaskia B2B Supplier Admin
+              Verfolgen Sie aktive Preisangebote, Anfragen und kommunizieren Sie direkt mit dem Flaskia B2B-Support
             </p>
           </div>
         </div>
@@ -190,55 +194,66 @@ export default function MyInquiriesHub({
               className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg transition cursor-pointer flex items-center gap-1.5 text-xs font-medium"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? "animate-spin" : ""}`} />
-              <span className="hidden md:inline">Refresh</span>
+              <span className="hidden md:inline">Aktualisieren</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Auth Guard if no email set */}
+      {/* Inquiry Lookup by Email (No Auth Required in Current B2B Theme) */}
       {!activeEmail ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-xl mx-auto text-center space-y-6 shadow-2xs">
-          <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto text-slate-700">
-            <Lock className="w-6 h-6" />
+          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mx-auto text-[#0052cc]">
+            <Mail className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900 font-heading">Access Your Inquiries</h3>
+            <h3 className="text-lg font-bold text-slate-900 font-heading">Ihre B2B-Anfragen verfolgen</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
-              Enter your registered email address to view your B2B quote inquiries and supplier responses.
+              Geben Sie die E-Mail-Adresse ein, die Sie bei Ihrer Angebotsanfrage verwendet haben, um Ihren Status und Antworten einzusehen.
             </p>
           </div>
 
-          <div className="flex gap-2 max-w-md mx-auto">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (emailInput.trim()) {
+                setManualEmail(emailInput.trim());
+              }
+            }}
+            className="flex gap-2 max-w-md mx-auto"
+          >
             <input
               type="email"
-              placeholder="Enter registered email (e.g., buyer@company.com)"
-              value={manualEmail}
-              onChange={(e) => setManualEmail(e.target.value)}
-              className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-600 text-slate-900"
+              required
+              placeholder="Geben Sie Ihre E-Mail-Adresse ein"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-[#0052cc] text-slate-900"
             />
             <button
-              onClick={() => fetchMyInquiries()}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer"
+              type="submit"
+              className="bg-[#0052cc] hover:bg-[#0747a6] text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer"
             >
-              View Inquiries
+              Anfragen anzeigen
             </button>
-          </div>
+          </form>
 
-          <div className="pt-4 border-t border-slate-100">
-            <p className="text-[11px] text-slate-400 mb-4">Or sign in to your account:</p>
-            <CustomerAuth
-              onAuthSuccess={(user) => {
-                if (onUpdateUser) onUpdateUser(user);
-                setManualEmail(user.email);
-              }}
-            />
-          </div>
+          {!isNoCartAuthTheme && (
+            <div className="pt-4 border-t border-slate-100">
+              <p className="text-[11px] text-slate-400 mb-4">Oder melden Sie sich bei Ihrem Konto an:</p>
+              <CustomerAuth
+                onAuthSuccess={(user) => {
+                  if (onUpdateUser) onUpdateUser(user);
+                  setManualEmail(user.email);
+                }}
+              />
+            </div>
+          )}
         </div>
       ) : isLoading ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-3 shadow-2xs">
           <div className="w-8 h-8 border-2 border-slate-200 border-t-emerald-700 rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-mono">Loading inquiries...</p>
+          <p className="text-xs text-slate-500 font-mono">Anfragen werden geladen...</p>
         </div>
       ) : inquiries.length === 0 ? (
         /* Empty State */
@@ -247,9 +262,9 @@ export default function MyInquiriesHub({
             <MessageSquare className="w-8 h-8 text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-800 font-heading">No B2B Inquiries Found</h3>
+            <h3 className="text-lg font-bold text-slate-800 font-heading">Keine B2B-Anfragen gefunden</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
-              You haven't submitted any product RFQs or price quote requests yet for <span className="font-semibold text-slate-700">{activeEmail}</span>.
+              Sie haben noch keine Produktanfragen oder Preisangebote für <span className="font-semibold text-slate-700">{activeEmail}</span> eingereicht.
             </p>
           </div>
           <button
@@ -257,7 +272,7 @@ export default function MyInquiriesHub({
             className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-xs transition cursor-pointer shadow-md active:scale-95"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Browse Chemical Catalog & Request RFQ</span>
+            <span>Chemikalienkatalog durchsuchen & Angebot anfordern</span>
           </button>
         </div>
       ) : (
@@ -278,7 +293,7 @@ export default function MyInquiriesHub({
                       : "bg-slate-100 hover:bg-slate-200 text-slate-600"
                   }`}
                 >
-                  {st === "ALL" ? `All (${inquiries.length})` : st}
+                  {st === "ALL" ? `Alle (${inquiries.length})` : st}
                 </button>
               ))}
             </div>
@@ -288,7 +303,7 @@ export default function MyInquiriesHub({
               <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by ID, product, notes..."
+                placeholder="Suche nach ID, Produkt, Notizen..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-emerald-600 focus:bg-white text-slate-900"
@@ -343,7 +358,7 @@ export default function MyInquiriesHub({
 
                         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
                           <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[11px] font-extrabold px-2 py-0.5 rounded-lg">
-                            Qty: {inq.quantity}
+                            Menge: {inq.quantity}
                           </span>
                           {inq.company_name && (
                             <span className="flex items-center gap-1 font-medium text-slate-600">
@@ -354,7 +369,7 @@ export default function MyInquiriesHub({
                           {inq.delivery_pincode && (
                             <span className="flex items-center gap-1 font-mono text-[11px] text-slate-500">
                               <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                              Pincode: {inq.delivery_pincode}
+                              PLZ: {inq.delivery_pincode}
                             </span>
                           )}
                         </div>
@@ -377,9 +392,9 @@ export default function MyInquiriesHub({
                         }`}
                       >
                         {inq.status === "APPROVED"
-                          ? "✅ Quote Approved"
+                          ? "✅ Angebot genehmigt"
                           : inq.status === "REPLIED"
-                          ? "💬 Admin Replied"
+                          ? "💬 Antwort erhalten"
                           : inq.status}
                       </span>
 
@@ -396,20 +411,20 @@ export default function MyInquiriesHub({
                       {/* Initial RFQ Details */}
                       <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
                         <div className="font-bold text-slate-700 uppercase tracking-wider font-mono text-[10px]">
-                          Initial B2B Quotation Requirement
+                          Ursprüngliche B2B-Angebotsanforderung
                         </div>
-                        <p className="text-slate-800 leading-relaxed italic">"{inq.notes || "Standard quotation request"}"</p>
+                        <p className="text-slate-800 leading-relaxed italic">"{inq.notes || "Standard-Angebotsanfrage"}"</p>
                       </div>
 
                       {/* Threaded Messages List */}
                       <div className="space-y-3.5">
                         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                          Conversation History ({messages.length} messages)
+                          Nachrichtenverlauf ({messages.length} Nachrichten)
                         </div>
 
                         {messages.length === 0 ? (
                           <div className="text-center py-4 text-xs text-slate-400 italic">
-                            No messages in this thread yet.
+                            Noch keine Nachrichten in diesem Verlauf.
                           </div>
                         ) : (
                           messages.map((msg) => {
@@ -426,12 +441,12 @@ export default function MyInquiriesHub({
                                   {isAdmin ? (
                                     <>
                                       <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                                      <span className="font-bold text-blue-900">Flaskia Admin Support</span>
+                                      <span className="font-bold text-blue-900">Flaskia Admin-Support</span>
                                     </>
                                   ) : (
                                     <>
                                       <User className="w-3.5 h-3.5 text-emerald-600" />
-                                      <span className="font-bold text-slate-700">{msg.sender_name || "You"}</span>
+                                      <span className="font-bold text-slate-700">{msg.sender_name || "Sie"}</span>
                                     </>
                                   )}
                                   <span>•</span>
@@ -459,12 +474,12 @@ export default function MyInquiriesHub({
                       <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-xs">
                         <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                           <Send className="w-4 h-4 text-emerald-600" />
-                          <span>Send Reply to Supplier Admin</span>
+                          <span>Antwort an den Lieferanten-Support senden</span>
                         </div>
 
                         <textarea
                           rows={3}
-                          placeholder="Type your message, query, or follow-up regarding this quote..."
+                          placeholder="Geben Sie Ihre Nachricht oder Rückfrage zu diesem Angebot ein..."
                           value={replyInput[inq.id] || ""}
                           onChange={(e) =>
                             setReplyInput((prev) => ({ ...prev, [inq.id]: e.target.value }))
@@ -474,7 +489,7 @@ export default function MyInquiriesHub({
 
                         <div className="flex items-center justify-between pt-1">
                           <span className="text-[10px] text-slate-400 font-mono">
-                            Replies are sent directly to Flaskia B2B Admin ledger
+                            Antworten werden direkt an das Flaskia B2B-Team gesendet
                           </span>
                           <button
                             onClick={() => handleSendReply(inq.id)}
@@ -484,12 +499,12 @@ export default function MyInquiriesHub({
                             {sendingReplyId === inq.id ? (
                               <>
                                 <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Sending...</span>
+                                <span>Wird gesendet...</span>
                               </>
                             ) : (
                               <>
                                 <Send className="w-3.5 h-3.5" />
-                                <span>Post Reply</span>
+                                <span>Antwort senden</span>
                               </>
                             )}
                           </button>

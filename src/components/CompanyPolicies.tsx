@@ -83,64 +83,64 @@ export default function CompanyPolicies({
     switch (id) {
       case "about":
         return {
-          title: "About {appName}",
-          subtitle: "{appSubtitle} — Serving academia and verified synthesis complexes.",
-          content: `Founded under the vision of democratizing clinical-grade lab chemicals for schools and research cooperatives, **{appName}** has evolved from a boutique reagents formulator into a leading domestic provider of laboratory standard chemicals, precise buffer configurations, pH indicators, and resilient borosilicate glass instruments.\n\nOur facility implements climate-locked warehousing logic, advanced DOT compliance automation for hazmat transit class routing, and meticulous batch record checks. This guarantees that your chemistry laboratory receives materials of the exact technical, laboratory, or ACS reagent grade documented.\n\nEquipping the next generation of chemists is a duty of absolute security. By providing full MSDS data and strict license checks, {appName} remains a trusted logistical companion for thousands of public science centers, high school chemistry labs, and academic research ecosystems.`,
+          title: "Über {appName}",
+          subtitle: "{appSubtitle} — Versorgung von Universitäten, Forschungslaboren und Industrie.",
+          content: `Gegründet mit der Vision, hochreine Laborchemikalien für Forschungseinrichtungen und Bildungsträger bereitzustellen, hat sich **{appName}** zu einem führenden Anbieter von Laborstandardchemikalien, präzisen Pufferlösungen, pH-Indikatoren und Borosilikat-Glaswaren entwickelt.\n\nUnsere Einrichtung setzt auf klimatisierte Lagerhaltung, automatisierte Gefahrgutkonformität und sorgfältige Chargenprüfungen. Dies garantiert, dass Ihr Chemielabor Materialien in genau der dokumentierten technischen, analytischen oder ACS-Reagenzienqualität erhält.\n\nDurch vollständige Sicherheitsdatenblätter (SDB) und strenge Qualitätskontrollen bleibt {appName} ein zuverlässiger Logistikpartner für wissenschaftliche Zentren, Schullabore und akademische Forschungseinrichtungen.`,
         };
       case "contact":
         return {
-          title: "Contact Us",
-          subtitle: "Our support staff, physical logistics desk, and regulatory officers are at your service.",
-          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@flaskia.com, compliance@flaskia.com\nWhatsApp Helpline: +1 (509) 994-1048 (Text Only, Chat 24/7)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`,
+          title: "Kontakt",
+          subtitle: "Unser Support-Team, die Logistikabteilung und unsere Sicherheitsbeauftragten stehen Ihnen zur Verfügung.",
+          content: `Hauptsitz: {footerCompanyName}\nWissenschafts- und Logistikpark, Bay 9\n\nE-Mail: support@flaskia.com, compliance@flaskia.com\nWhatsApp-Hotline: +1 (509) 994-1048 (Nur Text-Chat, 24/7 erreichbar)\n\nBei verschütteten Chemikalien oder Transportunfällen beachten Sie bitte direkt die Anweisungen im Sicherheitsdatenblatt (SDB).`,
         };
       case "privacy":
         return {
-          title: "Privacy Policy",
-          subtitle: "Approved regulatory database management and institution registration protocols.",
-          content: `Because our operations involve shipping chemical substances classification materials, we maintain a secure, encrypted procurement register. This dataset contains verified researcher profiles, official academic email addresses, delivery licenses, and active billing addresses. This records system aligns directly with security compliance regulations and is fully isolated from retail tracking data.\n\nUnder certain regional toxic substances bylaws, we are legally required to document transaction logs containing names, lot numbers, and institutions for DEA List chemicals and certain hazardous indicators. This transaction data is maintained securely in our private servers and is accessible only to compliance auditors.\n\nWe never have, and never will, sell, lease, or license institutional order histories, user info, email chains, or scientific safety logs to marketing agencies, advertising networks, or third-party web tracking enterprises. Cookies are dedicated exclusively to preserving your custom session identifiers and chemical checkout cart state.`,
+          title: "Datenschutzerklärung",
+          subtitle: "Datenschutzkonforme Verwaltung von Kundendaten und institutionellen Registrierungen.",
+          content: `Da unsere Tätigkeit den Versand klassifizierter chemischer Substanzen umfasst, führen wir ein sicheres, verschlüsseltes Beschaffungsregister. Dieser Datensatz enthält verifizierte Forscherprofile, offizielle E-Mail-Adressen und Lieferinformationen gemäß den geltenden Sicherheitsvorschriften.\n\nGemäß den gesetzlichen Vorschriften für chemische Stoffe sind wir verpflichtet, Transaktionsprotokolle mit Chargennummern und Empfängerinstitutionen sicher aufzubewahren.\n\nWir verkaufen, vermieten oder lizenzieren niemals Bestellhistorien, Benutzerdaten oder Sicherheitsprotokolle an Marketingagenturen oder Dritte. Cookies werden ausschließlich zur Aufrechterhaltung Ihrer Sitzung verwendet.`,
         };
       case "terms":
         return {
-          title: "Terms & Conditions",
-          subtitle: "Legal conditions under which active laboratory chemical items are distributed.",
-          content: `By checking out on the **{appName} Sandbox Checkout Portal**, you explicitly certify that you are an adult representative representing a school of science, a certified chemistry educational program, or a corporate laboratory entity. You must provide a valid chemistry end-use agreement verification and accept that materials will strictly reside inside accredited facility stores.\n\nAll chemical reagents are barred from dispatch to private, residential, hotel, or PO Box locations. Orders attempting to leverage home addresses will be systematically cancelled. We reserve the absolute right to suspend any customer profile mimicking an accredited institution to bypass security gates.\n\nSubstances procured through this catalog cannot be transferred to unverified third parties, exported, or diverted for home experimentation, manufacturing of pyrotechnics, or synthetic drugs. Violation of this agreement triggers swift reports containing lot numbers to appropriate federal chemistry agencies.`,
+          title: "Allgemeine Geschäftsbedingungen (AGB)",
+          subtitle: "Rechtliche Bedingungen für den Bezug von Laborchemikalien und Reagenzien.",
+          content: `Mit einer Anfrage oder Bestellung über **{appName}** bestätigen Sie ausdrücklich, dass Sie ein bevollmächtigter Vertreter einer Bildungseinrichtung, eines zertifizierten Chemieprogramms oder eines gewerblichen Labors sind.\n\nAlle chemischen Reagenzien sind vom Versand an private Wohnadressen, Hotels oder Postfächer ausgeschlossen. Die über diesen Katalog bezogenen Substanzen dürfen nicht an unbefugte Dritte weitergegeben oder zweckentfremdet werden.`,
         };
       case "compliance":
         return {
-          title: "Compliance Policy",
-          subtitle: "How regulatory frameworks are implemented in {appName}'s logistics chain.",
-          content: `We execute rigorous checks to ensure safety pictograms, signal words (Danger/Warning), and hazard phrases match OSHA Standard 29 CFR 1910.1200 HazCom specifications. Our inventory systems run immediate CAS-number filters to detect restricted precursors or regulated reagents. For any substance presenting GHS Health rating \u2265 3 (e.g. skin corrosion, toxicity indicators, severe carcinogenicity risk), system safety logic blocks checkout until the user declares a binding laboratory end-use compliance agreement.\n\nEach reagent dispatch contains isolated batch lot codes linked to our formulation reports. Under regulatory bylaws, we maintain full custody archives for at least seven (7) years to permit immediate lot recalls, temperature disruption flags, and compliance review requests.`,
+          title: "Qualitäts- & Compliance-Richtlinie",
+          subtitle: "Wie gesetzliche Rahmenbedingungen in der Logistikkette von {appName} umgesetzt werden.",
+          content: `Wir führen strenge Prüfungen durch, um sicherzustellen, dass Gefahrenpiktogramme, Signalwörter und Gefahrenhinweise den geltenden GHS-, CLP- und OSHA-Spezifikationen entsprechen.\n\nJede Reagenzienlieferung enthält eindeutige Chargencodes, die mit unseren Analyseberichten (CoA) verknüpft sind. Gemäß den gesetzlichen Bestimmungen bewahren wir vollständige Rückverfolgbarkeitsarchive für mindestens sieben (7) Jahre auf.`,
         };
       case "disclaimer":
         return {
-          title: "Safety Disclaimer",
-          subtitle: "Binding precautions regarding handling and experiment execution.",
-          content: `All compounds, reagents, buffering solutions, and certified indicators listed under the catalog of **{appName}** are manufactured exclusively to serve academic demonstrations, analytical titrations, scientific modeling synthesis, and secondary science laboratories.\n\nThese chemicals are **strictly not intended** and must never be utilized for: human or veterinary medical therapeutics, in vivo testing, cosmetics, or food supplements.\n\nBy completing transactions in this portal, the purchasing entity accepts sovereign custody liability. **{appName}** completely isolates itself from any accidental chemical burns, fires, localized toxic emissions, inappropriate waste disposal fines, or educational demonstration mishaps. Science lab instructors must enforce appropriate PPE standards (protective lab-goggles, chemical aprons, impervious nitrile gloves, working fume-hood extraction layouts).`,
+          title: "Sicherheitshinweis",
+          subtitle: "Verbindliche Vorsichtsmaßnahmen für Handhabung und Laborversuche.",
+          content: `Alle im Katalog von **{appName}** aufgeführten Verbindungen, Reagenzien, Pufferlösungen und zertifizierten Indikatoren werden ausschließlich für analytische Zwecke, wissenschaftliche Forschung, Industrie und Ausbildungslabore hergestellt.\n\nDiese Chemikalien sind **ausdrücklich nicht bestimmt** für die Anwendung am Menschen oder Tier, für Arzneimittel, Kosmetika oder Lebensmittelzusätze.\n\nDas beziehende Labor übernimmt die volle Verantwortung für die fachgerechte Handhabung und Einhaltung der persönlichen Schutzausrüstung (Schutzbrille, Laborkittel, Schutzhandschuhe, Abzugshaube).`,
         };
       case "shipping":
         return {
-          title: "Shipping & Transit Policy",
-          subtitle: "How specialized hazardous substances are packed and delivered.",
-          content: `Due to physical fire risk, acute poison indicators, and acidity variables in chemical transportation, our logistics networks strictly comply with DOT Hazardous Materials Regulations (Code of Federal Regulations, Title 49).\n\nFor items explicitly marked with GHS hazard warning pictograms (such as concentrated sulfuric acid, flammable liquids, or reactive copper salts), a **flat $15.00 Hazmat Surcharge** is consolidated on checkout. This offsets double-wall safety canisters, specialized vermiculite spill insulation, mandatory DOT-labeled shipping parcels, and certified hazardous transit licensing.\n\nDelicate indicators, specialized buffers, and highly volatile compounds are shipped inside temperature-regulated dry gel thermal compartments. These insulated units guard chemistry agents during hot summer heat waves or severe winter drop points to keep active concentration stable.\n\nStandard institutional delivery takes 3 to 5 business days. Rapid transport is available only after manual clearance by our compliance desk.`,
+          title: "Versand- & Gefahrgutrichtlinie",
+          subtitle: "Wie spezialisierte Gefahrstoffe sicher verpackt und geliefert werden.",
+          content: `Aufgrund von Brandgefahren, Toxizität und Ätzwirkungen beim Chemikalientransport halten sich unsere Logistiknetzwerke strikt an die geltenden Gefahrgutvorschriften (ADR / DOT / IATA).\n\nFür Artikel, die mit GHS-Gefahrenpiktogrammen gekennzeichnet sind, werden doppelwandige Sicherheitsbehälter, spezielles Vermiculit-Absorptionsmaterial und vorschriftsmäßig gekennzeichnete Gefahrgutpakete verwendet.\n\nEmpfindliche Indikatoren, spezielle Puffer und flüchtige Verbindungen werden in temperaturregulierten Thermoverpackungen versendet, um die chemische Konzentration stabil zu halten.`,
         };
       case "return":
         return {
-          title: "Return Policy",
-          subtitle: "Strict guidelines regarding return parcels under chemical regulations.",
-          content: `Once a chemical security seal is ruptured, regulatory rules strictly prohibit return shipment via standard public couriers. Reagents return is confined strictly to un-opened, factory-locked packages.\n\nNo delivery parcel can be returned to our warehouse without a pre-authorized Return Merchandise Authorization (RMA) ticket. Please contact our support desk (compliance@flaskia.com) to obtain the RMA documentation prior to making shipping arrangements.\n\nReturn windows close exactly thirty (30) days from original order dispatch. The outer regulatory seals, heat-locked bands, GHS decals, safety rings, and inner secure caps must look completely un-ruptured and clean to pass return audits.`,
+          title: "Rückgaberichtlinie",
+          subtitle: "Strenge Richtlinien für Rücksendungen gemäß den Chemikalienvorschriften.",
+          content: `Sobald ein chemisches Sicherheitssiegel gebrochen ist, verbieten gesetzliche Vorschriften den Rückversand über reguläre Paketdienste. Die Rückgabe von Reagenzien ist ausschließlich auf ungeöffnete, werkseitig versiegelte Originalverpackungen beschränkt.\n\nKeine Sendung kann ohne vorherige Rücksendegenehmigung (RMA) an unser Lager zurückgesandt werden. Bitte kontaktieren Sie unseren Support (compliance@flaskia.com), um vorab die RMA-Dokumentation zu erhalten.\n\nDie Rückgabefrist beträgt dreißig (30) Tage ab Versanddatum.`,
         };
       case "refund":
         return {
-          title: "Refund Policy",
-          subtitle: "Our financial rules regarding order errors, damages, and replacements.",
-          content: `If a borosilicate glassware item arrives fractured, or if a chemistry reagent bottle suffers leakage in transit, take immediate high-resolution photographs **prior to opening the protective seal bag**. Notify our compliance team within 48 hours for an instant full replacement or sandbox cart credit.\n\nRefunds are processed back to the original funding account. For university departments leveraging procurement cards, please allow up to five (5) business days for credits to appear on institutional statements.\n\nOnce GHS hazmat parcels are loaded into authorized courier transit chambers, active carrier fees and safety surcharges are fully earned and non-refundable.`,
+          title: "Rückerstattungsrichtlinie",
+          subtitle: "Unsere Bestimmungen bei Bestellfehlern, Transportschäden und Ersatzlieferungen.",
+          content: `Sollte ein Borosilikat-Glasartikel zerbrochen ankommen oder eine Reagenzienflasche während des Transports beschädigt werden, erstellen Sie bitte sofort Fotos **vor dem Öffnen des Schutzbeutels**. Informieren Sie unser Team innerhalb von 48 Stunden für einen sofortigen kostenlosen Ersatz oder eine vollständige Rückerstattung.\n\nRückerstattungen erfolgen auf das ursprüngliche Zahlungsmittel innerhalb von fünf (5) Werktagen.`,
         };
       case "cookie":
       default:
         return {
-          title: "Cookie Policy",
-          subtitle: "How technical state cookies preserve security registers during session modeling.",
-          content: `This cookie policy outlines how **{appName}** employs standard browser cache data to secure transaction portals. We strictly design with functional state cookies and stay fully disjointed from tracking conglomerates.\n\nWe utilize "chemlabs_session" to preserve active logs and security locks, "chemlabs_cart" to maintain the list of reagents, and "compliance_acknowledgement" to save compliance agreements.\n\nYou can block or purge cookies using your browser settings. Please note that blocking essential cookies will disrupt the chemical cart matching system and prevent access to the Sandbox Checkout.`,
+          title: "Cookie-Richtlinie",
+          subtitle: "Wie technisch notwendige Cookies die Sicherheit und Sitzungsdaten gewährleisten.",
+          content: `Diese Cookie-Richtlinie erläutert, wie **{appName}** Standard-Browser-Cache-Daten zum Schutz des Portals einsetzt. Wir verwenden ausschließlich funktionale Status-Cookies und verzichten auf Werbe-Tracker.\n\nWir verwenden lokale Speicherschlüssel, um Ihre Sitzung, Währungseinstellungen und Anfragen sicher zu speichern.\n\nSie können Cookies jederzeit in Ihren Browsereinstellungen blockieren oder löschen.`,
         };
     }
   };
@@ -194,16 +194,16 @@ export default function CompanyPolicies({
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const TABS_CONFIG: { id: PolicyTab; label: string; icon: React.FC<any>; desc: string }[] = [
-    { id: "about", label: "About Us", icon: Info, desc: "Our lineage in academic reagent manufacturing & purity supply chains." },
-    { id: "contact", label: "Contact Us", icon: Mail, desc: "Reach our regulatory desk, support specialists, or campus logistics." },
-    { id: "privacy", label: "Privacy Policy", icon: Database, desc: "How we safeguard institutional data and sensitive registers." },
-    { id: "terms", label: "Terms & Conditions", icon: Scale, desc: "Legal requirements of purchasing active classroom agents." },
-    { id: "compliance", label: "Compliance Policy", icon: FileCheck, desc: "Upholding EPA, DEA, and OSHA safety standards." },
-    { id: "disclaimer", label: "Safety Disclaimer", icon: AlertTriangle, desc: "Imperative restrictions of academic demonstration reagents." },
-    { id: "shipping", label: "Shipping & Transit", icon: Truck, desc: "Hazmat surcharges, temperature buffers, and DOT regulations." },
-    { id: "return", label: "Return Policy", icon: RotateCcw, desc: "Chain-of-custody protocols for hazardous chemical items." },
-    { id: "refund", label: "Refund Policy", icon: ShieldCheck, desc: "Reimbursements, credit limits, and replacement parameters." },
-    { id: "cookie", label: "Cookie Policy", icon: FileText, desc: "Usage of technical authentication cookies and cart state trackers." }
+    { id: "about", label: "Über uns", icon: Info, desc: "Unsere Geschichte in der Herstellung hochreiner Laborreagenzien." },
+    { id: "contact", label: "Kontakt", icon: Mail, desc: "Erreichen Sie unsere Fachabteilung, den Support oder die Logistik." },
+    { id: "privacy", label: "Datenschutzerklärung", icon: Database, desc: "Wie wir institutionelle Daten und sensible Register schützen." },
+    { id: "terms", label: "AGB", icon: Scale, desc: "Rechtliche Bedingungen für den Erwerb von Laborreagenzien." },
+    { id: "compliance", label: "Compliance-Richtlinie", icon: FileCheck, desc: "Einhaltung von GHS-, REACH- und OSHA-Sicherheitsstandards." },
+    { id: "disclaimer", label: "Sicherheitshinweis", icon: AlertTriangle, desc: "Wichtige Verwendungsbeschränkungen für Laborchemikalien." },
+    { id: "shipping", label: "Versand & Gefahrgut", icon: Truck, desc: "Gefahrgutversand, Temperaturkontrolle und Transportvorschriften." },
+    { id: "return", label: "Rückgaberichtlinie", icon: RotateCcw, desc: "Rückgabeprotokolle für versiegelte chemische Artikel." },
+    { id: "refund", label: "Rückerstattungsrichtlinie", icon: ShieldCheck, desc: "Erstattungen, Gutschriften und Ersatzlieferungen." },
+    { id: "cookie", label: "Cookie-Richtlinie", icon: FileText, desc: "Verwendung technisch notwendiger Sitzungs-Cookies." }
   ];
 
   const handleContactSubmit = (e: React.FormEvent) => {
@@ -238,10 +238,10 @@ export default function CompanyPolicies({
           className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 py-2.5 px-4 rounded-xl cursor-pointer transition shadow-2xs active:scale-98"
         >
           <X className="w-4 h-4 text-slate-400" />
-          <span>Back to Reagent Catalog</span>
+          <span>Zurück zum Reagenzienkatalog</span>
         </button>
         <div className="hidden sm:block text-[10.5px] text-slate-400 font-mono">
-          SECURE ENCRYPTED COMPLIANCE HUB // PORTAL
+          SICHERES COMPLIANCE- & RECHTSPORTAL
         </div>
       </div>
 
@@ -252,7 +252,7 @@ export default function CompanyPolicies({
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-slate-50 p-4 border border-slate-200/80 rounded-2xl">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 px-1 font-mono">
-              Legal & Support Deck
+              Rechtliches & Support
             </h2>
             
             {/* Mobile Dropdown Custom Selector */}

@@ -22,6 +22,7 @@ import MyInquiriesHub from "./components/MyInquiriesHub";
 import CheckoutPromptModal from "./components/CheckoutPromptModal";
 import IndiamartInquiryModal from "./components/IndiamartInquiryModal";
 import { useTheme } from "./context/ThemeContext";
+import { getProxiedImageUrl } from "./utils/imageUtils";
 import { 
   FlaskConical, 
   FlaskConicalOff, 
@@ -53,6 +54,7 @@ import {
 
 export default function App() {
   const { isRetail, isIndiamart } = useTheme();
+  const isNoCartAuthTheme = isRetail || isIndiamart;
   const [currentView, setCurrentView] = useState<"store" | "product" | "checkout" | "orders" | "inquiries" | "admin" | "policies" | "profile">("store");
   const [activePolicyTab, setActivePolicyTab] = useState<PolicyTab>("about");
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -179,27 +181,29 @@ export default function App() {
 
   // Dynamic editable homepage configurations
   const [homepageConfig, setHomepageConfig] = useState({
-    heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
-    heroTitle: "High-Purity Laboratory Reagents & Supplies",
-    heroDescription: "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+    heroTag: "FDA & OSHA GHS-KONFORME BESCHAFFUNG",
+    heroTitle: "Hochreine Laborreagenzien & Chemikalienbedarf",
+    heroDescription: "Flaskia vertreibt analytische Chemikalien, Pufferlösungen und zertifizierte Borosilikat-Glaswaren der Klasse A für akademische Synthese, Forschungsmodellierung und Laboratorien.",
     heroStat1Value: "≤18 MΩ·cm",
-    heroStat1Label: "Methylene conductivity standard",
+    heroStat1Label: "Leitfähigkeitsstandard",
     heroStat2Value: "100%",
-    heroStat2Label: "SDS / GHS Clear Documentation",
+    heroStat2Label: "SDB / GHS-Dokumentation",
     heroImageUrl: "/src/assets/images/chemical_hero_banner_1780924768442.png",
-    heroImageAlt: "High Purity Research Chemistry Lab Illustration",
-    heroWatermarkTitle: "CHEMLABS REAGENT CELL",
-    heroWatermarkBadge: "Sandbox Portal",
-    complianceBtnText: "Open Safety & FAQ Manual",
+    heroImageAlt: "Hochreines Forschungslabor für Chemie",
+    heroWatermarkTitle: "CHEMLABS REAGENZIENZELLE",
+    heroWatermarkBadge: "Geprüftes Portal",
+    complianceBtnText: "Sicherheits- & FAQ-Handbuch öffnen",
     complianceEmoji: "🔐",
-    complianceTitle: "GHS Custody compliance assurance:",
-    complianceText: "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+    complianceTitle: "GHS-Konformitätsgarantie:",
+    complianceText: "Flaskia überwacht Sicherheitsprofile kontinuierlich. Unsere Sicherheitsdokumentation entspricht internationalen Chemiestandards.",
     
     // Brand identity defaults
     appName: "Flaskia",
     appBrandBadge: "PRO",
-    appSubtitle: "Academic Supply Direct",
+    appSubtitle: "Chemikalien & Forschungslösungen",
     appLogoIcon: "FlaskConical",
+    appLogoUrl: "",
+    footerLogoUrl: "",
     appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
     admin_url_path: "/lunexa_official",
     adminWhatsappNumber: "15099941048",
@@ -209,7 +213,7 @@ export default function App() {
     footerLicence1: "OSHA ID: 44321-REAG",
     footerLicence2: "EPA LICENSE: 7385-CHEM",
     footerLicence3: "DOT TRANSPORT: CLASS 9",
-    footerCopyright: "Flaskia Supplies International Co. All rights reserved."
+    footerCopyright: "Flaskia Supplies International Co. Alle Rechte vorbehalten."
   });
 
   const loadHomepageConfig = () => {
@@ -284,16 +288,25 @@ export default function App() {
   // Sync favicon and document title dynamically
   useEffect(() => {
     if (homepageConfig.appFaviconUrl) {
+      const faviconSrc = getProxiedImageUrl(homepageConfig.appFaviconUrl);
       let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
       if (!link) {
         link = document.createElement('link');
         link.rel = 'icon';
         document.head.appendChild(link);
       }
-      link.href = homepageConfig.appFaviconUrl;
+      link.href = faviconSrc;
+
+      let appleLink: HTMLLinkElement | null = document.querySelector("link[rel='apple-touch-icon']");
+      if (!appleLink) {
+        appleLink = document.createElement('link');
+        appleLink.rel = 'apple-touch-icon';
+        document.head.appendChild(appleLink);
+      }
+      appleLink.href = faviconSrc;
     }
     if (homepageConfig.appName) {
-      document.title = `${homepageConfig.appName} | ${homepageConfig.appSubtitle || "Premium Reagents Marketplace"}`;
+      document.title = `${homepageConfig.appName} | ${homepageConfig.appSubtitle || "Marktplatz für Laborreagenzien"}`;
     }
   }, [homepageConfig.appFaviconUrl, homepageConfig.appName, homepageConfig.appSubtitle]);
 
@@ -416,8 +429,13 @@ export default function App() {
           setCurrentView("policies");
           setActiveProduct(null);
         } else if (["store", "checkout", "orders", "inquiries", "profile"].includes(state.view)) {
-          setCurrentView(state.view);
-          if (state.view === "store") setActiveProduct(null);
+          if (isNoCartAuthTheme && ["checkout", "orders", "profile"].includes(state.view)) {
+            setCurrentView("store");
+            setActiveProduct(null);
+          } else {
+            setCurrentView(state.view);
+            if (state.view === "store") setActiveProduct(null);
+          }
         } else {
           setCurrentView("store");
           setActiveProduct(null);
@@ -492,6 +510,10 @@ export default function App() {
 
   const handleQuickAddToCart = (product: Product, event: React.MouseEvent) => {
     event.stopPropagation();
+    if (isNoCartAuthTheme) {
+      handleOpenInquiry(product, 1);
+      return;
+    }
     
     // Check if chemical requires a specific compliance license which can be checked inside Product Details first
     // For quick add, automatically use default packaging
@@ -521,6 +543,10 @@ export default function App() {
   };
 
   const handleDetailedAddToCart = (product: Product, qty: number, pkg: string, agreesTerms: boolean) => {
+    if (isNoCartAuthTheme) {
+      handleOpenInquiry(product, qty);
+      return;
+    }
     if (!agreesTerms) return;
 
     const existingIndex = cart.findIndex(item => item.product.id === product.id);
@@ -687,6 +713,13 @@ export default function App() {
   };
 
   const handleNavigate = (view: any) => {
+    if (isNoCartAuthTheme && ["checkout", "orders", "profile"].includes(view)) {
+      setCurrentView("store");
+      setActiveProduct(null);
+      window.history.pushState({ view: "store" }, "", "/");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setCurrentView(view);
     if (view === "store") {
       setActiveProduct(null);
@@ -749,6 +782,7 @@ export default function App() {
           appBrandBadge={homepageConfig.appBrandBadge}
           appSubtitle={homepageConfig.appSubtitle}
           appLogoIcon={homepageConfig.appLogoIcon}
+          appLogoUrl={homepageConfig.appLogoUrl}
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenInquiry={handleHeaderOpenInquiry}
@@ -760,7 +794,7 @@ export default function App() {
       {/* Slide-out FAQ & Hygiene Manual Overlay */}
       <div className="print:hidden">
         <HelpFaq isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
-        {showCheckoutModalPrompt && addedProductForCheckoutModal && (
+        {!isNoCartAuthTheme && showCheckoutModalPrompt && addedProductForCheckoutModal && (
           <CheckoutPromptModal
             product={addedProductForCheckoutModal}
             qty={modalQty}
@@ -802,11 +836,15 @@ export default function App() {
                 <div className="bg-gradient-to-br from-[#091e42] via-[#0a2540] to-[#0052cc] rounded-2xl p-6 md:p-10 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                   <div className="max-w-2xl space-y-3.5">
                     <h1 className="text-2xl md:text-4xl font-bold text-white tracking-tight font-heading leading-tight">
-                      {homepageConfig.heroTitle || "Wholesale Chemical Supplier & Bulk Quotation Hub"}
+                      {homepageConfig.heroTitle === "High-Purity Laboratory Reagents & Supplies"
+                        ? "Großhandel für Laborchemikalien & B2B-Angebotsportal"
+                        : (homepageConfig.heroTitle || "Großhandel für Laborchemikalien & B2B-Angebotsportal")}
                     </h1>
 
                     <p className="text-blue-100/90 text-xs md:text-sm leading-relaxed max-w-xl">
-                      {homepageConfig.heroDescription || "Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA and fast dispatch."}
+                      {homepageConfig.heroDescription?.startsWith("Flaskia distributes analytical chemicals")
+                        ? "Direkte Herstellerangebote für Chemikalien in ACS-, HPLC- und Industriequalität. Komplett mit chargenzertifiziertem Analysezertifikat (CoA) und schnellem Versand."
+                        : (homepageConfig.heroDescription || "Direkte Herstellerangebote für Chemikalien in ACS-, HPLC- und Industriequalität. Komplett mit chargenzertifiziertem Analysezertifikat (CoA) und schnellem Versand.")}
                     </p>
                   </div>
 
@@ -816,19 +854,19 @@ export default function App() {
                       <div className="bg-blue-950/80 border border-blue-400/40 p-4 rounded-xl flex items-center justify-between gap-3 text-xs">
                         <span className="flex items-center gap-2 text-blue-100 font-semibold">
                           <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                          RFQ submitted. Our team will contact {heroRfqPhone} shortly.
+                          Anfrage gesendet. Unser Team kontaktiert {heroRfqPhone} in Kürze.
                         </span>
                         <button
                           onClick={() => setHeroRfqSubmitted(false)}
                           className="text-xs font-semibold text-sky-300 hover:underline cursor-pointer shrink-0"
                         >
-                          New Quote
+                          Neues Angebot
                         </button>
                       </div>
                     ) : (
                       <form onSubmit={handleHeroRfqSubmit} className="bg-white/10 backdrop-blur-md border border-white/15 p-3.5 rounded-xl space-y-2.5">
                         <div className="text-[11px] font-semibold text-blue-100 px-1">
-                          Request Instant Bulk Quotation
+                          Sofortiges Großhandelsangebot anfordern
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
                           <input
@@ -836,7 +874,7 @@ export default function App() {
                             required
                             value={heroRfqProduct}
                             onChange={(e) => setHeroRfqProduct(e.target.value)}
-                            placeholder="Chemical name or CAS..."
+                            placeholder="Chemikalienname oder CAS..."
                             className="flex-1 bg-white text-slate-900 text-xs font-medium rounded-lg px-3.5 py-2.5 border border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400 placeholder:text-slate-400"
                           />
                           <input
@@ -844,7 +882,7 @@ export default function App() {
                             required
                             value={heroRfqPhone}
                             onChange={(e) => setHeroRfqPhone(e.target.value)}
-                            placeholder="Mobile / WhatsApp"
+                            placeholder="Mobil / WhatsApp"
                             className="w-full sm:w-36 bg-white text-slate-900 text-xs font-medium rounded-lg px-3 py-2.5 border border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400 placeholder:text-slate-400"
                           />
                           <button
@@ -852,7 +890,7 @@ export default function App() {
                             disabled={heroRfqLoading}
                             className="bg-[#0052cc] hover:bg-[#0747a6] border border-blue-400/30 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition cursor-pointer whitespace-nowrap active:scale-[0.99] shadow-xs"
                           >
-                            {heroRfqLoading ? "Sending..." : (homepageConfig.complianceBtnText || "Get Quote")}
+                            {heroRfqLoading ? "Sende..." : "Angebot anfordern"}
                           </button>
                         </div>
                       </form>
@@ -867,24 +905,28 @@ export default function App() {
                   <div className="space-y-3 z-10 max-w-xl">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="bg-[#febd69] text-slate-950 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider font-sans shadow-xs">
-                        🔥 BIG SAVING DAYS • LIMITED TIME DEALS
+                        🔥 GROSSE SPARTAGE • ZEITLICH BEGRENZTE ANGEBOTE
                       </span>
                       <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
-                        UP TO 60% OFF DIRECT
+                        BIS ZU 60% DIREKTRABATT
                       </span>
                     </div>
                     <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight font-sans leading-tight">
-                      {homepageConfig.heroTitle || "Global Chemistry & Lab Equipment Marketplace"}
+                      {homepageConfig.heroTitle === "High-Purity Laboratory Reagents & Supplies"
+                        ? "Hochreine Laborreagenzien & Chemikalienbedarf"
+                        : (homepageConfig.heroTitle || "Globaler Marktplatz für Chemie & Laborausrüstung")}
                     </h2>
                     <p className="text-blue-100 text-xs md:text-sm leading-relaxed">
-                      {homepageConfig.heroDescription || "Shop 10,000+ ACS Grade Chemical Reagents, Glassware & Safety Equipment with Express Free Delivery."}
+                      {homepageConfig.heroDescription?.startsWith("Flaskia distributes analytical chemicals")
+                        ? "Flaskia vertreibt analytische Chemikalien, Pufferlösungen und zertifizierte Borosilikat-Glaswaren der Klasse A für akademische Synthese, Forschungsmodellierung und Laboratorien."
+                        : (homepageConfig.heroDescription || "Entdecken Sie über 10.000 chemische Reagenzien in ACS-Qualität, Glaswaren und Sicherheitsausrüstung mit schnellem, kostenlosem Versand.")}
                     </p>
                     <div className="flex flex-wrap items-center gap-3 pt-2">
                       <button 
                         onClick={() => { const el = document.getElementById('retail-products-grid'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} 
                         className="bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 font-extrabold px-6 py-2.5 rounded-lg text-xs transition cursor-pointer shadow-md uppercase tracking-wide"
                       >
-                        EXPLORE DEALS NOW
+                        ANGEBOTE ENTDECKEN
                       </button>
                       <a
                         href="https://wa.me/15099941048"
@@ -893,7 +935,7 @@ export default function App() {
                         className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
-                        <span>WhatsApp Help Line</span>
+                        <span>WhatsApp-Hilfe</span>
                       </a>
                     </div>
                   </div>
@@ -908,7 +950,7 @@ export default function App() {
                       onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400"; }} 
                     />
                     <span className="text-[10px] font-bold text-emerald-300 mt-1 uppercase font-mono flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-emerald-400" /> 256-Bit SSL Encrypted Vault
+                      <Lock className="w-3 h-3 text-emerald-400" /> 256-Bit SSL-Verschlüsselt
                     </span>
                   </div>
                 </div>
@@ -917,16 +959,16 @@ export default function App() {
                 <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-slate-200 flex-wrap gap-3 font-mono shadow-xs">
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px]">
                     <span className="flex items-center gap-1.5 font-bold text-amber-300">
-                      <Lock className="w-3.5 h-3.5 text-amber-300" /> 256-Bit SSL Encrypted
+                      <Lock className="w-3.5 h-3.5 text-amber-300" /> 256-Bit SSL-Verschlüsselt
                     </span>
                     <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> PCI-DSS Gateway Security
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> PCI-DSS-Geprüfte Sicherheit
                     </span>
                     <span className="flex items-center gap-1.5 font-bold text-cyan-300">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300" /> GHS Chemical Safety Standard
+                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300" /> GHS-Chemikaliensicherheitsstandard
                     </span>
                   </div>
-                  <span className="bg-emerald-950 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded border border-emerald-800 uppercase">OFFICIAL SECURE STORE</span>
+                  <span className="bg-emerald-950 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded border border-emerald-800 uppercase">OFFIZIELLER SICHERER SHOP</span>
                 </div>
               </div>
             ) : (
@@ -940,13 +982,15 @@ export default function App() {
                 <div className="space-y-4 max-w-xl relative z-10">
                   <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 font-mono text-[10.5px] font-semibold px-3 py-1 rounded-full border border-blue-100 uppercase tracking-wider">
                     <Sparkles className="w-3.5 h-3.5" />
-                    {homepageConfig.heroTag}
+                    {homepageConfig.heroTag === "FDA & OSHA GHS COMPLIANT PROCUREMENT" ? "FDA & OSHA GHS-KONFORME BESCHAFFUNG" : homepageConfig.heroTag}
                   </span>
                   <h2 className="text-2xl md:text-4xl font-light text-slate-800 tracking-tight leading-none font-heading">
-                    {homepageConfig.heroTitle}
+                    {homepageConfig.heroTitle === "High-Purity Laboratory Reagents & Supplies" ? "Hochreine Laborreagenzien & Chemikalienbedarf" : homepageConfig.heroTitle}
                   </h2>
                   <p className="text-slate-500 text-xs md:text-sm leading-relaxed">
-                    {homepageConfig.heroDescription}
+                    {homepageConfig.heroDescription?.startsWith("Flaskia distributes analytical chemicals")
+                      ? "Flaskia vertreibt analytische Chemikalien, Pufferlösungen und zertifizierte Borosilikat-Glaswaren der Klasse A für akademische Synthese, Forschungsmodellierung und Laboratorien."
+                      : homepageConfig.heroDescription}
                   </p>
 
                   <div className="flex flex-wrap gap-2 pt-1 pb-1">
@@ -957,20 +1001,20 @@ export default function App() {
                       className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 hover:scale-[1.01] text-white text-[10.5px] font-bold rounded-xl shadow-xs transition-all active:scale-[0.99] cursor-pointer z-10"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
-                      <span>WhatsApp Helpline: +1 (509) 994-1048 (Text Only-Chat 24/7)</span>
+                      <span>WhatsApp-Hotline: +1 (509) 994-1048 (Nur Chat 24/7)</span>
                     </a>
                   </div>
                   
                   {/* Detailed Marketplace Security Specs */}
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 font-mono text-[11px] text-slate-600 border-t border-slate-100">
                     <span className="flex items-center gap-1.5 font-bold text-slate-800">
-                      <Lock className="w-3.5 h-3.5 text-amber-600" /> 256-Bit SSL/TLS Encryption
+                      <Lock className="w-3.5 h-3.5 text-amber-600" /> 256-Bit SSL/TLS-Verschlüsselung
                     </span>
                     <span className="flex items-center gap-1.5 font-bold text-slate-800">
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> PCI-DSS Secure Payments
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> PCI-DSS Sichere Zahlungen
                     </span>
                     <span className="flex items-center gap-1.5 font-bold text-slate-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" /> GHS & OSHA Chemical Compliance
+                      <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" /> GHS & OSHA Chemikalienkonformität
                     </span>
                   </div>
                 </div>
@@ -1002,25 +1046,38 @@ export default function App() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 select-none">
               <div className="w-full sm:w-auto overflow-hidden">
                 <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none font-heading flex-nowrap whitespace-nowrap scroll-smooth max-w-full">
-                  {["All", ...appCategories.map(c => c.name), ...Array.from(new Set(appProducts.map(p => typeof p.category === 'object' && p.category !== null ? (p.category as any).name : p.category))).filter(c => c && !appCategories.find(ac => ac.name === c))].map((catName) => (
-                    <button
-                      key={catName}
-                      onClick={() => setActiveCategory(catName)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition shrink-0 ${
-                        activeCategory === catName
-                          ? isRetail
-                            ? "bg-[#2874f0] text-white shadow-xs font-extrabold"
-                            : "bg-slate-900 text-white font-semibold shadow-xs"
-                          : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
-                      }`}
-                    >
-                      {catName}
-                    </button>
-                  ))}
+                  {["All", ...appCategories.map(c => c.name), ...Array.from(new Set(appProducts.map(p => typeof p.category === 'object' && p.category !== null ? (p.category as any).name : p.category))).filter(c => c && !appCategories.find(ac => ac.name === c))].map((catName) => {
+                    const catLabelMap: Record<string, string> = {
+                      All: "Alle",
+                      Reagents: "Reagenzien",
+                      Buffers: "Pufferlösungen",
+                      Indicators: "Indikatoren",
+                      Solvents: "Lösungsmittel",
+                      Acids: "Säuren",
+                      Salts: "Salze",
+                      Glassware: "Glaswaren",
+                    };
+                    const displayLabel = catLabelMap[catName] || catName;
+                    return (
+                      <button
+                        key={catName}
+                        onClick={() => setActiveCategory(catName)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition shrink-0 ${
+                          activeCategory === catName
+                            ? isRetail
+                              ? "bg-[#2874f0] text-white shadow-xs font-extrabold"
+                              : "bg-slate-900 text-white font-semibold shadow-xs"
+                            : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
+                        }`}
+                      >
+                        {displayLabel}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div className="text-[10.5px] text-slate-400 font-mono shrink-0">
-                Showing <strong className="text-slate-700 font-bold">{filteredProducts.length}</strong> authenticated reagents
+                Zeige <strong className="text-slate-700 font-bold">{filteredProducts.length}</strong> geprüfte Reagenzien
               </div>
             </div>
 
@@ -1028,13 +1085,13 @@ export default function App() {
             {filteredProducts.length === 0 ? (
               <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl max-w-lg mx-auto select-none shadow-xs animate-fade-in">
                 <FlaskConicalOff className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-base font-bold text-slate-700 font-heading">No corresponding reagents located</h3>
-                <p className="text-xs text-slate-400 mt-1">Adjust your catalog filters or correct the nomenclature query.</p>
+                <h3 className="text-base font-bold text-slate-700 font-heading">Keine passenden Reagenzien gefunden</h3>
+                <p className="text-xs text-slate-400 mt-1">Passen Sie Ihre Katalogfilter an oder korrigieren Sie Ihre Suchanfrage.</p>
                 <button
                   onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
                   className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs rounded-xl cursor-pointer font-medium transition"
                 >
-                  Reset Catalog filters
+                  Katalogfilter zurücksetzen
                 </button>
               </div>
             ) : (
@@ -1064,7 +1121,14 @@ export default function App() {
                 <ShieldAlert className="w-6 h-6 text-blue-600 shrink-0" />
                 <p className="leading-normal text-slate-500">
                   <span className="mr-1.5">{homepageConfig.complianceEmoji}</span> 
-                  <strong>{homepageConfig.complianceTitle}</strong> {homepageConfig.complianceText}
+                  <strong>
+                    {homepageConfig.complianceTitle === "GHS Custody compliance assurance:"
+                      ? "GHS-Konformitätsgarantie:"
+                      : homepageConfig.complianceTitle}
+                  </strong>{" "}
+                  {homepageConfig.complianceText?.startsWith("Flaskia monitors safety profiles")
+                    ? "Flaskia überwacht Sicherheitsprofile kontinuierlich. Die Dokumentation zur sicheren Handhabung entspricht internationalen Chemiestandards."
+                    : homepageConfig.complianceText}
                 </p>
               </div>
               <button
@@ -1072,7 +1136,9 @@ export default function App() {
                 className="px-4.5 py-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100/50 rounded-xl cursor-pointer transition shrink-0 self-stretch sm:self-auto text-center"
                 id="view-faq-manual-btn"
               >
-                {homepageConfig.complianceBtnText}
+                {homepageConfig.complianceBtnText === "Open Safety & FAQ Manual"
+                  ? "Sicherheits- & FAQ-Handbuch öffnen"
+                  : homepageConfig.complianceBtnText}
               </button>
             </div>
 
@@ -1098,7 +1164,7 @@ export default function App() {
         )}
 
         {/* VIEW 3: DISPATCH CART & CHECKOUT PAGE WRAPPER */}
-        {currentView === "checkout" && (
+        {!isNoCartAuthTheme && currentView === "checkout" && (
           authLoading ? (
             <div className="py-24 text-center text-xs text-slate-400 font-mono space-y-2">
               <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin mx-auto" />
@@ -1129,7 +1195,7 @@ export default function App() {
         )}
 
         {/* VIEW 4: LICENSED TRANSIT TRACKER HISTORY */}
-        {currentView === "orders" && (
+        {!isNoCartAuthTheme && currentView === "orders" && (
           authLoading ? (
             <div className="py-24 text-center text-xs text-slate-400 font-mono space-y-2">
               <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin mx-auto" />
@@ -1180,7 +1246,7 @@ export default function App() {
         )}
 
         {/* VIEW 6: SECURE PROFILE HUB */}
-        {currentView === "profile" && (
+        {!isNoCartAuthTheme && currentView === "profile" && (
           authLoading ? (
             <div className="py-24 text-center text-xs text-slate-400 font-mono space-y-2">
               <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin mx-auto" />
@@ -1220,25 +1286,33 @@ export default function App() {
                 onClick={() => handleNavigate("store")}
                 className="inline-flex items-center gap-2.5 cursor-pointer group"
               >
-                <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center shadow-2xs group-hover:bg-[#0747a6] transition-colors shrink-0">
-                  {(() => {
-                    const FooterIcon = (() => {
-                      switch (homepageConfig.appLogoIcon) {
-                        case "Award": return Award;
-                        case "Activity": return Activity;
-                        case "ShieldCheck": return ShieldCheck;
-                        case "Globe": return Globe;
-                        case "Cpu": return Cpu;
-                        case "Sparkles": return Sparkles;
-                        case "Beaker": return Beaker;
-                        case "Heart": return Heart;
-                        case "FlaskConical":
-                        default: return FlaskConical;
-                      }
-                    })();
-                    return <FooterIcon className="w-4.5 h-4.5" />;
-                  })()}
-                </div>
+                {(homepageConfig.footerLogoUrl || homepageConfig.appLogoUrl) ? (
+                  <img
+                    src={getProxiedImageUrl(homepageConfig.footerLogoUrl || homepageConfig.appLogoUrl)}
+                    alt={homepageConfig.appName}
+                    className="h-9 w-auto max-w-[160px] object-contain rounded-lg shrink-0"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center shadow-2xs group-hover:bg-[#0747a6] transition-colors shrink-0">
+                    {(() => {
+                      const FooterIcon = (() => {
+                        switch (homepageConfig.appLogoIcon) {
+                          case "Award": return Award;
+                          case "Activity": return Activity;
+                          case "ShieldCheck": return ShieldCheck;
+                          case "Globe": return Globe;
+                          case "Cpu": return Cpu;
+                          case "Sparkles": return Sparkles;
+                          case "Beaker": return Beaker;
+                          case "Heart": return Heart;
+                          case "FlaskConical":
+                          default: return FlaskConical;
+                        }
+                      })();
+                      return <FooterIcon className="w-4.5 h-4.5" />;
+                    })()}
+                  </div>
+                )}
                 <div>
                   <span className="font-bold text-slate-900 text-base tracking-tight font-heading block leading-none">
                     {homepageConfig.appName}
@@ -1252,7 +1326,7 @@ export default function App() {
               </div>
 
               <p className="text-xs leading-relaxed text-slate-500 max-w-sm">
-                Global supplier of analytical reagents, ACS & HPLC grade solvents, buffering solutions, and certified laboratory materials conforming to GHS and OSHA regulatory standards.
+                Weltweiter Lieferant von analytischen Reagenzien, Lösungsmitteln in ACS- und HPLC-Qualität, Pufferlösungen und zertifizierten Labormaterialien gemäß GHS- und OSHA-Standards.
               </p>
 
               <div className="pt-1 flex flex-wrap items-center gap-3">
@@ -1263,7 +1337,7 @@ export default function App() {
                   className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-medium transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5 text-[#0052cc]" />
-                  <span>WhatsApp Desk: +{homepageConfig.adminWhatsappNumber || "1 (509) 994-1048"}</span>
+                  <span>WhatsApp-Schalter: +{homepageConfig.adminWhatsappNumber || "1 (509) 994-1048"}</span>
                 </a>
               </div>
             </div>
@@ -1273,7 +1347,7 @@ export default function App() {
               {/* Column 1: Company */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
-                  Company
+                  Unternehmen
                 </h4>
                 <ul className="space-y-2.5 text-xs">
                   <li>
@@ -1281,7 +1355,7 @@ export default function App() {
                       onClick={() => handleNavigate("store")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Product Catalog
+                      Produktkatalog
                     </button>
                   </li>
                   <li>
@@ -1289,7 +1363,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("about")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      About Company
+                      Über uns
                     </button>
                   </li>
                   <li>
@@ -1297,7 +1371,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("compliance")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Quality & Compliance
+                      Qualität & Compliance
                     </button>
                   </li>
                   <li>
@@ -1305,7 +1379,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("contact")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Contact Us
+                      Kontakt
                     </button>
                   </li>
                 </ul>
@@ -1314,7 +1388,7 @@ export default function App() {
               {/* Column 2: Shipping & Support */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
-                  Logistics & Support
+                  Logistik & Support
                 </h4>
                 <ul className="space-y-2.5 text-xs">
                   <li>
@@ -1322,7 +1396,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("shipping")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Shipping & Hazmat Transit
+                      Versand & Gefahrguttransport
                     </button>
                   </li>
                   <li>
@@ -1330,7 +1404,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("return")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Returns & Claims
+                      Rückgabe & Reklamationen
                     </button>
                   </li>
                   <li>
@@ -1338,7 +1412,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("refund")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Refund Policy
+                      Rückerstattungsrichtlinie
                     </button>
                   </li>
                   <li>
@@ -1346,7 +1420,7 @@ export default function App() {
                       onClick={handleOpenHelp}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Safety & FAQ Manual
+                      Sicherheits- & FAQ-Handbuch
                     </button>
                   </li>
                 </ul>
@@ -1355,7 +1429,7 @@ export default function App() {
               {/* Column 3: Legal & Regulatory */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
-                  Legal & Regulatory
+                  Rechtliches & Regulierung
                 </h4>
                 <ul className="space-y-2.5 text-xs">
                   <li>
@@ -1363,7 +1437,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("terms")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Terms & Conditions
+                      Allgemeine Geschäftsbedingungen
                     </button>
                   </li>
                   <li>
@@ -1371,7 +1445,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("privacy")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Privacy Policy
+                      Datenschutzerklärung
                     </button>
                   </li>
                   <li>
@@ -1379,7 +1453,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("disclaimer")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Safety Disclaimer
+                      Sicherheitshinweis
                     </button>
                   </li>
                   <li>
@@ -1387,7 +1461,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("cookie")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Cookie Policy
+                      Cookie-Richtlinie
                     </button>
                   </li>
                 </ul>
@@ -1423,9 +1497,9 @@ export default function App() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </div>
           <div>
-            <p className="font-extrabold text-emerald-800 uppercase tracking-widest text-[8.5px] font-mono leading-none">WhatsApp Helpline</p>
+            <p className="font-extrabold text-emerald-800 uppercase tracking-widest text-[8.5px] font-mono leading-none">WhatsApp-Hotline</p>
             <p className="font-bold text-slate-705 mt-1 select-all">+1 (509) 994-1048</p>
-            <p className="text-[9px] text-slate-400 mt-0.5 whitespace-nowrap">Text Only (No Calls) - Online 24/7</p>
+            <p className="text-[9px] text-slate-400 mt-0.5 whitespace-nowrap">Nur Text (Keine Anrufe) - Online 24/7</p>
           </div>
         </div>
         
@@ -1436,8 +1510,8 @@ export default function App() {
           className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white p-3 md:p-3.5 md:px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 font-bold text-xs cursor-pointer border border-emerald-400/20"
         >
           <MessageCircle className="w-5 h-5" />
-          <span className="hidden sm:inline">WhatsApp Help</span>
-          <span className="sm:hidden">Help</span>
+          <span className="hidden sm:inline">WhatsApp-Hilfe</span>
+          <span className="sm:hidden">Hilfe</span>
         </a>
       </div>
 
