@@ -6,13 +6,21 @@
  * OMYRA ECOSYSTEM URL: www.omyra.org
  */
 
+import "dotenv/config";
 import pg from "pg";
 import bcrypt from "bcryptjs";
 const { Pool } = pg;
 
+const DEFAULT_NEON_DATABASE_URL =
+  "postgresql://neondb_owner:npg_16KNzsLOaYAt@ep-fancy-frog-b4988hvt-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+
+const envDbUrl = process.env.DATABASE_URL;
 const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://neondb_owner:npg_wLYJ4Ezn6Oru@ep-flat-dawn-aol0282a-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+  envDbUrl && !envDbUrl.includes("ep-flat-dawn-aol0282a-pooler")
+    ? envDbUrl
+    : DEFAULT_NEON_DATABASE_URL;
+
+process.env.DATABASE_URL = connectionString;
 
 export const pool = new Pool({
   connectionString,
