@@ -1,7 +1,7 @@
 import React from "react";
 import { Product } from "../data";
 import GhsPictogram from "./GhsPictogram";
-import { AlertTriangle, Tag, ZoomIn, ShoppingCart, Star, ShieldCheck, Zap, Lock, MessageCircle } from "lucide-react";
+import { AlertTriangle, Star, ShieldCheck, Zap, MessageCircle } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { getProxiedImageUrl } from "../utils/imageUtils";
@@ -10,104 +10,83 @@ interface ProductCardProps {
   key?: string | number;
   product: Product;
   onSelect: (product: Product) => void;
-  onAddToCart: (product: Product, event: React.MouseEvent) => void;
+  onAddToCart?: (product: Product, event: React.MouseEvent) => void;
   onOpenInquiry?: (product: Product) => void;
 }
 
-export default function ProductCard({ product, onSelect, onAddToCart, onOpenInquiry }: ProductCardProps) {
+export default function ProductCard({ product, onSelect, onOpenInquiry }: ProductCardProps) {
   const { isRetail, isIndiamart } = useTheme();
   const { formatPrice } = useCurrency();
 
+  const handleEnquireClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onOpenInquiry) {
+      onOpenInquiry(product);
+    } else {
+      onSelect(product);
+    }
+  };
+
   if (isIndiamart) {
-    // IndiaMART B2B Procurement Product Card
+    // Clean, Refined B2B Procurement Product Card (Analytical Cobalt Blue)
     return (
       <div 
         onClick={() => onSelect(product)}
-        className="bg-white rounded-2xl border border-slate-200 hover:border-[#2e7d32] hover:shadow-xl transition-all duration-300 group flex flex-col justify-between overflow-hidden cursor-pointer relative"
+        className="bg-white rounded-2xl border border-slate-200/90 hover:border-blue-300 hover:shadow-md transition-all duration-200 group flex flex-col justify-between overflow-hidden cursor-pointer"
         id={`card-indiamart-${product.id}`}
       >
-        {/* Top Supplier Verification Ribbon */}
-        <div className="bg-[#1b5e20] text-white px-3 py-1 flex items-center justify-between text-[10px] font-mono">
-          <span className="flex items-center gap-1 font-bold text-emerald-200">
-            <Lock className="w-3 h-3 text-emerald-400" /> 256-Bit SSL Encrypted
-          </span>
-          <span className="bg-emerald-800 text-white font-extrabold px-1.5 py-0.2 rounded">
-            Official Store
-          </span>
-        </div>
-
-        {/* Product Image & Badges Container */}
-        <div className="h-44 relative overflow-hidden bg-slate-50 p-3 flex items-center justify-center border-b border-slate-100">
+        {/* Clean Unobstructed Product Image Container */}
+        <div className="h-52 relative overflow-hidden bg-slate-50/70 p-6 flex items-center justify-center border-b border-slate-100">
           <img
             src={getProxiedImageUrl(product.image)}
             alt={product.name}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-103 transition-transform duration-200"
             referrerPolicy="no-referrer"
           />
-
-          <span className="absolute top-2 left-2 bg-[#00a699] text-white font-black text-[9.5px] px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
-            {product.grade} Grade
-          </span>
-
-          <span className="absolute bottom-2 right-2 bg-slate-900 text-white font-mono text-[9.5px] px-2 py-0.5 rounded shadow-xs">
-            CAS: {product.cas || "N/A"}
-          </span>
         </div>
 
         {/* Product Details Content */}
-        <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-          <div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono mb-1">
-              <span className="text-emerald-700 font-bold">Purity: {product.purity || "ACS"}</span>
-              <span className="bg-emerald-50 text-emerald-800 font-extrabold px-2 py-0.5 rounded border border-emerald-200 text-[10px]">
-                MOQ: 1 {product.unit}
-              </span>
+        <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+          <div className="space-y-1.5">
+            {/* Clean Unboxed Metadata with Middot Separators */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 font-mono">
+              <span>{product.grade}</span>
+              <span aria-hidden="true">·</span>
+              <span>CAS {product.cas || "N/A"}</span>
+              {product.purity && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{product.purity}</span>
+                </>
+              )}
             </div>
 
-            <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-[#2e7d32] line-clamp-2 leading-snug font-sans">
+            <h3 className="text-base font-semibold text-slate-900 group-hover:text-[#0052cc] transition-colors line-clamp-1 font-heading">
               {product.name}
             </h3>
 
-            {/* Price & Bulk Discount Tag */}
-            <div className="mt-2.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
-              <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Estimated Bulk Price</div>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-base font-black text-[#2e7d32] font-mono">
-                  {formatPrice(product.price)}
-                </span>
-                <span className="text-xs text-slate-500 font-medium">
-                  / {product.unit}
-                </span>
-              </div>
-              <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">
-                ⚡ Tiered Discounts for 10+ {product.unit}s
-              </p>
-            </div>
+            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+              {product.description}
+            </p>
           </div>
 
-          {/* Action Buttons: Get Best Price / Inquiry */}
-          <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+          {/* Price & Action Row */}
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+            <div>
+              <span className="text-lg font-bold text-slate-900 font-mono tabular-nums">
+                {formatPrice(product.price)}
+              </span>
+              <span className="text-xs text-slate-500 font-normal">
+                {" "}/ {product.unit}
+              </span>
+            </div>
+
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(product);
-              }}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded-xl transition cursor-pointer"
+              onClick={handleEnquireClick}
+              className="px-4 py-2 bg-[#0052cc] hover:bg-[#0747a6] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-2xs flex items-center gap-1.5 shrink-0"
+              title="Enquire on WhatsApp"
             >
-              Read Specs
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onOpenInquiry) {
-                  onOpenInquiry(product);
-                } else {
-                  onAddToCart(product, e);
-                }
-              }}
-              className="flex-1 bg-gradient-to-r from-[#2e7d32] to-[#00a699] hover:from-[#1b5e20] hover:to-[#00897b] text-white text-xs font-black py-2 rounded-xl transition cursor-pointer shadow-md flex items-center justify-center gap-1.5 uppercase tracking-wider active:scale-95"
-            >
-              <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
+              <MessageCircle className="w-3.5 h-3.5" />
               <span>Enquire on WhatsApp</span>
             </button>
           </div>
@@ -117,7 +96,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
   }
 
   if (isRetail) {
-    // Amazon & Flipkart Retail Powerhouse Product Card
+    // Retail Product Card
     const originalPrice = Math.round(product.price * 1.35);
     const discountPercent = 25;
 
@@ -127,7 +106,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
         className="bg-white rounded-lg border border-slate-200 hover:border-blue-400 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between overflow-hidden cursor-pointer relative"
         id={`card-retail-${product.id}`}
       >
-        {/* Flipkart / Amazon Image Container */}
+        {/* Image Container */}
         <div className="h-48 relative overflow-hidden bg-slate-50 p-3 flex items-center justify-center border-b border-slate-100">
           <img
             src={getProxiedImageUrl(product.image)}
@@ -136,12 +115,12 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
             referrerPolicy="no-referrer"
           />
 
-          {/* Discount Tag (Flipkart Yellow / Red Pill) */}
+          {/* Discount Tag */}
           <span className="absolute top-2.5 left-2.5 bg-emerald-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
             {discountPercent}% OFF
           </span>
 
-          {/* Flipkart Assured / Prime Badge */}
+          {/* Assured Badge */}
           <span className="absolute top-2.5 right-2.5 bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 rounded flex items-center gap-1 shadow-xs">
             <ShieldCheck className="w-3 h-3 text-amber-300" />
             <span>✓ Assured</span>
@@ -169,7 +148,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
               {product.name}
             </h3>
 
-            {/* Star Rating & Review Count (Flipkart Green Rating Badge) */}
+            {/* Star Rating & Review Count */}
             <div className="flex items-center gap-2 mt-1.5">
               <span className="bg-[#388e3c] text-white text-[10.5px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-2xs font-mono">
                 4.8 <Star className="w-2.5 h-2.5 fill-white text-white" />
@@ -196,32 +175,11 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
             </p>
           </div>
 
-          {/* Action Buttons (Amazon / Flipkart Yellow & Orange Buttons + WhatsApp) */}
-          <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+          {/* Action Button: Only Enquire on WhatsApp */}
+          <div className="pt-2 border-t border-slate-100 flex items-center">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(product);
-              }}
-              className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded transition cursor-pointer text-center"
-            >
-              Details
-            </button>
-            <button
-              onClick={(e) => onAddToCart(product, e)}
-              className="px-2.5 py-1.5 bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 text-[11px] font-extrabold rounded transition cursor-pointer shadow-xs flex items-center justify-center gap-1"
-            >
-              <ShoppingCart className="w-3 h-3 text-slate-950" />
-              <span>Add</span>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onOpenInquiry) {
-                  onOpenInquiry(product);
-                }
-              }}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold py-1.5 rounded transition cursor-pointer shadow-xs flex items-center justify-center gap-1 uppercase tracking-wider"
+              onClick={handleEnquireClick}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold py-2 rounded-lg transition cursor-pointer shadow-xs flex items-center justify-center gap-1.5 uppercase tracking-wider"
               title="Enquire on WhatsApp"
             >
               <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
@@ -233,14 +191,13 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
     );
   }
 
-  // Emerald Standard Theme Product Card
+  // Standard Theme Product Card
   return (
     <div 
       onClick={() => onSelect(product)}
       className="rounded-2xl overflow-hidden cursor-pointer flex flex-col transition-all duration-300 group bg-white border border-slate-200 hover:border-slate-300 hover:shadow-xs text-slate-900"
       id={`card-${product.id}`}
     >
-      
       {/* Product Image and Grade Tag overlay */}
       <div className="h-44 relative overflow-hidden select-none bg-slate-100">
         <img
@@ -273,7 +230,6 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
       {/* Reagent Data Specs */}
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
-          
           {/* Chemical CAS & Formula code */}
           <div className="flex items-center justify-between text-[10px] font-mono mb-1 text-slate-400">
             <span>CAS: {product.cas}</span>
@@ -299,7 +255,7 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
           </div>
         </div>
 
-        {/* Buy & Inspect Footers */}
+        {/* Price & Enquire on WhatsApp Footer */}
         <div className="mt-4 pt-3.5 border-t flex flex-col sm:flex-row gap-2.5 items-start sm:items-center justify-between border-slate-100">
           <div>
             <div className="text-[9px] uppercase tracking-widest font-mono text-slate-400">Reagent price</div>
@@ -309,44 +265,14 @@ export default function ProductCard({ product, onSelect, onAddToCart, onOpenInqu
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 select-none font-sans w-full sm:w-auto">
-            {/* Quick Inspect Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(product);
-              }}
-              className="p-2 rounded-xl border cursor-pointer transition bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200"
-              title="Inspect SDS Safety Data Sheets"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-
-            {/* Quick Add To Cart Button */}
-            <button
-              onClick={(e) => onAddToCart(product, e)}
-              className="px-2.5 py-2 rounded-xl font-semibold text-xs transition duration-150 active:scale-95 shadow-xs cursor-pointer flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
-              title="Add Reagent to Cart"
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              <span>Add</span>
-            </button>
-
-            {/* Enquire on WhatsApp Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onOpenInquiry) {
-                  onOpenInquiry(product);
-                }
-              }}
-              className="flex-1 sm:flex-initial px-3 py-2 rounded-xl font-black text-xs transition duration-150 active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white uppercase tracking-wider"
-              title="Enquire on WhatsApp"
-            >
-              <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
-              <span>Enquire on WhatsApp</span>
-            </button>
-          </div>
+          <button
+            onClick={handleEnquireClick}
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl font-bold text-xs transition duration-150 active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+            title="Enquire on WhatsApp"
+          >
+            <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
+            <span>Enquire on WhatsApp</span>
+          </button>
         </div>
       </div>
     </div>

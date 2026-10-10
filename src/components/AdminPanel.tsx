@@ -68,10 +68,16 @@ import {
   Palette,
   Building2,
   Zap,
-  MessageCircle
+  MessageCircle,
+  Key,
+  KeyRound,
+  EyeOff,
+  ExternalLink,
+  Code
 } from "lucide-react";
 import { PRODUCTS } from "../data";
 import { useTheme } from "../context/ThemeContext";
+import { ApiKeysManagement } from "./admin/ApiKeysManagement";
 
 
 export interface Category {
@@ -1106,6 +1112,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     | "payments"
     | "themes"
     | "inquiries"
+    | "api_keys"
   >("overview");
 
   // B2B Inquiries / RFQs State
@@ -3164,6 +3171,11 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                     icon: MessageSquare,
                     badge: inquiriesList ? inquiriesList.filter((i) => i.status === "PENDING").length : 0,
                   },
+                  {
+                    id: "api_keys",
+                    label: "API Keys & Integrations",
+                    icon: KeyRound,
+                  },
                 ].map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
@@ -3246,11 +3258,14 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   {activeTab === "checkout" && "Checkout Customizer & Settlement Ledger"}
                   {activeTab === "payments" && "Payment Gateways Configuration"}
                   {activeTab === "themes" && "Marketplace Theme & Visual Identity"}
-                  {activeTab === "inquiries" && "IndiaMART B2B RFQ Inquiries Ledger"}
+                  {activeTab === "inquiries" && "B2B Wholesale RFQ Inquiries Ledger"}
+                  {activeTab === "api_keys" && "API Keys & Integrations Management"}
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  {activeTab === "inquiries"
-                    ? "Manage wholesale chemical RFQs, buyer contact leads, price quotes, and IndiaMART B2B customer submissions."
+                  {activeTab === "api_keys"
+                    ? "Production-ready management for Cloudflare R2 object storage, Resend.com transactional email & verified domains, BETTER_AUTH signing secrets, Google Gemini AI, and PayPal gateways."
+                    : activeTab === "inquiries"
+                    ? "Manage wholesale chemical RFQs, buyer contact leads, price quotes, and B2B customer submissions."
                     : activeTab === "faqs"
                     ? "Manage safety descriptors, transport guidelines, and customer compliance articles."
                     : activeTab === "homepage"
@@ -4974,13 +4989,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                       {(activeTheme === "retail" || isCyber) && (
                         <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
                           <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
-                          Amazon & Flipkart Retail Theme
+                          Direct Retail E-Commerce Theme
                         </span>
                       )}
                       {activeTheme === "indiamart" && (
                         <span className="px-3 py-1 bg-teal-500/20 border border-teal-500/40 text-teal-300 text-xs font-bold rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(20,184,166,0.2)]">
                           <Building2 className="w-3.5 h-3.5 text-teal-400" />
-                          IndiaMART B2B Procurement Theme
+                          B2B Wholesale Procurement Theme
                         </span>
                       )}
                     </div>
@@ -5039,19 +5054,19 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                             : "text-slate-400 hover:text-white"
                         }`}
                       >
-                        🇮🇳 IndiaMART
+                        🏢 B2B Wholesale
                       </button>
                     </div>
                   </div>
 
                   {/* Render Live Preview ONLY for the CURRENTLY APPLIED Theme */}
                   {activeTheme === "indiamart" ? (
-                    /* IndiaMART B2B Procurement Theme Mockup */
+                    /* B2B Wholesale Procurement Theme Mockup */
                     <div className="bg-gradient-to-r from-[#1b5e20] via-[#2e7d32] to-[#00695c] rounded-2xl p-6 text-white shadow-lg space-y-4">
                       <div className="flex justify-between items-center border-b border-emerald-700/60 pb-3">
                         <div className="flex items-center gap-2">
                           <span className="bg-[#00a699] text-white text-[10px] font-black px-2.5 py-0.5 rounded uppercase font-mono">
-                            IndiaMART B2B Live Preview
+                            B2B Wholesale Live Preview
                           </span>
                           <span className="text-xs text-emerald-200 font-mono">Wholesale RFQ Quote Engine</span>
                         </div>
@@ -5092,12 +5107,12 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                       </div>
                     </div>
                   ) : (activeTheme === "retail" || isCyber) ? (
-                    /* Amazon & Flipkart Retail Theme Mockup */
+                    /* Direct Retail Theme Mockup */
                     <div className="bg-gradient-to-r from-[#2874f0] via-[#1f5bc0] to-[#131921] rounded-2xl p-6 text-white shadow-lg space-y-4">
                       <div className="flex justify-between items-center border-b border-blue-400/30 pb-3">
                         <div className="flex items-center gap-2">
                           <span className="bg-[#febd69] text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase font-sans">
-                            Flipkart / Amazon Live Preview
+                            Direct Retail Live Preview
                           </span>
                           <span className="text-xs text-blue-200 font-mono">Retail Storefront Layout</span>
                         </div>
@@ -5369,7 +5384,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2 flex items-center justify-between">
                       <span>
-                        2. {activeTheme === "indiamart" ? "IndiaMART B2B Hero Banner" : (activeTheme === "retail" || isCyber) ? "Amazon & Flipkart Hero Banner" : "Emerald Scientific Hero Banner"}
+                        2. {activeTheme === "indiamart" ? "B2B Wholesale Hero Banner" : (activeTheme === "retail" || isCyber) ? "Direct Retail Hero Banner" : "Emerald Scientific Hero Banner"}
                       </span>
                       <span className="text-[10px] text-slate-500 font-mono">
                         [{activeTheme.toUpperCase()}]
@@ -5393,7 +5408,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           }
                           placeholder={
                             activeTheme === "indiamart"
-                              ? "e.g. IndiaMART Verified Chemical Procurement Direct"
+                              ? "e.g. Verified Chemical Procurement Direct"
                               : activeTheme === "emerald"
                               ? "e.g. FDA & OSHA GHS COMPLIANT PROCUREMENT"
                               : "e.g. 🔥 BIG SAVING DAYS • LIMITED TIME DEALS"
@@ -8168,9 +8183,9 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                     }`}>
                       {activeTheme === "indiamart"
-                        ? "🇮🇳 IndiaMART B2B Procurement"
+                        ? "🏢 B2B Wholesale Procurement"
                         : activeTheme === "retail" || activeTheme === "cyber"
-                        ? "🛒 Amazon & Flipkart Retail"
+                        ? "🛒 Direct Retail Marketplace"
                         : "🌿 Emerald Classic"}
                     </span>
                   </div>
@@ -8275,7 +8290,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                     </div>
                   </div>
 
-                  {/* Theme 2: Amazon & Flipkart Retail Powerhouse */}
+                  {/* Theme 2: Direct Retail Marketplace */}
                   <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
                     activeTheme === "retail" || activeTheme === "cyber"
                       ? "bg-slate-900 border-amber-500/60 ring-2 ring-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.15)]"
@@ -8287,11 +8302,11 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           <div className="flex items-center gap-2">
                             <span className="text-xl">🛒</span>
                             <h3 className="text-base font-bold text-white font-heading">
-                              Amazon & Flipkart Retail Powerhouse
+                              Direct Retail E-Commerce
                             </h3>
                           </div>
                           <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                            An authentic high-converting retail e-commerce theme modeled directly after Amazon and Flipkart. Features prominent deal banners, star ratings, discount tags (25% OFF), pincode delivery estimators, strikethrough MRP, bank offer badges, and multi-step retail checkout.
+                            High-converting retail e-commerce theme featuring prominent deal banners, star ratings, discount tags, pincode delivery estimators, strikethrough MRP, and multi-step retail checkout.
                           </p>
                         </div>
                         {(activeTheme === "retail" || activeTheme === "cyber") && (
@@ -8317,7 +8332,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                       {/* Mini Component Live Mockup Preview */}
                       <div className="bg-slate-950 p-4 rounded-2xl border border-amber-500/20 space-y-3 relative overflow-hidden">
                         <div className="flex items-center justify-between text-[11px] font-mono text-amber-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-                          <span>Live Mini Flipkart Card Mockup</span>
+                          <span>Live Mini Retail Card Mockup</span>
                           <span className="text-amber-300">Retail UI</span>
                         </div>
                         <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-md space-y-2 relative">
@@ -8372,14 +8387,14 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 text-slate-950" />
-                            <span>Apply Amazon/Flipkart Retail Theme in 1-Click</span>
+                            <span>Apply Direct Retail Theme in 1-Click</span>
                           </>
                         )}
                       </button>
                     </div>
                   </div>
 
-                  {/* Theme 3: IndiaMART B2B Procurement Platform */}
+                  {/* Theme 3: B2B Wholesale Procurement Platform */}
                   <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
                     activeTheme === "indiamart"
                       ? "bg-slate-900 border-emerald-500/60 ring-2 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
@@ -8389,13 +8404,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xl">🇮🇳</span>
+                            <span className="text-xl">🏢</span>
                             <h3 className="text-base font-bold text-white font-heading">
-                              IndiaMART B2B Procurement
+                              B2B Wholesale Procurement
                             </h3>
                           </div>
                           <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                            Sleek IndiaMART B2B marketplace theme with animated hero banner, marketplace security badges, wholesale bulk MOQ pricing, and RFQ inquiry popup system. Direct card checkout is replaced with B2B inquiry submissions stored live in the database.
+                            Clean B2B wholesale marketplace theme with quick RFQ banner, wholesale bulk MOQ pricing, and RFQ inquiry modal system. Direct card checkout is replaced with B2B inquiry submissions stored live in the database.
                           </p>
                         </div>
                         {activeTheme === "indiamart" && (
@@ -8421,7 +8436,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                       {/* Mini Component Live Mockup Preview */}
                       <div className="bg-slate-950 p-4 rounded-2xl border border-emerald-500/20 space-y-3 relative overflow-hidden">
                         <div className="flex items-center justify-between text-[11px] font-mono text-emerald-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-                          <span>Live IndiaMART B2B RFQ Mockup</span>
+                          <span>Live B2B Wholesale RFQ Mockup</span>
                           <span className="text-emerald-300">B2B RFQ UI</span>
                         </div>
                         <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-slate-900 shadow-md space-y-2 relative">
@@ -8473,7 +8488,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4 text-white" />
-                            <span>Apply IndiaMART B2B Theme in 1-Click</span>
+                            <span>Apply B2B Wholesale Theme in 1-Click</span>
                           </>
                         )}
                       </button>
@@ -8513,10 +8528,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   <div>
                     <h2 className="text-lg font-bold text-white flex items-center gap-2 font-heading">
                       <MessageSquare className="w-5 h-5 text-emerald-400" />
-                      IndiaMART B2B RFQ Buyer Inquiries Ledger
+                      B2B Wholesale RFQ Buyer Inquiries Ledger
                     </h2>
                     <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                      All wholesale chemical price quotes and RFQ submissions from IndiaMART B2B marketplace visitors. Review buyer contact information, requested volume, target specs, and update lead status.
+                      All wholesale chemical price quotes and RFQ submissions from B2B marketplace visitors. Review buyer contact information, requested volume, target specs, and update lead status.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
@@ -8922,6 +8937,14 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* 15. API KEYS & INTEGRATIONS MANAGEMENT TAB PANEL */}
+            {activeTab === "api_keys" && (
+              <ApiKeysManagement
+                token={token}
+                onRefreshParent={loadAllData}
+              />
             )}
 
           </main>

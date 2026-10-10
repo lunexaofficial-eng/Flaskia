@@ -13,18 +13,18 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  activeTheme: "emerald",
+  activeTheme: "indiamart",
   setTheme: () => {},
   isRetail: false,
-  isEmerald: true,
-  isIndiamart: false,
+  isEmerald: false,
+  isIndiamart: true,
   isCyber: false,
   toggleTheme: () => {},
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode; initialTheme?: ThemeMode }> = ({
   children,
-  initialTheme = "emerald",
+  initialTheme = "indiamart",
 }) => {
   const [activeTheme, setActiveThemeState] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem("flaskia_active_theme");
@@ -96,7 +96,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode; initialTheme?:
         isRetail: activeTheme === "retail",
         isEmerald: activeTheme === "emerald",
         isIndiamart: activeTheme === "indiamart",
-        isCyber: activeTheme === "retail" || activeTheme === "cyber",
+        isCyber: false,
         toggleTheme,
       }}
     >

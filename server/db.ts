@@ -592,6 +592,50 @@ export async function initDb(frontProducts?: any[]) {
       )
     `);
 
+    // 20. Production-Ready System API Keys & Integrations Table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS system_api_keys (
+        key_name VARCHAR(100) PRIMARY KEY,
+        key_value TEXT,
+        service_category VARCHAR(50) NOT NULL DEFAULT 'general',
+        is_active BOOLEAN DEFAULT TRUE,
+        description TEXT,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_by VARCHAR(255) DEFAULT 'LUNEXA Administrator'
+      )
+    `);
+
+    // Seed default baseline API keys into system_api_keys if empty or missing
+    const defaultApiKeys = [
+      { key_name: "r2_account_id", key_value: process.env.R2_ACCOUNT_ID || "", service_category: "r2", is_active: true, description: "Cloudflare Account ID" },
+      { key_name: "r2_access_key_id", key_value: process.env.R2_ACCESS_KEY_ID || "", service_category: "r2", is_active: true, description: "Cloudflare R2 S3 Access Key ID" },
+      { key_name: "r2_secret_access_key", key_value: process.env.R2_SECRET_ACCESS_KEY || "", service_category: "r2", is_active: true, description: "Cloudflare R2 Secret Access Key" },
+      { key_name: "r2_bucket_name", key_value: process.env.R2_BUCKET_NAME || "flaskia-storage", service_category: "r2", is_active: true, description: "Cloudflare R2 Bucket Name" },
+      { key_name: "r2_public_url", key_value: process.env.R2_PUBLIC_URL || "", service_category: "r2", is_active: true, description: "Cloudflare R2 Public Domain or Worker URL" },
+      { key_name: "r2_enabled", key_value: "true", service_category: "r2", is_active: true, description: "Toggle Cloudflare R2 storage integration" },
+      
+      { key_name: "resend_api_key", key_value: process.env.RESEND_API_KEY || "", service_category: "resend", is_active: true, description: "Resend.com API Key (re_...)" },
+      { key_name: "resend_domain", key_value: "flaskia.com", service_category: "resend", is_active: true, description: "Resend.com Verified Sending Domain" },
+      { key_name: "resend_from_email", key_value: process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>", service_category: "resend", is_active: true, description: "Verified From Email sender address" },
+      { key_name: "resend_enabled", key_value: "true", service_category: "resend", is_active: true, description: "Toggle Resend.com email delivery" },
+
+      { key_name: "better_auth_secret", key_value: process.env.BETTER_AUTH_SECRET || "flaskia_better_auth_production_secret_key_2026_matrix", service_category: "better_auth", is_active: true, description: "BETTER_AUTH_SECRET cryptographic signing key" },
+      { key_name: "better_auth_url", key_value: process.env.BETTER_AUTH_URL || "https://ais-dev-drrzqjsllss3kzhvvx4a35-646852900977.asia-east1.run.app", service_category: "better_auth", is_active: true, description: "BETTER_AUTH_URL Base URL for authentication flows" },
+      { key_name: "better_auth_session_duration", key_value: "7d", service_category: "better_auth", is_active: true, description: "Better Auth session duration" },
+      { key_name: "better_auth_enabled", key_value: "true", service_category: "better_auth", is_active: true, description: "Toggle Better Auth module" },
+
+      { key_name: "gemini_api_key", key_value: process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY" ? process.env.GEMINI_API_KEY : "", service_category: "gemini", is_active: true, description: "Google Gemini AI API Key for Safety Assistant" },
+      { key_name: "gemini_enabled", key_value: "true", service_category: "gemini", is_active: true, description: "Toggle Gemini AI integration" },
+    ];
+
+    for (const k of defaultApiKeys) {
+      await client.query(`
+        INSERT INTO system_api_keys (key_name, key_value, service_category, is_active, description)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (key_name) DO NOTHING
+      `, [k.key_name, k.key_value, k.service_category, k.is_active, k.description]);
+    }
+
     // Add high-performance indexes for foreign keys, joins, and lookup filters
     console.log("Applying high-performance database indexes to tables...");
     await client.query("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id)");
@@ -1457,3 +1501,113 @@ export async function initDb(frontProducts?: any[]) {
     client.release();
   }
 }
+
+// --- SYSTEM API KEYS & CREDENTIALS STORAGE HELPERS ---
+
+export async function getStoredApiKey(keyName: string, fallbackEnv?: string): Promise<string> {
+  try {
+    const { rows } = await pool.query(
+      "SELECT key_value, is_active FROM system_api_keys WHERE key_name = $1",
+      [keyName]
+    );
+    if (rows.length > 0 && rows[0].is_active !== false && rows[0].key_value !== null && rows[0].key_value !== undefined) {
+      const val = String(rows[0].key_value).trim();
+      if (val !== "") return val;
+    }
+  } catch (err) {
+    // If table not yet ready, ignore and use fallback
+  }
+  return fallbackEnv || "";
+}
+
+export async function getAllStoredApiKeys(): Promise<Array<{
+  keyName: string;
+  keyValue: string;
+  serviceCategory: string;
+  isActive: boolean;
+  description: string;
+  updatedAt: string;
+  updatedBy: string;
+}>> {
+  try {
+    const { rows } = await pool.query(
+      "SELECT key_name, key_value, service_category, is_active, description, updated_at, updated_by FROM system_api_keys ORDER BY service_category ASC, key_name ASC"
+    );
+    return rows.map((r: any) => ({
+      keyName: r.key_name,
+      keyValue: r.key_value || "",
+      serviceCategory: r.service_category || "general",
+      isActive: r.is_active !== false,
+      description: r.description || "",
+      updatedAt: r.updated_at ? new Date(r.updated_at).toISOString() : new Date().toISOString(),
+      updatedBy: r.updated_by || "Administrator",
+    }));
+  } catch (err: any) {
+    console.error("Error retrieving stored API keys from PostgreSQL:", err);
+    return [];
+  }
+}
+
+export async function saveStoredApiKey(
+  keyName: string,
+  keyValue: string,
+  serviceCategory: string = "general",
+  isActive: boolean = true,
+  description?: string,
+  updatedBy: string = "LUNEXA Administrator"
+): Promise<void> {
+  await pool.query(`
+    INSERT INTO system_api_keys (key_name, key_value, service_category, is_active, description, updated_at, updated_by)
+    VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+    ON CONFLICT (key_name) DO UPDATE SET
+      key_value = EXCLUDED.key_value,
+      service_category = EXCLUDED.service_category,
+      is_active = EXCLUDED.is_active,
+      description = COALESCE(EXCLUDED.description, system_api_keys.description),
+      updated_at = NOW(),
+      updated_by = EXCLUDED.updated_by
+  `, [keyName, keyValue, serviceCategory, isActive, description || null, updatedBy]);
+}
+
+export async function saveBatchStoredApiKeys(
+  keys: Array<{
+    keyName: string;
+    keyValue: string;
+    serviceCategory?: string;
+    isActive?: boolean;
+    description?: string;
+  }>,
+  updatedBy: string = "LUNEXA Administrator"
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const item of keys) {
+      await client.query(`
+        INSERT INTO system_api_keys (key_name, key_value, service_category, is_active, description, updated_at, updated_by)
+        VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+        ON CONFLICT (key_name) DO UPDATE SET
+          key_value = EXCLUDED.key_value,
+          service_category = COALESCE(EXCLUDED.service_category, system_api_keys.service_category),
+          is_active = COALESCE(EXCLUDED.is_active, system_api_keys.is_active),
+          description = COALESCE(EXCLUDED.description, system_api_keys.description),
+          updated_at = NOW(),
+          updated_by = EXCLUDED.updated_by
+      `, [
+        item.keyName,
+        item.keyValue,
+        item.serviceCategory || "general",
+        item.isActive !== undefined ? item.isActive : true,
+        item.description || null,
+        updatedBy
+      ]);
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+

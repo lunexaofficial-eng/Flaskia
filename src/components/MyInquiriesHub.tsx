@@ -181,17 +181,15 @@ export default function MyInquiriesHub({
 
         {activeEmail && (
           <div className="flex items-center gap-2.5">
-            <div className="bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span className="text-slate-600 font-medium">Logged in as:</span>
-              <span className="font-bold font-mono text-emerald-800">{activeEmail}</span>
-            </div>
+            <span className="text-xs text-slate-500 font-mono">
+              {activeEmail}
+            </span>
             <button
               onClick={() => fetchMyInquiries(true)}
               disabled={isRefreshing}
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer flex items-center gap-1 text-xs font-bold"
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg transition cursor-pointer flex items-center gap-1.5 text-xs font-medium"
             >
-              <RefreshCw className={`w-4 h-4 text-emerald-600 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? "animate-spin" : ""}`} />
               <span className="hidden md:inline">Refresh</span>
             </button>
           </div>
@@ -200,14 +198,14 @@ export default function MyInquiriesHub({
 
       {/* Auth Guard if no email set */}
       {!activeEmail ? (
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-xl mx-auto text-center space-y-6 shadow-sm">
-          <div className="w-14 h-14 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-center mx-auto text-emerald-600">
-            <Lock className="w-7 h-7" />
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-xl mx-auto text-center space-y-6 shadow-2xs">
+          <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto text-slate-700">
+            <Lock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900 font-heading">Authenticate Your Email</h3>
+            <h3 className="text-lg font-bold text-slate-900 font-heading">Access Your Inquiries</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
-              Enter your registered email address to access your private B2B quote inquiries, vendor messages, and wholesale price quotes.
+              Enter your registered email address to view your B2B quote inquiries and supplier responses.
             </p>
           </div>
 
@@ -217,18 +215,18 @@ export default function MyInquiriesHub({
               placeholder="Enter registered email (e.g., buyer@company.com)"
               value={manualEmail}
               onChange={(e) => setManualEmail(e.target.value)}
-              className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-600 focus:bg-white text-slate-900"
+              className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-600 text-slate-900"
             />
             <button
               onClick={() => fetchMyInquiries()}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer shadow-sm"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer"
             >
               View Inquiries
             </button>
           </div>
 
           <div className="pt-4 border-t border-slate-100">
-            <p className="text-[11px] text-slate-400 mb-4">Or sign in with OTP via Customer Authentication:</p>
+            <p className="text-[11px] text-slate-400 mb-4">Or sign in to your account:</p>
             <CustomerAuth
               onAuthSuccess={(user) => {
                 if (onUpdateUser) onUpdateUser(user);
@@ -238,9 +236,9 @@ export default function MyInquiriesHub({
           </div>
         </div>
       ) : isLoading ? (
-        <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center space-y-3 shadow-xs">
-          <div className="w-10 h-10 border-3 border-slate-200 border-t-emerald-600 rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-mono">Fetching your private customer inquiries from Neon Database...</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-3 shadow-2xs">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-emerald-700 rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-mono">Loading inquiries...</p>
         </div>
       ) : inquiries.length === 0 ? (
         /* Empty State */

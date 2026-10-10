@@ -57,7 +57,7 @@ export default function App() {
   const [activePolicyTab, setActivePolicyTab] = useState<PolicyTab>("about");
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
-  // States for IndiaMART Hero Section Quick RFQ Form
+  // States for Hero Section Quick RFQ Form
   const [heroRfqProduct, setHeroRfqProduct] = useState<string>("Sulfuric Acid 98% ACS Grade");
   const [heroRfqQty, setHeroRfqQty] = useState<string>("25 Packs");
   const [heroRfqPhone, setHeroRfqPhone] = useState<string>("");
@@ -76,10 +76,10 @@ export default function App() {
           product_name: heroRfqProduct,
           quantity: heroRfqQty,
           packaging_type: "Wholesale Drums / Containers",
-          buyer_name: "IndiaMART B2B Hero Visitor",
+          buyer_name: "B2B Wholesale Visitor",
           buyer_phone: heroRfqPhone,
-          buyer_email: "hero_rfq@indiamart.lead",
-          message: `Direct B2B Quote Request from IndiaMART Hero Section: Requested wholesale pricing for ${heroRfqQty} of ${heroRfqProduct}. Contact Phone: ${heroRfqPhone}`,
+          buyer_email: "rfq@wholesale.lead",
+          message: `Direct B2B Quote Request from Hero Section: Requested wholesale pricing for ${heroRfqQty} of ${heroRfqProduct}. Contact Phone: ${heroRfqPhone}`,
         }),
       });
       setHeroRfqSubmitted(true);
@@ -209,7 +209,7 @@ export default function App() {
     footerLicence1: "OSHA ID: 44321-REAG",
     footerLicence2: "EPA LICENSE: 7385-CHEM",
     footerLicence3: "DOT TRANSPORT: CLASS 9",
-    footerCopyright: "Flaskia. Educational Material Logistics. Sandbox Checkout Portal."
+    footerCopyright: "Flaskia Supplies International Co. All rights reserved."
   });
 
   const loadHomepageConfig = () => {
@@ -415,7 +415,7 @@ export default function App() {
           if (state.tab) setActivePolicyTab(state.tab);
           setCurrentView("policies");
           setActiveProduct(null);
-        } else if (["store", "checkout", "orders", "profile"].includes(state.view)) {
+        } else if (["store", "checkout", "orders", "inquiries", "profile"].includes(state.view)) {
           setCurrentView(state.view);
           if (state.view === "store") setActiveProduct(null);
         } else {
@@ -434,8 +434,9 @@ export default function App() {
         }
       } else if (hash === "#admin") {
         setCurrentView("admin");
-      } else if (path === "/" || path === "") {
-        // Stay on currentView or store
+      } else if (e && (path === "/" || path === "") && !hash) {
+        setCurrentView("store");
+        setActiveProduct(null);
       }
     };
 
@@ -797,42 +798,46 @@ export default function App() {
             
             {/* Conditional Hero Layout based on Theme */}
             {isIndiamart ? (
-              <div className="animate-fade-in space-y-4" id="indiamart-hero-banner">
-                {/* Simple & Sleek IndiaMART B2B Hero Banner */}
-                <div className="bg-gradient-to-r from-[#1b5e20] via-[#2e7d32] to-[#00695c] rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-                  <div className="max-w-3xl space-y-4 relative z-10">
-                    <h1 className="text-2xl md:text-4xl font-black font-sans leading-tight">
+              <div className="animate-fade-in" id="indiamart-hero-banner">
+                <div className="bg-gradient-to-br from-[#091e42] via-[#0a2540] to-[#0052cc] rounded-2xl p-6 md:p-10 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  <div className="max-w-2xl space-y-3.5">
+                    <h1 className="text-2xl md:text-4xl font-bold text-white tracking-tight font-heading leading-tight">
                       {homepageConfig.heroTitle || "Wholesale Chemical Supplier & Bulk Quotation Hub"}
                     </h1>
 
-                    <p className="text-emerald-100/90 text-xs md:text-sm leading-relaxed max-w-2xl">
-                      {homepageConfig.heroDescription || "Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA, and fast dispatch."}
+                    <p className="text-blue-100/90 text-xs md:text-sm leading-relaxed max-w-xl">
+                      {homepageConfig.heroDescription || "Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA and fast dispatch."}
                     </p>
+                  </div>
 
-                    {/* Quick 1-Line RFQ Bar */}
-                    <div className="pt-2">
-                      {heroRfqSubmitted ? (
-                        <div className="bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl flex items-center justify-between gap-3 text-xs font-mono">
-                          <span className="flex items-center gap-2 text-emerald-300 font-bold">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            RFQ Submitted! We will contact you at {heroRfqPhone} shortly.
-                          </span>
-                          <button
-                            onClick={() => setHeroRfqSubmitted(false)}
-                            className="text-[11px] text-white hover:underline cursor-pointer"
-                          >
-                            New RFQ
-                          </button>
+                  {/* Quick 1-Line RFQ Bar */}
+                  <div className="w-full lg:w-auto lg:min-w-[440px]">
+                    {heroRfqSubmitted ? (
+                      <div className="bg-blue-950/80 border border-blue-400/40 p-4 rounded-xl flex items-center justify-between gap-3 text-xs">
+                        <span className="flex items-center gap-2 text-blue-100 font-semibold">
+                          <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
+                          RFQ submitted. Our team will contact {heroRfqPhone} shortly.
+                        </span>
+                        <button
+                          onClick={() => setHeroRfqSubmitted(false)}
+                          className="text-xs font-semibold text-sky-300 hover:underline cursor-pointer shrink-0"
+                        >
+                          New Quote
+                        </button>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleHeroRfqSubmit} className="bg-white/10 backdrop-blur-md border border-white/15 p-3.5 rounded-xl space-y-2.5">
+                        <div className="text-[11px] font-semibold text-blue-100 px-1">
+                          Request Instant Bulk Quotation
                         </div>
-                      ) : (
-                        <form onSubmit={handleHeroRfqSubmit} className="flex flex-col sm:flex-row gap-2 max-w-xl">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             required
                             value={heroRfqProduct}
                             onChange={(e) => setHeroRfqProduct(e.target.value)}
-                            placeholder="Chemical name needed (e.g. Acetone, Sulfuric Acid)..."
-                            className="flex-1 bg-white text-slate-900 text-xs font-medium rounded-xl px-4 py-3 border-0 focus:outline-none focus:ring-2 focus:ring-[#00a699] placeholder:text-slate-400 shadow-md"
+                            placeholder="Chemical name or CAS..."
+                            className="flex-1 bg-white text-slate-900 text-xs font-medium rounded-lg px-3.5 py-2.5 border border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400 placeholder:text-slate-400"
                           />
                           <input
                             type="tel"
@@ -840,32 +845,18 @@ export default function App() {
                             value={heroRfqPhone}
                             onChange={(e) => setHeroRfqPhone(e.target.value)}
                             placeholder="Mobile / WhatsApp"
-                            className="w-full sm:w-40 bg-white text-slate-900 text-xs font-medium rounded-xl px-3 py-3 border-0 focus:outline-none focus:ring-2 focus:ring-[#00a699] placeholder:text-slate-400 shadow-md"
+                            className="w-full sm:w-36 bg-white text-slate-900 text-xs font-medium rounded-lg px-3 py-2.5 border border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400 placeholder:text-slate-400"
                           />
                           <button
                             type="submit"
                             disabled={heroRfqLoading}
-                            className="bg-[#00a699] hover:bg-[#00897b] text-white text-xs font-black px-5 py-3 rounded-xl transition cursor-pointer shadow-md uppercase tracking-wider whitespace-nowrap active:scale-95 flex items-center justify-center gap-1.5"
+                            className="bg-[#0052cc] hover:bg-[#0747a6] border border-blue-400/30 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition cursor-pointer whitespace-nowrap active:scale-[0.99] shadow-xs"
                           >
-                            <Zap className="w-3.5 h-3.5 fill-white text-white" />
-                            <span>{homepageConfig.complianceBtnText || "Get Price Quote"}</span>
+                            {heroRfqLoading ? "Sending..." : (homepageConfig.complianceBtnText || "Get Quote")}
                           </button>
-                        </form>
-                      )}
-                    </div>
-
-                    {/* B2B Marketplace Security Architecture Badges */}
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-emerald-100 font-mono pt-2 border-t border-emerald-700/50">
-                      <span className="flex items-center gap-1.5 font-bold text-amber-300">
-                        <Lock className="w-3.5 h-3.5 text-amber-300" /> 256-Bit SSL/TLS Encryption
-                      </span>
-                      <span className="flex items-center gap-1.5 font-bold text-emerald-300">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> PCI-DSS Gateway Protection
-                      </span>
-                      <span className="flex items-center gap-1.5 font-bold text-cyan-300">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300" /> GHS & OSHA Safety Compliant
-                      </span>
-                    </div>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1095,6 +1086,8 @@ export default function App() {
             onBack={() => {
               setActiveProduct(null);
               setCurrentView("store");
+              window.history.pushState({ view: "store" }, "", "/");
+              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             onAddToCart={handleDetailedAddToCart}
             onOpenInquiry={handleOpenInquiry}
@@ -1128,7 +1121,7 @@ export default function App() {
               onUpdateQty={handleUpdateCartQty}
               onRemoveItem={handleRemoveCartItem}
               onPaymentSuccess={handlePaymentSuccess}
-              onBackToStore={() => setCurrentView("store")}
+              onBackToStore={() => handleNavigate("store")}
               homepageConfig={homepageConfig}
               currentUser={currentUser}
             />
@@ -1156,7 +1149,7 @@ export default function App() {
           ) : (
             <OrdersHub
               orders={orders}
-              onBackToStore={() => setCurrentView("store")}
+              onBackToStore={() => handleNavigate("store")}
               onClearHistory={handleClearOrderHistory}
               homepageConfig={homepageConfig}
               currentUser={currentUser}
@@ -1168,7 +1161,7 @@ export default function App() {
         {currentView === "inquiries" && (
           <MyInquiriesHub
             currentUser={currentUser}
-            onBackToStore={() => setCurrentView("store")}
+            onBackToStore={() => handleNavigate("store")}
             onSelectProductById={handleSelectProductById}
             onUpdateUser={handleSetUser}
           />
@@ -1179,9 +1172,7 @@ export default function App() {
         {currentView === "policies" && (
           <CompanyPolicies
             initialTab={activePolicyTab}
-            onBack={() => {
-              setCurrentView("store");
-            }}
+            onBack={() => handleNavigate("store")}
             appName={homepageConfig.appName}
             appSubtitle={homepageConfig.appSubtitle}
             footerCompanyName={homepageConfig.footerCompanyName}
@@ -1211,138 +1202,203 @@ export default function App() {
               currentUser={currentUser}
               onUpdateUser={handleSetUser}
               onLogout={handleLogout}
-              onBackToStore={() => setCurrentView("store")}
+              onBackToStore={() => handleNavigate("store")}
             />
           )
         )}
 
       </main>
 
-      {/* Humble aesthetic footer */}
-      <footer className="print:hidden border-t border-slate-200 bg-white pt-10 pb-6 select-none font-sans text-xs text-slate-450">
-        <div className="max-w-7xl mx-auto px-4 md:px-10">
-          
-          {/* Top Multi-Column Policy Layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-8 border-b border-slate-200/65 text-left">
-            
-            {/* Column 1: Brand & Desc */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const FooterIcon = (() => {
-                    switch (homepageConfig.appLogoIcon) {
-                      case "Award": return Award;
-                      case "Activity": return Activity;
-                      case "ShieldCheck": return ShieldCheck;
-                      case "Globe": return Globe;
-                      case "Cpu": return Cpu;
-                      case "Sparkles": return Sparkles;
-                      case "Beaker": return Beaker;
-                      case "Heart": return Heart;
-                      case "FlaskConical":
-                      default: return FlaskConical;
-                    }
-                  })();
-                  return <FooterIcon className="w-4.5 h-4.5 text-blue-600" />;
-                })()}
-                <span className="font-extrabold text-slate-800 text-sm tracking-tight font-heading">{homepageConfig.appName}</span>
+      {/* Clean Corporate Footer */}
+      <footer className="print:hidden border-t border-slate-200/90 bg-white text-slate-600 font-sans select-none">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
+          {/* Main Footer Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-slate-200/80 text-left">
+            {/* Brand & Corporate Summary (5 cols) */}
+            <div className="lg:col-span-5 space-y-4 pr-0 lg:pr-8">
+              <div
+                onClick={() => handleNavigate("store")}
+                className="inline-flex items-center gap-2.5 cursor-pointer group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center shadow-2xs group-hover:bg-[#0747a6] transition-colors shrink-0">
+                  {(() => {
+                    const FooterIcon = (() => {
+                      switch (homepageConfig.appLogoIcon) {
+                        case "Award": return Award;
+                        case "Activity": return Activity;
+                        case "ShieldCheck": return ShieldCheck;
+                        case "Globe": return Globe;
+                        case "Cpu": return Cpu;
+                        case "Sparkles": return Sparkles;
+                        case "Beaker": return Beaker;
+                        case "Heart": return Heart;
+                        case "FlaskConical":
+                        default: return FlaskConical;
+                      }
+                    })();
+                    return <FooterIcon className="w-4.5 h-4.5" />;
+                  })()}
+                </div>
+                <div>
+                  <span className="font-bold text-slate-900 text-base tracking-tight font-heading block leading-none">
+                    {homepageConfig.appName}
+                  </span>
+                  {homepageConfig.appSubtitle && (
+                    <span className="text-[11px] text-slate-500 font-medium block mt-1 leading-none">
+                      {homepageConfig.appSubtitle}
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="text-[11px] leading-relaxed text-slate-450">
-                Premium laboratory reagents, buffering solutions, and certified Class A borosilicate glassware conforming to strict OSHA GHS standardization protocols.
+
+              <p className="text-xs leading-relaxed text-slate-500 max-w-sm">
+                Global supplier of analytical reagents, ACS & HPLC grade solvents, buffering solutions, and certified laboratory materials conforming to GHS and OSHA regulatory standards.
               </p>
-              <div className="text-[9.5px] font-mono uppercase bg-slate-50 border border-slate-150 inline-block px-2.5 py-1 rounded text-slate-450 font-bold">
-                GHS CERTIFIED LOGISTICS
+
+              <div className="pt-1 flex flex-wrap items-center gap-3">
+                <a
+                  href={`https://wa.me/${(homepageConfig.adminWhatsappNumber || "15099941048").replace(/[^0-9]/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-medium transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-[#0052cc]" />
+                  <span>WhatsApp Desk: +{homepageConfig.adminWhatsappNumber || "1 (509) 994-1048"}</span>
+                </a>
               </div>
             </div>
 
-            {/* Column 2: Corporate Info */}
-            <div className="space-y-2.5">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">Corporate Info</h4>
-              <ul className="space-y-1.5 text-[11px]">
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("about")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    About Us
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("contact")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Contact Us
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("compliance")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Compliance Policy
-                  </button>
-                </li>
-              </ul>
-            </div>
+            {/* Navigation Columns (7 cols) */}
+            <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
+              {/* Column 1: Company */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
+                  Company
+                </h4>
+                <ul className="space-y-2.5 text-xs">
+                  <li>
+                    <button
+                      onClick={() => handleNavigate("store")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Product Catalog
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("about")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      About Company
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("compliance")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Quality & Compliance
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("contact")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Contact Us
+                    </button>
+                  </li>
+                </ul>
+              </div>
 
-            {/* Column 3: Logistics Desk */}
-            <div className="space-y-2.5">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">Logistics Desk</h4>
-              <ul className="space-y-1.5 text-[11px]">
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("shipping")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Shipping Policy
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("return")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Return Policy
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("refund")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Refund Policy
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("disclaimer")} className="hover:text-amber-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Safety Disclaimer
-                  </button>
-                </li>
-              </ul>
-            </div>
+              {/* Column 2: Shipping & Support */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
+                  Logistics & Support
+                </h4>
+                <ul className="space-y-2.5 text-xs">
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("shipping")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Shipping & Hazmat Transit
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("return")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Returns & Claims
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("refund")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Refund Policy
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={handleOpenHelp}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Safety & FAQ Manual
+                    </button>
+                  </li>
+                </ul>
+              </div>
 
-            {/* Column 4: Legal & System */}
-            <div className="space-y-2.5">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">Legal & System</h4>
-              <ul className="space-y-1.5 text-[11px]">
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("privacy")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Privacy Policy
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("terms")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Terms & Conditions
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigateToPolicy("cookie")} className="hover:text-blue-600 hover:underline underline-offset-2 transition cursor-pointer text-slate-500 font-medium">
-                    Cookie Policy
-                  </button>
-                </li>
-              </ul>
+              {/* Column 3: Legal & Regulatory */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
+                  Legal & Regulatory
+                </h4>
+                <ul className="space-y-2.5 text-xs">
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("terms")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Terms & Conditions
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("privacy")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Privacy Policy
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("disclaimer")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Safety Disclaimer
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigateToPolicy("cookie")}
+                      className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
+                    >
+                      Cookie Policy
+                    </button>
+                  </li>
+                </ul>
+              </div>
             </div>
-
           </div>
 
-          {/* Bottom Metainfo, Licences & Copyright */}
-          <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <span className="font-semibold text-slate-600 text-[11px] font-sans">
-              {homepageConfig.footerCompanyName}
-            </span>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-slate-400 items-center justify-center">
-              {homepageConfig.footerLicence1 && <span>{homepageConfig.footerLicence1}</span>}
-              {homepageConfig.footerLicence2 && <span>{homepageConfig.footerLicence2}</span>}
-              {homepageConfig.footerLicence3 && <span>{homepageConfig.footerLicence3}</span>}
-            </div>
-            <div className="text-[10px] text-slate-400 text-center md:text-right font-mono">
-              © {new Date().getFullYear()} {homepageConfig.footerCopyright}
-            </div>
+          {/* Bottom Bar: Clean Footer Credit Only */}
+          <div className="pt-6 flex items-center justify-center text-xs text-slate-400 text-center">
+            © {new Date().getFullYear()} {homepageConfig.footerCopyright}
           </div>
-
         </div>
       </footer>
 
