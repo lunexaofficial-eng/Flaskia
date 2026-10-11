@@ -50,6 +50,8 @@ export interface Product {
     precautionaryStatements: string[];
     sections: SDSSection[];
   };
+  realRatingAvg?: number | null;
+  realReviewCount?: number | null;
 }
 
 export const PRODUCTS: Product[] = [

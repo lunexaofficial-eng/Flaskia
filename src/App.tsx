@@ -797,8 +797,27 @@ export default function App() {
     return <AdminPanel onBackToStore={handleBackToStore} />;
   }
 
+  const activeLangCode = homepageConfig.defaultLanguage || "en";
+  const t = UI_TRANSLATIONS[activeLangCode] || UI_TRANSLATIONS.en;
+  const resolveLocalizedText = (
+    configVal: string | undefined,
+    englishDefault: string,
+    translatedVal: string,
+    legacyDefaults: string[] = []
+  ) => {
+    const trimmed = (configVal || "").trim();
+    if (!trimmed || trimmed === englishDefault || legacyDefaults.includes(trimmed)) {
+      return translatedVal;
+    }
+    return trimmed;
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white" id="aniixa-app">
+    <div
+      dir={activeLangCode === "ar" ? "rtl" : "ltr"}
+      className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white"
+      id="aniixa-app"
+    >
       
       {/* Dynamic Header block */}
       <div className="print:hidden">
@@ -820,7 +839,10 @@ export default function App() {
           appSubtitle={homepageConfig.appSubtitle}
           appLogoIcon={homepageConfig.appLogoIcon}
           appLogoUrl={homepageConfig.appLogoUrl}
-          defaultLanguage={homepageConfig.defaultLanguage || "en"}
+          defaultLanguage={activeLangCode}
+          onLanguageChange={(newLang) => {
+            setHomepageConfig((prev) => ({ ...prev, defaultLanguage: newLang }));
+          }}
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenInquiry={handleHeaderOpenInquiry}
@@ -895,41 +917,42 @@ export default function App() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 pt-7 pb-8 sm:pt-10 sm:pb-10 lg:pt-14 lg:pb-14 relative z-10">
                   <div className="max-w-2xl space-y-5 sm:space-y-6">
                     {/* Top Green Pill Badge */}
-                    {(homepageConfig.heroTag || "Global Chemical Marketplace") && (
-                      <div>
-                        <span className="inline-flex items-center px-3.5 sm:px-4 py-1.5 rounded-full bg-[#e3f6ec] text-[#059669] text-xs sm:text-[13px] font-semibold tracking-tight shadow-2xs">
-                          {homepageConfig.heroTag &&
-                          homepageConfig.heroTag !== "FDA & OSHA GHS COMPLIANT PROCUREMENT"
-                            ? homepageConfig.heroTag
-                            : "Global Chemical Marketplace"}
-                        </span>
-                      </div>
-                    )}
+                    <div>
+                      <span className="inline-flex items-center px-3.5 sm:px-4 py-1.5 rounded-full bg-[#e3f6ec] text-[#059669] text-xs sm:text-[13px] font-semibold tracking-tight shadow-2xs">
+                        {resolveLocalizedText(
+                          homepageConfig.heroTag,
+                          "Global Chemical Marketplace",
+                          t.heroTag,
+                          ["FDA & OSHA GHS COMPLIANT PROCUREMENT"]
+                        )}
+                      </span>
+                    </div>
 
                     {/* Main Hero Heading */}
                     <h1 className="text-[28px] xs:text-[32px] sm:text-4xl md:text-[46px] lg:text-[50px] font-extrabold tracking-tight leading-[1.14] text-[#0b192c]">
-                      {homepageConfig.heroTitle &&
-                      homepageConfig.heroTitle !== "High-Purity Laboratory Reagents & Supplies"
-                        ? homepageConfig.heroTitle
-                        : "High-Quality Chemicals for"}
-                      {(homepageConfig.heroTitleHighlight !== undefined
-                        ? homepageConfig.heroTitleHighlight
-                        : "Research, Industry & Innovation") && (
-                        <span className="block mt-1 text-[#059669]">
-                          {homepageConfig.heroTitleHighlight !== undefined &&
-                          homepageConfig.heroTitleHighlight !== ""
-                            ? homepageConfig.heroTitleHighlight
-                            : "Research, Industry & Innovation"}
-                        </span>
+                      {resolveLocalizedText(
+                        homepageConfig.heroTitle,
+                        "High-Quality Chemicals for",
+                        t.heroTitle,
+                        ["High-Purity Laboratory Reagents & Supplies"]
                       )}
+                      <span className="block mt-1 text-[#059669]">
+                        {resolveLocalizedText(
+                          homepageConfig.heroTitleHighlight,
+                          "Research, Industry & Innovation",
+                          t.heroTitleHighlight
+                        )}
+                      </span>
                     </h1>
 
                     {/* Subtitle Paragraph */}
                     <p className="text-[#4b5c6b] text-[13.5px] sm:text-[15.5px] md:text-[16.5px] leading-relaxed max-w-xl font-normal">
                       {homepageConfig.heroDescription &&
-                      !homepageConfig.heroDescription.startsWith("Aniixa distributes analytical chemicals")
+                      !homepageConfig.heroDescription.startsWith("Aniixa distributes analytical chemicals") &&
+                      homepageConfig.heroDescription !==
+                        "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place."
                         ? homepageConfig.heroDescription
-                        : "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place."}
+                        : t.heroDescription}
                     </p>
 
                     {/* Primary & Secondary Action Buttons */}
@@ -957,7 +980,13 @@ export default function App() {
                           <path d="M12 9v4" />
                           <path d="M10 11h4" />
                         </svg>
-                        <span>{homepageConfig.heroPrimaryBtnText || "Explore Products"}</span>
+                        <span>
+                          {resolveLocalizedText(
+                            homepageConfig.heroPrimaryBtnText,
+                            "Explore Products",
+                            t.heroPrimaryBtnText
+                          )}
+                        </span>
                         <svg
                           className="w-4 h-4 text-white/90 shrink-0"
                           viewBox="0 0 24 24"
@@ -979,7 +1008,13 @@ export default function App() {
                         }}
                         className="inline-flex items-center justify-center gap-2.5 sm:gap-3 px-6 py-3.5 rounded-full bg-white hover:bg-slate-50 text-[#0b192c] border border-[#1e293b]/75 hover:border-[#0b192c] text-xs sm:text-sm font-semibold transition-all cursor-pointer active:scale-[0.99]"
                       >
-                        <span>{homepageConfig.heroSecondaryBtnText || "Browse Categories"}</span>
+                        <span>
+                          {resolveLocalizedText(
+                            homepageConfig.heroSecondaryBtnText,
+                            "Browse Categories",
+                            t.heroSecondaryBtnText
+                          )}
+                        </span>
                         <svg
                           className="w-4 h-4 text-[#0b192c] shrink-0"
                           viewBox="0 0 24 24"
@@ -1022,30 +1057,43 @@ export default function App() {
                         (f) => f.enabled !== false
                       );
                       if (activeFeatures.length === 0) return null;
+                      const defaultFeatTitles = [
+                        { enTitle: "Trusted Suppliers", enSub: "Verified & reliable partners", tTitle: t.feat1Title, tSub: t.feat1Subtitle },
+                        { enTitle: "Wide Product Range", enSub: "From lab to industrial grade", tTitle: t.feat2Title, tSub: t.feat2Subtitle },
+                        { enTitle: "Secure Shipping", enSub: "Safe & global delivery", tTitle: t.feat3Title, tSub: t.feat3Subtitle },
+                        { enTitle: "Dedicated Support", enSub: "Here for your needs", tTitle: t.feat4Title, tSub: t.feat4Subtitle },
+                      ];
                       return (
                         <div className="pt-2 sm:pt-4 grid grid-cols-2 sm:grid-cols-4 gap-y-5 gap-x-4 sm:gap-x-0 border-t border-slate-200/70 sm:border-t-0">
-                          {activeFeatures.map((feat, idx) => (
-                            <div
-                              key={feat.id || idx}
-                              className={`pt-3 sm:pt-0 ${
-                                idx === 0
-                                  ? "sm:pr-5"
-                                  : idx === activeFeatures.length - 1
-                                  ? "pl-3 sm:pl-5 border-l border-slate-200/90"
-                                  : "pl-3 sm:px-5 border-l border-slate-200/90"
-                              } ${idx >= 2 ? "border-t sm:border-t-0" : ""}`}
-                            >
-                              <div className="mb-1.5 sm:mb-2 text-[#0b192c]">
-                                {renderHeroFeatureIcon(feat.icon)}
+                          {activeFeatures.map((feat, idx) => {
+                            const preset = defaultFeatTitles[idx];
+                            const displayTitle =
+                              preset && feat.title === preset.enTitle ? preset.tTitle : feat.title;
+                            const displaySubtitle =
+                              preset && feat.subtitle === preset.enSub ? preset.tSub : feat.subtitle;
+                            return (
+                              <div
+                                key={feat.id || idx}
+                                className={`pt-3 sm:pt-0 ${
+                                  idx === 0
+                                    ? "sm:pr-5"
+                                    : idx === activeFeatures.length - 1
+                                    ? "pl-3 sm:pl-5 border-l border-slate-200/90"
+                                    : "pl-3 sm:px-5 border-l border-slate-200/90"
+                                } ${idx >= 2 ? "border-t sm:border-t-0" : ""}`}
+                              >
+                                <div className="mb-1.5 sm:mb-2 text-[#0b192c]">
+                                  {renderHeroFeatureIcon(feat.icon)}
+                                </div>
+                                <h3 className="text-xs sm:text-[13px] font-bold text-[#0b192c] leading-snug">
+                                  {displayTitle}
+                                </h3>
+                                <p className="text-[11px] sm:text-[11.5px] text-[#526071] mt-0.5 leading-snug">
+                                  {displaySubtitle}
+                                </p>
                               </div>
-                              <h3 className="text-xs sm:text-[13px] font-bold text-[#0b192c] leading-snug">
-                                {feat.title}
-                              </h3>
-                              <p className="text-[11px] sm:text-[11.5px] text-[#526071] mt-0.5 leading-snug">
-                                {feat.subtitle}
-                              </p>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       );
                     })()}
@@ -1084,10 +1132,18 @@ export default function App() {
                         </div>
                         <div className="text-left">
                           <span className="block text-[11px] sm:text-xs font-semibold text-[#334155] leading-tight">
-                            {homepageConfig.cryptoBarSmallLabel || "We Accept"}
+                            {resolveLocalizedText(
+                              homepageConfig.cryptoBarSmallLabel,
+                              "We Accept",
+                              t.cryptoBarSmallLabel
+                            )}
                           </span>
                           <span className="block text-base sm:text-lg md:text-xl font-extrabold text-[#0b192c] tracking-tight leading-tight">
-                            {homepageConfig.cryptoBarTitle || "Cryptocurrency Payments"}
+                            {resolveLocalizedText(
+                              homepageConfig.cryptoBarTitle,
+                              "Cryptocurrency Payments",
+                              t.cryptoBarTitle
+                            )}
                           </span>
                         </div>
                       </div>
@@ -1135,74 +1191,70 @@ export default function App() {
 
             <div className="max-w-7xl mx-auto px-4 md:px-10 space-y-8">
               {/* Reagents Categorization Panels */}
-              {(() => {
-                const t = UI_TRANSLATIONS[homepageConfig.defaultLanguage || "en"] || UI_TRANSLATIONS.en;
-                return (
-                  <>
-                    <div
-                      id="catalog-categories-bar"
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 select-none"
-                    >
-                      <div className="w-full sm:w-auto overflow-hidden">
-                        <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none font-heading flex-nowrap whitespace-nowrap scroll-smooth max-w-full">
-                          {["All", ...appCategories.map(c => c.name), ...Array.from(new Set(appProducts.map(p => typeof p.category === 'object' && p.category !== null ? (p.category as any).name : p.category))).filter(c => c && !appCategories.find(ac => ac.name === c))].map((catName) => (
-                            <button
-                              key={catName}
-                              onClick={() => setActiveCategory(catName)}
-                              className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition shrink-0 ${
-                                activeCategory === catName
-                                  ? isRetail
-                                    ? "bg-[#2874f0] text-white shadow-xs font-extrabold"
-                                    : "bg-slate-900 text-white font-semibold shadow-xs"
-                                  : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
-                              }`}
-                            >
-                              {catName === "All" ? t.allCategories : catName}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="text-[10.5px] text-slate-400 font-mono shrink-0">
-                        {t.showingReagents} <strong className="text-slate-700 font-bold">{filteredProducts.length}</strong> {t.authenticatedReagents}
-                      </div>
-                    </div>
-
-                    {/* Product card grid */}
-                    {filteredProducts.length === 0 ? (
-                      <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl max-w-lg mx-auto select-none shadow-xs animate-fade-in">
-                        <FlaskConicalOff className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-base font-bold text-slate-700 font-heading">{t.noReagentsFound}</h3>
-                        <p className="text-xs text-slate-400 mt-1">Adjust your catalog filters or correct the nomenclature query.</p>
+              <>
+                <div
+                  id="catalog-categories-bar"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 select-none"
+                >
+                  <div className="w-full sm:w-auto overflow-hidden">
+                    <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none font-heading flex-nowrap whitespace-nowrap scroll-smooth max-w-full">
+                      {["All", ...appCategories.map(c => c.name), ...Array.from(new Set(appProducts.map(p => typeof p.category === 'object' && p.category !== null ? (p.category as any).name : p.category))).filter(c => c && !appCategories.find(ac => ac.name === c))].map((catName) => (
                         <button
-                          onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
-                          className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs rounded-xl cursor-pointer font-medium transition"
+                          key={catName}
+                          onClick={() => setActiveCategory(catName)}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition shrink-0 ${
+                            activeCategory === catName
+                              ? isRetail
+                                ? "bg-[#2874f0] text-white shadow-xs font-extrabold"
+                                : "bg-slate-900 text-white font-semibold shadow-xs"
+                              : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
+                          }`}
                         >
-                          {t.resetFilters}
+                          {catName === "All" ? t.allCategories : catName}
                         </button>
-                      </div>
-                    ) : (
-                      <div 
-                        id="retail-products-grid"
-                        className={`grid gap-6 animate-fade-in ${
-                          isRetail 
-                            ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
-                            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                        }`}
-                      >
-                        {filteredProducts.map((prod) => (
-                          <ProductCard
-                            key={prod.id}
-                            product={prod}
-                            onSelect={handleProductSelect}
-                            onAddToCart={handleQuickAddToCart}
-                            onOpenInquiry={handleOpenInquiry}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-[10.5px] text-slate-400 font-mono shrink-0">
+                    {t.showingReagents} <strong className="text-slate-700 font-bold">{filteredProducts.length}</strong> {t.authenticatedReagents}
+                  </div>
+                </div>
+
+                {/* Product card grid */}
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl max-w-lg mx-auto select-none shadow-xs animate-fade-in">
+                    <FlaskConicalOff className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-base font-bold text-slate-700 font-heading">{t.noReagentsFound}</h3>
+                    <p className="text-xs text-slate-400 mt-1">{t.adjustFiltersDesc}</p>
+                    <button
+                      onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
+                      className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs rounded-xl cursor-pointer font-medium transition"
+                    >
+                      {t.resetFilters}
+                    </button>
+                  </div>
+                ) : (
+                  <div 
+                    id="retail-products-grid"
+                    className={`grid gap-6 animate-fade-in ${
+                      isRetail 
+                        ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
+                        : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                    }`}
+                  >
+                    {filteredProducts.map((prod) => (
+                      <ProductCard
+                        key={prod.id}
+                        product={prod}
+                        onSelect={handleProductSelect}
+                        onAddToCart={handleQuickAddToCart}
+                        onOpenInquiry={handleOpenInquiry}
+                        language={activeLangCode}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
 
             {/* Compliance advisory footnote */}
             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between select-none text-slate-500 shadow-xs">
@@ -1210,7 +1262,18 @@ export default function App() {
                 <ShieldAlert className="w-6 h-6 text-blue-600 shrink-0" />
                 <p className="leading-normal text-slate-500">
                   <span className="mr-1.5">{homepageConfig.complianceEmoji}</span> 
-                  <strong>{homepageConfig.complianceTitle}</strong> {homepageConfig.complianceText}
+                  <strong>
+                    {resolveLocalizedText(
+                      homepageConfig.complianceTitle,
+                      "GHS Regulatory Compliance Guarantee:",
+                      t.complianceTitle
+                    )}
+                  </strong>{" "}
+                  {resolveLocalizedText(
+                    homepageConfig.complianceText,
+                    "Aniixa continuously monitors safety profiles and ensures all safety handling literature conforms to international standards.",
+                    t.complianceText
+                  )}
                 </p>
               </div>
               <button
@@ -1218,7 +1281,11 @@ export default function App() {
                 className="px-4.5 py-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-100/50 rounded-xl cursor-pointer transition shrink-0 self-stretch sm:self-auto text-center"
                 id="view-faq-manual-btn"
               >
-                {homepageConfig.complianceBtnText}
+                {resolveLocalizedText(
+                  homepageConfig.complianceBtnText,
+                  "Open Safety & FAQ Manual",
+                  t.complianceBtnText
+                )}
               </button>
             </div>
             </div>
@@ -1240,6 +1307,20 @@ export default function App() {
             appName={homepageConfig.appName}
             appSubtitle={homepageConfig.appSubtitle}
             whatsappNumber={homepageConfig.adminWhatsappNumber || "15099941048"}
+            language={activeLangCode}
+            customer={currentUser}
+            onRatingUpdated={() => {
+              fetch("/api/products")
+                .then((r) => (r.ok ? r.json() : null))
+                .then((prods) => {
+                  if (Array.isArray(prods) && prods.length > 0) {
+                    setAppProducts(prods);
+                    const updatedActive = prods.find((p: any) => p.id === activeProduct.id);
+                    if (updatedActive) setActiveProduct(updatedActive);
+                  }
+                })
+                .catch(() => {});
+            }}
           />
         )}
 
@@ -1409,7 +1490,7 @@ export default function App() {
               </div>
 
               <p className="text-xs leading-relaxed text-slate-500 max-w-sm">
-                Global supplier of analytical reagents, ACS & HPLC grade solvents, buffering solutions, and certified laboratory materials conforming to GHS and OSHA regulatory standards.
+                {t.footerTagline}
               </p>
 
               <div className="pt-1 flex flex-wrap items-center gap-3">
@@ -1420,7 +1501,7 @@ export default function App() {
                   className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-medium transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5 text-[#0052cc]" />
-                  <span>WhatsApp Desk: +{homepageConfig.adminWhatsappNumber || "1 (509) 994-1048"}</span>
+                  <span>{t.whatsappDesk}: +{homepageConfig.adminWhatsappNumber || "1 (509) 994-1048"}</span>
                 </a>
               </div>
             </div>
@@ -1430,7 +1511,7 @@ export default function App() {
               {/* Column 1: Company */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
-                  Company
+                  {t.companyCol}
                 </h4>
                 <ul className="space-y-2.5 text-xs">
                   <li>
@@ -1438,7 +1519,7 @@ export default function App() {
                       onClick={() => handleNavigate("store")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Product Catalog
+                      {t.productCatalogLink}
                     </button>
                   </li>
                   <li>
@@ -1446,7 +1527,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("about")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      About Company
+                      {t.aboutCompanyLink}
                     </button>
                   </li>
                   <li>
@@ -1454,7 +1535,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("compliance")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Quality & Compliance
+                      {t.qualityComplianceLink}
                     </button>
                   </li>
                   <li>
@@ -1462,7 +1543,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("contact")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Contact Us
+                      {t.contactUsLink}
                     </button>
                   </li>
                 </ul>
@@ -1471,7 +1552,7 @@ export default function App() {
               {/* Column 2: Shipping & Support */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
-                  Logistics & Support
+                  {t.logisticsSupportCol}
                 </h4>
                 <ul className="space-y-2.5 text-xs">
                   <li>
@@ -1479,7 +1560,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("shipping")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Shipping & Hazmat Transit
+                      {t.shippingHazmatLink}
                     </button>
                   </li>
                   <li>
@@ -1487,7 +1568,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("return")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Returns & Claims
+                      {t.returnsClaimsLink}
                     </button>
                   </li>
                   <li>
@@ -1495,7 +1576,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("refund")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Refund Policy
+                      {t.refundPolicyLink}
                     </button>
                   </li>
                   <li>
@@ -1503,7 +1584,7 @@ export default function App() {
                       onClick={handleOpenHelp}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Safety & FAQ Manual
+                      {t.safetyFaqManualLink}
                     </button>
                   </li>
                 </ul>
@@ -1512,7 +1593,7 @@ export default function App() {
               {/* Column 3: Legal & Regulatory */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-900 tracking-wide">
-                  Legal & Regulatory
+                  {t.legalRegulatoryCol}
                 </h4>
                 <ul className="space-y-2.5 text-xs">
                   <li>
@@ -1520,7 +1601,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("terms")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Terms & Conditions
+                      {t.termsConditionsLink}
                     </button>
                   </li>
                   <li>
@@ -1528,7 +1609,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("privacy")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Privacy Policy
+                      {t.privacyPolicyLink}
                     </button>
                   </li>
                   <li>
@@ -1536,7 +1617,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("disclaimer")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Safety Disclaimer
+                      {t.safetyDisclaimerLink}
                     </button>
                   </li>
                   <li>
@@ -1544,7 +1625,7 @@ export default function App() {
                       onClick={() => handleNavigateToPolicy("cookie")}
                       className="text-slate-500 hover:text-[#0052cc] transition-colors cursor-pointer"
                     >
-                      Cookie Policy
+                      {t.cookiePolicyLink}
                     </button>
                   </li>
                 </ul>

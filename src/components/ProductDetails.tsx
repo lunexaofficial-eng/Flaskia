@@ -6,6 +6,7 @@ import AisSafetyExpert from "./AisSafetyExpert";
 import { useTheme } from "../context/ThemeContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { getProxiedImageUrl } from "../utils/imageUtils";
+import { getProductRatingStats, UI_TRANSLATIONS } from "../utils/homepageDefaults";
 import {
   FileText,
   ShoppingCart,
@@ -25,7 +26,20 @@ import {
   Maximize2,
   X,
   Play,
+  Star,
+  CheckCircle2,
 } from "lucide-react";
+
+interface ProductReviewItem {
+  id: string;
+  productId: string;
+  customerId?: string | null;
+  customerName: string;
+  rating: number;
+  comment: string;
+  verifiedPurchase: boolean;
+  createdAt: string;
+}
 
 interface ProductDetailsProps {
   product: Product;
@@ -40,6 +54,9 @@ interface ProductDetailsProps {
   appName?: string;
   appSubtitle?: string;
   whatsappNumber?: string;
+  language?: string;
+  customer?: { id?: string; name?: string; email?: string } | null;
+  onRatingUpdated?: () => void;
 }
 
 export default function ProductDetails({
@@ -50,9 +67,13 @@ export default function ProductDetails({
   appName = "Aniixa",
   appSubtitle = "Academic Supply Direct",
   whatsappNumber = "15099941048",
+  language = "en",
+  customer = null,
+  onRatingUpdated,
 }: ProductDetailsProps) {
   const { isCyber, isRetail, isIndiamart } = useTheme();
   const { formatPrice } = useCurrency();
+  const t = UI_TRANSLATIONS[language] || UI_TRANSLATIONS.en;
   const [activeTab, setActiveTab] = useState<number>(0);
   const [qty, setQty] = useState(1);
   const [selectedPkg, setSelectedPkg] = useState("Glass Lab Bottle");
@@ -60,6 +81,93 @@ export default function ProductDetails({
   const [activeMedia, setActiveMedia] = useState<string>(product.image);
   const [showAgreementError, setShowAgreementError] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Real Customer Reviews State
+  const [realReviews, setRealReviews] = useState<ProductReviewItem[]>([]);
+  const [liveRealAvg, setLiveRealAvg] = useState<number | null>(
+    product.realRatingAvg ?? null
+  );
+  const [liveRealCount, setLiveRealCount] = useState<number>(
+    product.realReviewCount ?? 0
+  );
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [reviewerName, setReviewerName] = useState<string>(
+    customer?.name || ""
+  );
+  const [reviewComment, setReviewComment] = useState<string>("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState<boolean>(false);
+  const [reviewSuccessMsg, setReviewSuccessMsg] = useState<string>("");
+
+  React.useEffect(() => {
+    if (customer?.name && !reviewerName) {
+      setReviewerName(customer.name);
+    }
+  }, [customer?.name]);
+
+  React.useEffect(() => {
+    setLiveRealAvg(product.realRatingAvg ?? null);
+    setLiveRealCount(product.realReviewCount ?? 0);
+    fetch(`/api/products/${encodeURIComponent(product.id)}/reviews`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.reviews)) {
+          setRealReviews(data.reviews);
+          setLiveRealAvg(data.realRatingAvg);
+          setLiveRealCount(data.realReviewCount || 0);
+        }
+      })
+      .catch(() => {});
+  }, [product.id, product.realRatingAvg, product.realReviewCount]);
+
+  const ratingStats = getProductRatingStats({
+    ...product,
+    realRatingAvg: liveRealAvg,
+    realReviewCount: liveRealCount,
+  });
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingReview) return;
+    setIsSubmittingReview(true);
+    setReviewSuccessMsg("");
+    try {
+      const res = await fetch(
+        `/api/products/${encodeURIComponent(product.id)}/reviews`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerId: customer?.id || null,
+            customerName:
+              reviewerName.trim() ||
+              customer?.name ||
+              "Verified Laboratory Buyer",
+            customerEmail: customer?.email || null,
+            rating: reviewRating,
+            comment: reviewComment.trim(),
+          }),
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.reviews)) {
+          setRealReviews(data.reviews);
+          setLiveRealAvg(data.realRatingAvg);
+          setLiveRealCount(data.realReviewCount || data.reviews.length);
+        }
+        setReviewComment("");
+        setReviewSuccessMsg("✓");
+        if (onRatingUpdated) {
+          onRatingUpdated();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to submit review:", err);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   // Build unified deduplicated media list (main image + gallery images + optional video)
   const mediaItems = React.useMemo(() => {
@@ -194,7 +302,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
           className="flex items-center gap-2 font-medium mb-6 group cursor-pointer transition text-xs select-none text-slate-500 hover:text-[#0052cc]"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1.5 transition-transform" />
-          Return to Chemical Registry Catalogue
+          {t.returnToCatalog}
         </button>
 
         {/* Main product structure */}
@@ -304,13 +412,13 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
             {/* Quick Technical Specs Table */}
             <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-3 shadow-xs">
               <h3 className="text-xs uppercase tracking-wider font-bold text-slate-400 font-heading">
-                Technical Specifications
+                {t.technicalSpecs}
               </h3>
 
               <div className="grid grid-cols-2 gap-3.5 text-xs">
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    Empirical Formula
+                    {t.empiricalFormula}
                   </span>
                   <span className="font-semibold text-slate-700 font-mono block mt-1">
                     {product.formula}
@@ -318,7 +426,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    Molecular Weight
+                    {t.molecularWeight}
                   </span>
                   <span className="font-semibold text-slate-700 font-mono block mt-1">
                     {product.molecularWeight}
@@ -326,7 +434,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    CAS Number Registry
+                    {t.casRegistry}
                   </span>
                   <span className="font-semibold text-slate-700 font-mono block mt-1">
                     {product.cas}
@@ -334,7 +442,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    Physical Appearance
+                    {t.physicalAppearance}
                   </span>
                   <span className="font-semibold text-slate-700 block mt-1">
                     {product.physicalState}
@@ -343,7 +451,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 {product.meltingPoint && (
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <span className="text-[10px] text-slate-400 block">
-                      Melting Threshold
+                      {t.meltingThreshold}
                     </span>
                     <span className="font-semibold text-slate-700 font-mono block mt-1">
                       {product.meltingPoint}
@@ -353,7 +461,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 {product.boilingPoint && (
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <span className="text-[10px] text-slate-400 block">
-                      Boiling Threshold
+                      {t.boilingThreshold}
                     </span>
                     <span className="font-semibold text-slate-700 font-mono block mt-1">
                       {product.boilingPoint}
@@ -376,7 +484,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
                 <div>
                   <h4 className="text-[11px] uppercase tracking-wider text-slate-400 font-medium font-heading">
-                    GHS Class Pictograms
+                    {t.ghsPictogramsTitle}
                   </h4>
                   <div className="flex gap-4.5 mt-3">
                     {product.ghsPictograms.map((pt, idx) => (
@@ -393,15 +501,15 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
             </div>
           </div>
 
-          {/* Right Column (Single Description, Pricing selections, SDS tabs, Compliance) - 7 Cols */}
+          {/* Right Column (Single Description, Pricing selections, SDS tabs, Customer Reviews) - 7 Cols */}
           <div className="lg:col-span-7 space-y-6">
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 font-mono">
                 <span>{typeof product.category === "object" && product.category !== null ? (product.category as any).name : product.category}</span>
                 <span className="text-slate-300">•</span>
-                <span>{product.grade} Grade</span>
+                <span>{product.grade}</span>
                 <span className="text-slate-300">•</span>
-                <span>Purity: {product.purity}</span>
+                <span>{t.purityLabel}: {product.purity}</span>
                 {product.cas && (
                   <>
                     <span className="text-slate-300">•</span>
@@ -412,6 +520,37 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 font-heading">
                 {product.name}
               </h2>
+
+              {/* Dynamic Product Rating Summary Row */}
+              <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
+                <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-full">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((starIdx) => (
+                      <Star
+                        key={starIdx}
+                        className={`w-3.5 h-3.5 ${
+                          starIdx <= Math.round(ratingStats.rating)
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-slate-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-extrabold font-mono text-slate-900">
+                    {ratingStats.ratingFormatted}
+                  </span>
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  ({ratingStats.reviewCount.toLocaleString()} {t.basedOnReviews})
+                </span>
+                {ratingStats.isRealCustomerRating && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    {t.verifiedCustomerBadge}
+                  </span>
+                )}
+              </div>
+
               <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-sans pt-1">
                 {product.description}
               </p>
@@ -422,7 +561,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono block">
-                    {isIndiamart ? "Unit Reference Price" : isRetail ? "Deal Price" : "Volumetric unit price"}
+                    {isIndiamart ? t.unitReferencePrice : isRetail ? t.dealPrice : t.volumetricUnitPrice}
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-3xl font-bold text-slate-900 font-mono">
@@ -433,7 +572,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Estimated Dispatch & Transit: <span className="font-medium text-slate-700">10–15 Business Days</span>
+                    {t.estimatedDispatch} <span className="font-medium text-slate-700">{t.businessDays}</span>
                   </p>
                 </div>
 
@@ -464,7 +603,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               {/* Packaging and safety containment options */}
               <div className="space-y-2.5">
                 <label className="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-                  Safety Containment Type
+                  {t.safetyContainmentType}
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {PACKAGING_OPTIONS.map((opt) => (
@@ -508,7 +647,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     title="Download Official SDS PDF"
                   >
                     <Download className="w-4 h-4 text-slate-500 shrink-0" />
-                    <span>Download SDS</span>
+                    <span>{t.downloadSds}</span>
                   </a>
                 )}
 
@@ -527,7 +666,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                   className="flex-1 flex min-w-[200px] items-center gap-2 justify-center font-semibold text-xs py-3 px-6 rounded-xl cursor-pointer transition active:scale-[0.99] text-center bg-[#0052cc] hover:bg-[#0747a6] text-white"
                 >
                   <MessageCircle className="w-4 h-4 shrink-0" />
-                  <span>Enquire on WhatsApp</span>
+                  <span>{t.enquireOnWhatsapp}</span>
                 </button>
               </div>
             </div>
@@ -538,7 +677,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-[#0052cc]" />
                   <h3 className="text-xs font-semibold text-slate-800 leading-none font-heading uppercase tracking-wider">
-                    Material Safety Data Sheet (SDS)
+                    {t.msdsHeading}
                   </h3>
                 </div>
               </div>
@@ -626,6 +765,142 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                         ),
                       )}
                     </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* CUSTOMER RATINGS & VERIFIED BUYER REVIEWS SECTION */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs">
+              <div className="bg-slate-50/70 px-5 py-3.5 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <h3 className="text-xs font-semibold text-slate-800 leading-none font-heading uppercase tracking-wider">
+                    {t.customerReviewsTitle}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-mono">
+                  <span className="font-extrabold text-slate-900">
+                    {ratingStats.ratingFormatted} / 5.0
+                  </span>
+                  <span className="text-slate-400">
+                    ({ratingStats.reviewCount} {t.basedOnReviews})
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-5">
+                {/* Submit a Real Rating & Review Form */}
+                <form
+                  onSubmit={handleSubmitReview}
+                  className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 space-y-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-800">
+                      {t.writeReviewTitle}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((starVal) => (
+                        <button
+                          key={starVal}
+                          type="button"
+                          onMouseEnter={() => setHoverRating(starVal)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          onClick={() => setReviewRating(starVal)}
+                          className="p-0.5 cursor-pointer transition-transform hover:scale-110"
+                          title={`${starVal} / 5`}
+                        >
+                          <Star
+                            className={`w-5 h-5 ${
+                              starVal <= (hoverRating || reviewRating)
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-slate-300"
+                            }`}
+                          />
+                        </button>
+                      ))}
+                      <span className="ml-1.5 text-xs font-mono font-bold text-slate-700">
+                        {reviewRating}.0
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <input
+                      type="text"
+                      value={reviewerName}
+                      onChange={(e) => setReviewerName(e.target.value)}
+                      placeholder={t.yourNamePlaceholder}
+                      className="sm:col-span-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-[#0052cc]"
+                    />
+                    <input
+                      type="text"
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder={t.yourReviewPlaceholder}
+                      className="sm:col-span-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-[#0052cc]"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3">
+                    {reviewSuccessMsg && (
+                      <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {t.verifiedCustomerBadge}
+                      </span>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={isSubmittingReview}
+                      className="px-4 py-2 rounded-lg bg-[#0052cc] hover:bg-[#0747a6] disabled:opacity-50 text-white text-xs font-semibold transition cursor-pointer"
+                    >
+                      {isSubmittingReview
+                        ? t.submittingReviewBtn
+                        : t.submitReviewBtn}
+                    </button>
+                  </div>
+                </form>
+
+                {/* List of Real Customer Reviews if any */}
+                {realReviews.length > 0 && (
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                    {realReviews.map((rev) => (
+                      <div
+                        key={rev.id}
+                        className="border border-slate-100 bg-white rounded-xl p-3.5 space-y-1.5 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-800">
+                              {rev.customerName}
+                            </span>
+                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                              ✓ {t.verifiedCustomerBadge}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={`w-3 h-3 ${
+                                  s <= Math.round(rev.rating)
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "text-slate-200"
+                                }`}
+                              />
+                            ))}
+                            <span className="text-[11px] font-mono font-bold text-slate-700 ml-1">
+                              {Number(rev.rating).toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                        {rev.comment && (
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            {rev.comment}
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

@@ -202,20 +202,130 @@ app.get("/api/products", async (req, res) => {
       "SELECT * FROM products ORDER BY name ASC",
     );
     const { rows: cRows } = await pool.query("SELECT * FROM categories");
+    let reviewAggMap: Record<string, { avg: number; count: number }> = {};
+    try {
+      const { rows: rRows } = await pool.query(
+        "SELECT product_id, ROUND(AVG(rating)::numeric, 1) AS avg_rating, COUNT(*)::int AS review_count FROM product_reviews GROUP BY product_id"
+      );
+      for (const r of rRows) {
+        reviewAggMap[r.product_id] = {
+          avg: parseFloat(r.avg_rating) || 0,
+          count: parseInt(r.review_count, 10) || 0,
+        };
+      }
+    } catch {
+      // Table might be initializing
+    }
 
     const categories = cRows.map(mapCategoryFromDb);
     const products = pRows.map(mapProductFromDb);
 
-    const expanded = products.map((prod) => ({
-      ...prod,
-      category: categories.find((c) => c && c.id === prod!.categoryId) || {
-        id: prod!.categoryId,
-        name: prod!.categoryId,
-        description: "",
-      },
-    }));
+    const expanded = products.map((prod) => {
+      const stats = reviewAggMap[prod!.id];
+      return {
+        ...prod,
+        realRatingAvg: stats ? stats.avg : null,
+        realReviewCount: stats ? stats.count : 0,
+        category: categories.find((c) => c && c.id === prod!.categoryId) || {
+          id: prod!.categoryId,
+          name: prod!.categoryId,
+          description: "",
+        },
+      };
+    });
     dbCache.products = expanded;
     return res.json(expanded);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Product Customer Ratings & Reviews Endpoints
+app.get("/api/products/:id/reviews", async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const { rows } = await pool.query(
+      "SELECT id, product_id, customer_id, customer_name, rating, comment, verified_purchase, created_at FROM product_reviews WHERE product_id = $1 ORDER BY created_at DESC",
+      [productId]
+    );
+    const count = rows.length;
+    const avg =
+      count > 0
+        ? Math.round(
+            (rows.reduce((acc, r) => acc + parseFloat(r.rating || 0), 0) / count) * 10
+          ) / 10
+        : null;
+    return res.json({
+      reviews: rows.map((r) => ({
+        id: r.id,
+        productId: r.product_id,
+        customerId: r.customer_id,
+        customerName: r.customer_name,
+        rating: parseFloat(r.rating),
+        comment: r.comment || "",
+        verifiedPurchase: Boolean(r.verified_purchase),
+        createdAt: r.created_at,
+      })),
+      realRatingAvg: avg,
+      realReviewCount: count,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/products/:id/reviews", async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const { customerId, customerName, customerEmail, rating, comment } = req.body || {};
+    const numRating = Math.min(5.0, Math.max(1.0, Number(rating) || 5.0));
+    const cleanName = (customerName || "Verified Laboratory Buyer").trim();
+    const cleanComment = (comment || "").trim();
+    const id = "rev-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+
+    await pool.query(
+      `INSERT INTO product_reviews (id, product_id, customer_id, customer_name, customer_email, rating, comment, verified_purchase)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        id,
+        productId,
+        customerId || null,
+        cleanName,
+        customerEmail || null,
+        numRating,
+        cleanComment,
+        true,
+      ]
+    );
+
+    invalidateCache("products");
+
+    const { rows } = await pool.query(
+      "SELECT id, product_id, customer_id, customer_name, rating, comment, verified_purchase, created_at FROM product_reviews WHERE product_id = $1 ORDER BY created_at DESC",
+      [productId]
+    );
+    const count = rows.length;
+    const avg =
+      count > 0
+        ? Math.round(
+            (rows.reduce((acc, r) => acc + parseFloat(r.rating || 0), 0) / count) * 10
+          ) / 10
+        : numRating;
+
+    return res.json({
+      reviews: rows.map((r) => ({
+        id: r.id,
+        productId: r.product_id,
+        customerId: r.customer_id,
+        customerName: r.customer_name,
+        rating: parseFloat(r.rating),
+        comment: r.comment || "",
+        verifiedPurchase: Boolean(r.verified_purchase),
+        createdAt: r.created_at,
+      })),
+      realRatingAvg: avg,
+      realReviewCount: count,
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

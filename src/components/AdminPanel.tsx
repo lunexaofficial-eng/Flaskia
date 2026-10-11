@@ -6242,12 +6242,26 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         </label>
                         <select
                           value={homepageForm.defaultLanguage || "en"}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              defaultLanguage: e.target.value,
-                            }))
-                          }
+                          onChange={(e) => {
+                            const newLang = e.target.value;
+                            const updated = {
+                              ...homepageForm,
+                              defaultLanguage: newLang,
+                            };
+                            setHomepageForm(updated);
+                            fetch("/api/homepage", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(updated),
+                            })
+                              .then(() => {
+                                showToast(
+                                  `Marketplace language updated to ${newLang.toUpperCase()}`,
+                                  "success"
+                                );
+                              })
+                              .catch(() => {});
+                          }}
                           className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
                         >
                           {SUPPORTED_LANGUAGES.map((lang) => (
@@ -6257,7 +6271,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           ))}
                         </select>
                         <p className="text-[10.5px] text-slate-400 leading-relaxed">
-                          Automatically translates storefront header navigation, search bar placeholders, category tabs, and sets HTML language &amp; text direction (<code className="text-emerald-300">LTR/RTL</code>).
+                          Automatically translates the entire marketplace (Header, Hero Section, 4-Column Feature Row, Crypto Bar, Product Cards, Product Details, Compliance Banner, and Footer) and sets HTML language &amp; text direction (<code className="text-emerald-300">LTR/RTL</code>).
                         </p>
                       </div>
 
@@ -6268,12 +6282,26 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         </label>
                         <select
                           value={homepageForm.defaultWebsiteCurrency || "INR"}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              defaultWebsiteCurrency: e.target.value,
-                            }))
-                          }
+                          onChange={(e) => {
+                            const newCurr = e.target.value;
+                            const updated = {
+                              ...homepageForm,
+                              defaultWebsiteCurrency: newCurr,
+                            };
+                            setHomepageForm(updated);
+                            fetch("/api/homepage", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(updated),
+                            })
+                              .then(() => {
+                                showToast(
+                                  `Default website currency updated to ${newCurr}`,
+                                  "success"
+                                );
+                              })
+                              .catch(() => {});
+                          }}
                           className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:outline-none focus:border-sky-500 cursor-pointer"
                         >
                           {SUPPORTED_CURRENCIES.map((curr) => (

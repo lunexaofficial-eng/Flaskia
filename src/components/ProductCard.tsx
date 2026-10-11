@@ -5,6 +5,7 @@ import { AlertTriangle, Star, ShieldCheck, Zap, MessageCircle } from "lucide-rea
 import { useTheme } from "../context/ThemeContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { getProxiedImageUrl } from "../utils/imageUtils";
+import { getProductRatingStats, UI_TRANSLATIONS } from "../utils/homepageDefaults";
 
 interface ProductCardProps {
   key?: string | number;
@@ -12,11 +13,19 @@ interface ProductCardProps {
   onSelect: (product: Product) => void;
   onAddToCart?: (product: Product, event: React.MouseEvent) => void;
   onOpenInquiry?: (product: Product) => void;
+  language?: string;
 }
 
-export default function ProductCard({ product, onSelect, onOpenInquiry }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  onSelect,
+  onOpenInquiry,
+  language = "en",
+}: ProductCardProps) {
   const { isRetail, isIndiamart } = useTheme();
   const { formatPrice } = useCurrency();
+  const t = UI_TRANSLATIONS[language] || UI_TRANSLATIONS.en;
+  const ratingStats = getProductRatingStats(product);
 
   const handleEnquireClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -43,6 +52,15 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
             className="w-full h-full object-contain group-hover:scale-103 transition-transform duration-200"
             referrerPolicy="no-referrer"
           />
+          <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur-xs border border-slate-200/90 px-2 py-0.5 rounded-full shadow-2xs">
+            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <span className="text-[11px] font-bold text-slate-800 font-mono">
+              {ratingStats.ratingFormatted}
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">
+              ({ratingStats.reviewCount})
+            </span>
+          </div>
         </div>
 
         {/* Product Details Content */}
@@ -84,10 +102,10 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
             <button
               onClick={handleEnquireClick}
               className="px-4 py-2 bg-[#0052cc] hover:bg-[#0747a6] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-2xs flex items-center gap-1.5 shrink-0"
-              title="Auf WhatsApp anfragen"
+              title={t.enquireOnWhatsapp}
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              <span>Auf WhatsApp anfragen</span>
+              <span>{t.enquireOnWhatsapp}</span>
             </button>
           </div>
         </div>
@@ -117,19 +135,19 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
 
           {/* Discount Tag */}
           <span className="absolute top-2.5 left-2.5 bg-emerald-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
-            {discountPercent}% RABATT
+            {discountPercent}% {t.off}
           </span>
 
           {/* Assured Badge */}
           <span className="absolute top-2.5 right-2.5 bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 rounded flex items-center gap-1 shadow-xs">
             <ShieldCheck className="w-3 h-3 text-amber-300" />
-            <span>✓ Geprüft</span>
+            <span>✓ {t.assured}</span>
           </span>
 
           {/* Low Stock Urgency */}
           {product.stock <= 50 && (
             <span className="absolute bottom-2 left-2 bg-rose-600 text-white text-[9.5px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-              <Zap className="w-2.5 h-2.5 fill-white" /> Nur noch {product.stock} verfügbar
+              <Zap className="w-2.5 h-2.5 fill-white" /> {t.onlyLeft} ({product.stock})
             </span>
           )}
         </div>
@@ -139,7 +157,7 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
           <div>
             {/* Category / Grade Label */}
             <div className="flex items-center justify-between text-[10.5px] font-mono text-slate-500 mb-0.5">
-              <span>{product.grade} Qualität</span>
+              <span>{product.grade}</span>
               <span className="text-slate-400">CAS: {product.cas}</span>
             </div>
 
@@ -151,9 +169,16 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
             {/* Star Rating & Review Count */}
             <div className="flex items-center gap-2 mt-1.5">
               <span className="bg-[#388e3c] text-white text-[10.5px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-2xs font-mono">
-                4.8 <Star className="w-2.5 h-2.5 fill-white text-white" />
+                {ratingStats.ratingFormatted} <Star className="w-2.5 h-2.5 fill-white text-white" />
               </span>
-              <span className="text-[11px] text-slate-500 font-medium">(1.248)</span>
+              <span className="text-[11px] text-slate-500 font-medium">
+                ({ratingStats.reviewCount.toLocaleString()})
+              </span>
+              {ratingStats.isRealCustomerRating && (
+                <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                  ✓ {t.verifiedCustomerBadge}
+                </span>
+              )}
             </div>
 
             {/* Price Section: Deal Price + Original MRP Strikethrough */}
@@ -165,13 +190,13 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
                 {formatPrice(originalPrice)}
               </span>
               <span className="text-[11px] font-bold text-emerald-600">
-                Spare {formatPrice(originalPrice - product.price)}
+                {t.save} {formatPrice(originalPrice - product.price)}
               </span>
             </div>
 
             {/* Free Delivery Tag */}
             <p className="text-[10.5px] font-semibold text-slate-700 mt-1 flex items-center gap-1">
-              <span className="text-emerald-700 font-bold">Kostenloser Versand</span> bis morgen
+              <span className="text-emerald-700 font-bold">{t.freeDelivery}</span> {t.byTomorrow}
             </p>
           </div>
 
@@ -180,10 +205,10 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
             <button
               onClick={handleEnquireClick}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold py-2 rounded-lg transition cursor-pointer shadow-xs flex items-center justify-center gap-1.5 uppercase tracking-wider"
-              title="Auf WhatsApp anfragen"
+              title={t.enquireOnWhatsapp}
             >
               <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
-              <span>Auf WhatsApp anfragen</span>
+              <span>{t.enquireOnWhatsapp}</span>
             </button>
           </div>
         </div>
@@ -222,9 +247,16 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
         {product.stock <= 50 && (
           <span className="absolute bottom-3 left-3 bg-orange-500 border border-orange-600 text-white text-[9px] uppercase font-mono px-2 py-0.5 rounded-md font-bold shadow-xs flex items-center gap-1 leading-none select-none">
             <AlertTriangle className="w-2.5 h-2.5 animate-pulse" />
-            Geringer Bestand ({product.stock})
+            {t.lowStock} ({product.stock})
           </span>
         )}
+
+        {/* Rating Pill on Standard Card */}
+        <span className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-xs border border-slate-200 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-xs flex items-center gap-1">
+          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+          {ratingStats.ratingFormatted}
+          <span className="text-slate-400 font-normal">({ratingStats.reviewCount})</span>
+        </span>
       </div>
 
       {/* Reagent Data Specs */}
@@ -258,7 +290,7 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
         {/* Price & Enquire on WhatsApp Footer */}
         <div className="mt-4 pt-3.5 border-t flex flex-col sm:flex-row gap-2.5 items-start sm:items-center justify-between border-slate-100">
           <div>
-            <div className="text-[9px] uppercase tracking-widest font-mono text-slate-400">Reagenzienpreis</div>
+            <div className="text-[9px] uppercase tracking-widest font-mono text-slate-400">{t.reagentPrice}</div>
             <span className="text-base font-bold font-mono text-slate-900">
               {formatPrice(product.price)}
               <span className="text-[10px] ml-0.5 font-normal text-slate-400">/{product.unit}</span>
@@ -268,10 +300,10 @@ export default function ProductCard({ product, onSelect, onOpenInquiry }: Produc
           <button
             onClick={handleEnquireClick}
             className="w-full sm:w-auto px-3.5 py-2 rounded-xl font-bold text-xs transition duration-150 active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-            title="Auf WhatsApp anfragen"
+            title={t.enquireOnWhatsapp}
           >
             <MessageCircle className="w-3.5 h-3.5 fill-white text-white" />
-            <span>Auf WhatsApp anfragen</span>
+            <span>{t.enquireOnWhatsapp}</span>
           </button>
         </div>
       </div>

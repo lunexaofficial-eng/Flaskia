@@ -30,6 +30,7 @@ interface HeaderProps {
   appLogoIcon?: string;
   appLogoUrl?: string;
   defaultLanguage?: string;
+  onLanguageChange?: (langCode: string) => void;
   currentUser?: any;
   onLogout?: () => void;
   onOpenInquiry?: (product?: any) => void;
@@ -72,6 +73,7 @@ export default function Header({
   appLogoIcon = "FlaskConical",
   appLogoUrl = "",
   defaultLanguage = "en",
+  onLanguageChange,
   currentUser,
   onLogout,
   onOpenInquiry,
@@ -185,15 +187,28 @@ export default function Header({
           <div className="h-4 w-px bg-slate-200 hidden lg:block" />
 
           <div className="flex items-center gap-2.5">
-            {defaultLanguage && defaultLanguage !== "en" && (
-              <span
+            <div className="relative inline-flex items-center">
+              <select
+                aria-label="Select Marketplace Language"
+                value={defaultLanguage || "en"}
+                onChange={(e) => {
+                  if (onLanguageChange) {
+                    onLanguageChange(e.target.value);
+                  }
+                }}
                 title={`Active Marketplace Language: ${langInfo.name}`}
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-semibold text-slate-700"
+                className="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:border-[#0052cc] transition-colors"
               >
-                <span>{langInfo.flag}</span>
-                <span>{langInfo.nativeName}</span>
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.nativeName}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400">
+                ▼
               </span>
-            )}
+            </div>
             <CurrencySelector align="right" />
 
             {!isNoCartAuthTheme && (

@@ -605,6 +605,22 @@ export async function initDb(frontProducts?: any[]) {
       )
     `);
 
+    // 21. Customer Product Ratings & Reviews Table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS product_reviews (
+        id VARCHAR(100) PRIMARY KEY,
+        product_id VARCHAR(100) NOT NULL,
+        customer_id VARCHAR(100),
+        customer_name VARCHAR(255) NOT NULL,
+        customer_email VARCHAR(255),
+        rating NUMERIC(2, 1) NOT NULL CHECK (rating >= 1.0 AND rating <= 5.0),
+        comment TEXT,
+        verified_purchase BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await client.query("CREATE INDEX IF NOT EXISTS idx_product_reviews_product ON product_reviews(product_id)");
+
     // Seed default baseline API keys into system_api_keys if empty or missing
     const defaultApiKeys = [
       { key_name: "r2_account_id", key_value: process.env.R2_ACCOUNT_ID || "", service_category: "r2", is_active: true, description: "Cloudflare Account ID" },
