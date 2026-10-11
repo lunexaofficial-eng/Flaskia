@@ -1294,19 +1294,28 @@ export async function initDb(frontProducts?: any[]) {
     if (parseInt(homeConfigCheck.rows[0].count) === 0) {
       console.log("Seeding initial homepage config...");
       const defaultHomepageConfig: Record<string, string> = {
-        heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
-        heroTitle: "High-Purity Laboratory Reagents & Supplies",
+        heroTag: "Global Chemical Marketplace",
+        heroTitle: "High-Quality Chemicals for",
+        heroTitleHighlight: "Research, Industry & Innovation",
         heroDescription:
-          "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+          "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place.",
+        heroPrimaryBtnText: "Explore Products",
+        heroSecondaryBtnText: "Browse Categories",
         heroStat1Value: "≤18 MΩ·cm",
         heroStat1Label: "Methylene conductivity standard",
         heroStat2Value: "100%",
         heroStat2Label: "SDS / GHS Clear Documentation",
         heroImageUrl:
-          "/src/assets/images/chemical_hero_banner_1780924768442.png",
-        heroImageAlt: "High Purity Research Chemistry Lab Illustration",
+          "/src/assets/images/chemical_hero_showcase_1791706712241.jpg",
+        heroImageAlt: "High-Quality Laboratory Chemicals & Glassware",
         heroWatermarkTitle: "CHEMLABS REAGENT CELL",
         heroWatermarkBadge: "Sandbox Portal",
+        heroFeaturesVisible: "true",
+        cryptoBarVisible: "true",
+        cryptoBarSmallLabel: "We Accept",
+        cryptoBarTitle: "Cryptocurrency Payments",
+        defaultLanguage: "en",
+        defaultWebsiteCurrency: "INR",
         complianceBtnText: "Open Safety & FAQ Manual",
         complianceEmoji: "🔐",
         complianceTitle: "GHS Custody compliance assurance:",

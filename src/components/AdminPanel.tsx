@@ -77,6 +77,19 @@ import {
 } from "lucide-react";
 import { PRODUCTS } from "../data";
 import { useTheme } from "../context/ThemeContext";
+import { SUPPORTED_CURRENCIES } from "../context/CurrencyContext";
+import {
+  DEFAULT_HERO_FEATURES,
+  DEFAULT_ACCEPTED_CRYPTOS,
+  BLOCKCHAIN_LOGO_PRESETS,
+  SUPPORTED_LANGUAGES,
+  HeroFeatureItem,
+  AcceptedCryptoItem,
+  parseHeroFeatures,
+  parseAcceptedCryptos,
+  resolveCryptoLogoUrl,
+  renderHeroFeatureIcon,
+} from "../utils/homepageDefaults";
 import { ApiKeysManagement } from "./admin/ApiKeysManagement";
 
 
@@ -1375,21 +1388,33 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
   // Dynamic Editable Homepage Form settings
   const [homepageForm, setHomepageForm] = useState({
-    heroTag: "",
-    heroTitle: "",
-    heroDescription: "",
-    heroStat1Value: "",
-    heroStat1Label: "",
-    heroStat2Value: "",
-    heroStat2Label: "",
-    heroImageUrl: "",
-    heroImageAlt: "",
-    heroWatermarkTitle: "",
-    heroWatermarkBadge: "",
-    complianceEmoji: "",
-    complianceTitle: "",
+    heroTag: "Global Chemical Marketplace",
+    heroTitle: "High-Quality Chemicals for",
+    heroTitleHighlight: "Research, Industry & Innovation",
+    heroDescription:
+      "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place.",
+    heroPrimaryBtnText: "Explore Products",
+    heroSecondaryBtnText: "Browse Categories",
+    heroStat1Value: "≤18 MΩ·cm",
+    heroStat1Label: "Methylene conductivity standard",
+    heroStat2Value: "100%",
+    heroStat2Label: "SDS / GHS Clear Documentation",
+    heroImageUrl: "/src/assets/images/chemical_hero_showcase_1791706712241.jpg",
+    heroImageAlt: "High-Quality Laboratory Chemicals & Glassware",
+    heroWatermarkTitle: "CHEMLABS REAGENT CELL",
+    heroWatermarkBadge: "Sandbox Portal",
+    heroFeaturesVisible: "true",
+    heroFeaturesJson: JSON.stringify(DEFAULT_HERO_FEATURES),
+    cryptoBarVisible: "true",
+    cryptoBarSmallLabel: "We Accept",
+    cryptoBarTitle: "Cryptocurrency Payments",
+    acceptedCryptosJson: JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
+    defaultLanguage: "en",
+    defaultWebsiteCurrency: "INR",
+    complianceEmoji: "🔐",
+    complianceTitle: "GHS Custody compliance assurance:",
     complianceText: "",
-    complianceBtnText: "",
+    complianceBtnText: "Open Safety & FAQ Manual",
 
     // Core Brand Identity / Navigation settings
     appName: "",
@@ -1426,18 +1451,24 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     message: string;
   } | null>(null);
 
-  // Branding Logo & Favicon Upload States (Progress & Size Validation Alerts)
+  // Quick Add New Cryptocurrency Form State inside Homepage Control
+  const [newCryptoName, setNewCryptoName] = useState<string>("");
+  const [newCryptoSymbol, setNewCryptoSymbol] = useState<string>("");
+  const [newCryptoLogoUrl, setNewCryptoLogoUrl] = useState<string>("");
+
+  // Branding Logo, Favicon & Hero Banner Upload States (Progress & Size Validation Alerts)
   const [brandUploadProgress, setBrandUploadProgress] = useState<{
     header: number | null;
     footer: number | null;
     favicon: number | null;
-  }>({ header: null, footer: null, favicon: null });
+    hero: number | null;
+  }>({ header: null, footer: null, favicon: null, hero: null });
 
   const [brandUploadAlert, setBrandUploadAlert] = useState<{
     type: "error" | "success";
     title: string;
     message: string;
-    target?: "header" | "footer" | "favicon";
+    target?: "header" | "footer" | "favicon" | "hero";
   } | null>(null);
 
   const validateImageDimensions = (
@@ -1471,7 +1502,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
   const handleBrandingAssetUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    assetType: "header" | "footer" | "favicon"
+    assetType: "header" | "footer" | "favicon" | "hero"
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1515,6 +1546,18 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         maxH: 512,
         recLabel: "64 × 64 px or 48 × 48 px 1:1 Square (Allowed: 16×16px to 512×512px, Max 500KB)",
         allowedExts: ["png", "ico", "svg", "webp"],
+      },
+      hero: {
+        label: "Hero Section Showcase Image",
+        field: "heroImageUrl" as const,
+        maxBytes: 5 * 1024 * 1024,
+        maxSizeLabel: "5 MB",
+        minW: 600,
+        maxW: 4096,
+        minH: 350,
+        maxH: 2560,
+        recLabel: "1600 × 900 px or 1920 × 1080 px (Allowed: 600–4096px W × 350–2560px H, Max 5MB)",
+        allowedExts: ["png", "webp", "jpg", "jpeg", "svg"],
       },
     }[assetType];
 
@@ -1907,21 +1950,75 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     const homeData = await safeFetch("/api/homepage");
     if (homeData && typeof homeData === "object" && !Array.isArray(homeData)) {
       setHomepageForm({
-        heroTag: homeData.heroTag || "",
-        heroTitle: homeData.heroTitle || "",
-        heroDescription: homeData.heroDescription || "",
-        heroStat1Value: homeData.heroStat1Value || "",
-        heroStat1Label: homeData.heroStat1Label || "",
-        heroStat2Value: homeData.heroStat2Value || "",
-        heroStat2Label: homeData.heroStat2Label || "",
-        heroImageUrl: homeData.heroImageUrl || "",
-        heroImageAlt: homeData.heroImageAlt || "",
-        heroWatermarkTitle: homeData.heroWatermarkTitle || "",
-        heroWatermarkBadge: homeData.heroWatermarkBadge || "",
-        complianceEmoji: homeData.complianceEmoji || "",
-        complianceTitle: homeData.complianceTitle || "",
-        complianceText: homeData.complianceText || "",
-        complianceBtnText: homeData.complianceBtnText || "",
+        heroTag:
+          homeData.heroTag &&
+          homeData.heroTag !== "FDA & OSHA GHS COMPLIANT PROCUREMENT"
+            ? homeData.heroTag
+            : "Global Chemical Marketplace",
+        heroTitle:
+          homeData.heroTitle &&
+          homeData.heroTitle !== "High-Purity Laboratory Reagents & Supplies"
+            ? homeData.heroTitle
+            : "High-Quality Chemicals for",
+        heroTitleHighlight:
+          homeData.heroTitleHighlight !== undefined
+            ? homeData.heroTitleHighlight
+            : "Research, Industry & Innovation",
+        heroDescription:
+          homeData.heroDescription &&
+          !homeData.heroDescription.startsWith(
+            "Flaskia distributes analytical chemicals"
+          )
+            ? homeData.heroDescription
+            : "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place.",
+        heroPrimaryBtnText: homeData.heroPrimaryBtnText || "Explore Products",
+        heroSecondaryBtnText:
+          homeData.heroSecondaryBtnText || "Browse Categories",
+        heroStat1Value: homeData.heroStat1Value || "≤18 MΩ·cm",
+        heroStat1Label:
+          homeData.heroStat1Label || "Methylene conductivity standard",
+        heroStat2Value: homeData.heroStat2Value || "100%",
+        heroStat2Label:
+          homeData.heroStat2Label || "SDS / GHS Clear Documentation",
+        heroImageUrl:
+          homeData.heroImageUrl &&
+          !homeData.heroImageUrl.includes(
+            "chemical_hero_banner_1780924768442.png"
+          )
+            ? homeData.heroImageUrl
+            : "/src/assets/images/chemical_hero_showcase_1791706712241.jpg",
+        heroImageAlt:
+          homeData.heroImageAlt ||
+          "High-Quality Laboratory Chemicals & Glassware",
+        heroWatermarkTitle:
+          homeData.heroWatermarkTitle || "CHEMLABS REAGENT CELL",
+        heroWatermarkBadge: homeData.heroWatermarkBadge || "Sandbox Portal",
+        heroFeaturesVisible:
+          homeData.heroFeaturesVisible !== undefined
+            ? homeData.heroFeaturesVisible
+            : "true",
+        heroFeaturesJson:
+          homeData.heroFeaturesJson || JSON.stringify(DEFAULT_HERO_FEATURES),
+        cryptoBarVisible:
+          homeData.cryptoBarVisible !== undefined
+            ? homeData.cryptoBarVisible
+            : "true",
+        cryptoBarSmallLabel: homeData.cryptoBarSmallLabel || "We Accept",
+        cryptoBarTitle:
+          homeData.cryptoBarTitle || "Cryptocurrency Payments",
+        acceptedCryptosJson:
+          homeData.acceptedCryptosJson ||
+          JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
+        defaultLanguage: homeData.defaultLanguage || "en",
+        defaultWebsiteCurrency: homeData.defaultWebsiteCurrency || "INR",
+        complianceEmoji: homeData.complianceEmoji || "🔐",
+        complianceTitle:
+          homeData.complianceTitle || "GHS Custody compliance assurance:",
+        complianceText:
+          homeData.complianceText ||
+          "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+        complianceBtnText:
+          homeData.complianceBtnText || "Open Safety & FAQ Manual",
 
         // Brand details loading
         appName: homeData.appName || "Flaskia",
@@ -1949,7 +2046,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
 
         // PayPal credentials loading
         paypal_enabled: homeData.paypal_enabled || "false",
-        paypal_sandbox_mode: homeData.paypal_sandbox_mode !== undefined ? homeData.paypal_sandbox_mode : "true",
+        paypal_sandbox_mode:
+          homeData.paypal_sandbox_mode !== undefined
+            ? homeData.paypal_sandbox_mode
+            : "true",
         paypal_sandbox_client_id: homeData.paypal_sandbox_client_id || "",
         paypal_sandbox_secret: homeData.paypal_sandbox_secret || "",
         paypal_live_client_id: homeData.paypal_live_client_id || "",
@@ -2008,19 +2108,30 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
       }
     } else {
       setHomepageForm({
-        heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
-        heroTitle: "High-Purity Laboratory Reagents & Supplies",
+        heroTag: "Global Chemical Marketplace",
+        heroTitle: "High-Quality Chemicals for",
+        heroTitleHighlight: "Research, Industry & Innovation",
         heroDescription:
-          "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+          "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place.",
+        heroPrimaryBtnText: "Explore Products",
+        heroSecondaryBtnText: "Browse Categories",
         heroStat1Value: "≤18 MΩ·cm",
         heroStat1Label: "Methylene conductivity standard",
         heroStat2Value: "100%",
         heroStat2Label: "SDS / GHS Clear Documentation",
         heroImageUrl:
-          "/src/assets/images/chemical_hero_banner_1780924768442.png",
-        heroImageAlt: "High Purity Research Chemistry Lab Illustration",
+          "/src/assets/images/chemical_hero_showcase_1791706712241.jpg",
+        heroImageAlt: "High-Quality Laboratory Chemicals & Glassware",
         heroWatermarkTitle: "CHEMLABS REAGENT CELL",
         heroWatermarkBadge: "Sandbox Portal",
+        heroFeaturesVisible: "true",
+        heroFeaturesJson: JSON.stringify(DEFAULT_HERO_FEATURES),
+        cryptoBarVisible: "true",
+        cryptoBarSmallLabel: "We Accept",
+        cryptoBarTitle: "Cryptocurrency Payments",
+        acceptedCryptosJson: JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
+        defaultLanguage: "en",
+        defaultWebsiteCurrency: "INR",
         complianceEmoji: "🔐",
         complianceTitle: "GHS Custody compliance assurance:",
         complianceText:
@@ -2045,6 +2156,14 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         footerCopyright:
           "Flaskia. Educational Material Logistics. Sandbox Checkout Portal.",
         admin_url_path: "/lunexa_official",
+        paypal_enabled: "false",
+        paypal_sandbox_mode: "true",
+        paypal_sandbox_client_id: "",
+        paypal_sandbox_secret: "",
+        paypal_live_client_id: "",
+        paypal_live_secret: "",
+        paypal_webhook_id: "",
+        paypal_currency: "USD",
       });
     }
 
@@ -6077,112 +6196,924 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                     </div>
                   </div>
 
-                  {/* PANEL 2: MAIN HOMEPAGE HERO BANNER SECTION */}
-                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2 flex items-center justify-between">
-                      <span>
-                        2. {activeTheme === "indiamart" ? "B2B Wholesale Hero Banner" : (activeTheme === "retail" || isCyber) ? "Direct Retail Hero Banner" : "Emerald Scientific Hero Banner"}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        [{activeTheme.toUpperCase()}]
-                      </span>
-                    </h3>
-
-                    <div className="space-y-3">
+                  {/* PANEL 1B: MARKETPLACE DEFAULT LANGUAGE & DEFAULT WEBSITE CURRENCY */}
+                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4 md:col-span-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-3">
                       <div>
-                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          {activeTheme === "indiamart" ? "Hero Category Tag / Pill Badge" : activeTheme === "emerald" ? "Header Safety Tag / Compliance Badge" : "Retail Promo Deal Pill / Badge"}
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                          <span>Marketplace Default Language & Default Website Currency</span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            [GLOBAL LOCALIZATION & PRICING]
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Set the global default language and default website currency for the entire marketplace. Saving immediately updates storefront navigation labels, document direction, and product currency conversion.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-emerald-950/60 border border-emerald-700/60 text-emerald-300">
+                          LANG: {(homepageForm.defaultLanguage || "en").toUpperCase()}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-sky-950/60 border border-sky-700/60 text-sky-300">
+                          CURRENCY: {(homepageForm.defaultWebsiteCurrency || "INR").toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Default Marketplace Language Selector */}
+                      <div className="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 space-y-2.5">
+                        <label className="block text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">
+                          Marketplace Default Language
                         </label>
-                        <input
-                          type="text"
-                          required
-                          value={homepageForm.heroTag}
+                        <select
+                          value={homepageForm.defaultLanguage || "en"}
                           onChange={(e) =>
                             setHomepageForm((prev) => ({
                               ...prev,
-                              heroTag: e.target.value,
+                              defaultLanguage: e.target.value,
                             }))
                           }
-                          placeholder={
-                            activeTheme === "indiamart"
-                              ? "e.g. Verified Chemical Procurement Direct"
-                              : activeTheme === "emerald"
-                              ? "e.g. FDA & OSHA GHS COMPLIANT PROCUREMENT"
-                              : "e.g. 🔥 BIG SAVING DAYS • LIMITED TIME DEALS"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                        >
+                          {SUPPORTED_LANGUAGES.map((lang) => (
+                            <option key={lang.code} value={lang.code}>
+                              {lang.flag} {lang.name} — {lang.nativeName} ({lang.code.toUpperCase()})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10.5px] text-slate-400 leading-relaxed">
+                          Automatically translates storefront header navigation, search bar placeholders, category tabs, and sets HTML language &amp; text direction (<code className="text-emerald-300">LTR/RTL</code>).
+                        </p>
+                      </div>
+
+                      {/* Default Website Currency Selector */}
+                      <div className="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 space-y-2.5">
+                        <label className="block text-[10px] font-semibold text-sky-400 uppercase tracking-wider">
+                          Default Website Currency
+                        </label>
+                        <select
+                          value={homepageForm.defaultWebsiteCurrency || "INR"}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              defaultWebsiteCurrency: e.target.value,
+                            }))
                           }
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:outline-none focus:border-sky-500 cursor-pointer"
+                        >
+                          {SUPPORTED_CURRENCIES.map((curr) => (
+                            <option key={curr.code} value={curr.code}>
+                              {curr.flag} {curr.code} ({curr.symbol.trim()}) — {curr.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10.5px] text-slate-400 leading-relaxed">
+                          Sets the primary default currency across all product cards, detail pages, and checkout calculations using live exchange rates.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PANEL 2: HERO SECTION TEXT, CUSTOM IMAGE UPLOAD & 4-COLUMN FEATURE ROW */}
+                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-5 md:col-span-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                          <span>2. Hero Section Showcase Image &amp; All Text Content Controls</span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            [RESPONSIVE HERO STUDIO]
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Upload a custom Hero Section showcase image with automatic pixel dimension verification, and update every Hero heading, highlighted subheading, description paragraph, and CTA button label.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      {/* Left 7 Cols: All Hero Text Fields (Badge, Heading, Highlight, Paragraph, CTA Buttons) */}
+                      <div className="lg:col-span-7 space-y-3.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Top Pill Badge Text
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={homepageForm.heroTag}
+                              onChange={(e) =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  heroTag: e.target.value,
+                                }))
+                              }
+                              placeholder="e.g. Global Chemical Marketplace"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Hero Image Alt Text (SEO)
+                            </label>
+                            <input
+                              type="text"
+                              value={homepageForm.heroImageAlt}
+                              onChange={(e) =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  heroImageAlt: e.target.value,
+                                }))
+                              }
+                              placeholder="e.g. High-Quality Laboratory Chemicals & Glassware"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Main Hero Heading (Line 1 - Dark Navy)
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={homepageForm.heroTitle}
+                              onChange={(e) =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  heroTitle: e.target.value,
+                                }))
+                              }
+                              placeholder="e.g. High-Quality Chemicals for"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1.5">
+                              Highlighted Subheading (Line 2 - Emerald Green)
+                            </label>
+                            <input
+                              type="text"
+                              value={homepageForm.heroTitleHighlight}
+                              onChange={(e) =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  heroTitleHighlight: e.target.value,
+                                }))
+                              }
+                              placeholder="e.g. Research, Industry & Innovation"
+                              className="w-full px-3 py-2 bg-slate-950 border border-emerald-900/70 rounded-xl text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 transition"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Hero Subtitle / Description Paragraph
+                          </label>
+                          <textarea
+                            required
+                            rows={3}
+                            value={homepageForm.heroDescription}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                heroDescription: e.target.value,
+                              }))
+                            }
+                            placeholder="Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place."
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition resize-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Primary Button Text (Green)
+                            </label>
+                            <input
+                              type="text"
+                              value={homepageForm.heroPrimaryBtnText}
+                              onChange={(e) =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  heroPrimaryBtnText: e.target.value,
+                                }))
+                              }
+                              placeholder="e.g. Explore Products"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Secondary Button Text (Outline)
+                            </label>
+                            <input
+                              type="text"
+                              value={homepageForm.heroSecondaryBtnText}
+                              onChange={(e) =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  heroSecondaryBtnText: e.target.value,
+                                }))
+                              }
+                              placeholder="e.g. Browse Categories"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Compliance Footnote Button
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={homepageForm.complianceBtnText}
+                              onChange={(e) =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  complianceBtnText: e.target.value,
+                                }))
+                              }
+                              placeholder="e.g. Open Safety & FAQ Manual"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right 5 Cols: Custom Hero Image Upload Studio with Size Instructions & Progress Bar */}
+                      <div className="lg:col-span-5 bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between space-y-3.5">
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <Image className="w-3.5 h-3.5 text-emerald-400" />
+                              Hero Section Showcase Image
+                            </span>
+                            <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase bg-emerald-950 text-emerald-400 border border-emerald-800">
+                              16:9 Wide Banner
+                            </span>
+                          </div>
+
+                          {/* Live Hero Image Preview Box */}
+                          <div className="h-36 rounded-xl bg-white border border-slate-200 relative overflow-hidden">
+                            <img
+                              src={
+                                homepageForm.heroImageUrl && homepageForm.heroImageUrl.trim()
+                                  ? homepageForm.heroImageUrl.trim()
+                                  : "/src/assets/images/chemical_hero_showcase_1791706712241.jpg"
+                              }
+                              alt="Hero Showcase Preview"
+                              className="w-full h-full object-cover object-right"
+                              onError={(e) => {
+                                e.currentTarget.src = "/src/assets/images/chemical_hero_showcase_1791706712241.jpg";
+                              }}
+                            />
+                            <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-white via-white/80 to-transparent p-3 flex flex-col justify-center">
+                              <span className="text-[8px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full w-fit">
+                                {homepageForm.heroTag || "Global Chemical Marketplace"}
+                              </span>
+                              <span className="text-[10px] font-extrabold text-slate-900 leading-tight mt-1 line-clamp-2">
+                                {homepageForm.heroTitle || "High-Quality Chemicals for"}{" "}
+                                <span className="text-emerald-600">
+                                  {homepageForm.heroTitleHighlight || "Research, Industry & Innovation"}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Hero Image Size & Pixel Instructions */}
+                          <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-2.5 space-y-1 text-[10px] text-slate-300">
+                            <div className="font-semibold text-emerald-300 flex items-center justify-between">
+                              <span>Required Hero Image Size Specs:</span>
+                              <span className="font-mono text-[9px] text-slate-400">MAX 5 MB</span>
+                            </div>
+                            <ul className="text-[10px] text-slate-400 space-y-0.5 font-mono">
+                              <li>• Ideal Size: <strong className="text-slate-200">1600 × 900 px</strong> or <strong className="text-slate-200">1920 × 1080 px</strong> (16:9)</li>
+                              <li>• Allowed Range: <strong className="text-slate-200">600–4096px W × 350–2560px H</strong></li>
+                              <li>• Formats: <strong className="text-slate-200">JPG, PNG, WEBP, SVG</strong></li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Upload Progress Bar & Controls */}
+                        <div className="space-y-2 pt-1">
+                          {brandUploadProgress.hero !== null && (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-mono text-emerald-300">
+                                <span>Validating &amp; Uploading Hero Image...</span>
+                                <span>{brandUploadProgress.hero}%</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                                <div
+                                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-200"
+                                  style={{ width: `${brandUploadProgress.hero}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-xl cursor-pointer transition shadow-xs">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>
+                                {brandUploadProgress.hero !== null
+                                  ? `Uploading (${brandUploadProgress.hero}%)`
+                                  : "Upload Custom Hero Image"}
+                              </span>
+                              <input
+                                type="file"
+                                accept=".png,.webp,.jpg,.jpeg,.svg,image/png,image/webp,image/jpeg,image/svg+xml"
+                                onChange={(e) => handleBrandingAssetUpload(e, "hero")}
+                                disabled={brandUploadProgress.hero !== null}
+                                className="hidden"
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setHomepageForm((prev) => ({
+                                  ...prev,
+                                  heroImageUrl:
+                                    "/src/assets/images/chemical_hero_showcase_1791706712241.jpg",
+                                }))
+                              }
+                              title="Reset to default studio laboratory hero image"
+                              className="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-xl text-[10px] font-semibold cursor-pointer transition"
+                            >
+                              Default Image
+                            </button>
+                          </div>
+
+                          <input
+                            type="text"
+                            required
+                            value={homepageForm.heroImageUrl}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                heroImageUrl: e.target.value,
+                              }))
+                            }
+                            placeholder="Or paste direct Hero Showcase Image URL..."
+                            className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[10px] text-slate-300 font-mono focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4-COLUMN FEATURE ROW MANAGEMENT (Trusted Suppliers, Wide Product Range, Secure Shipping, Dedicated Support) */}
+                    <div className="border-t border-slate-800/80 pt-5 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                            <span>4-Column Hero Feature Row Management</span>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              (Trusted Suppliers • Wide Product Range • Secure Shipping • Dedicated Support)
+                            </span>
+                          </h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            Customize the icon, heading, and subtitle for each of the 4 feature columns in the Hero section, toggle individual items, or hide the entire row in one click.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                heroFeaturesVisible:
+                                  prev.heroFeaturesVisible === "false" ? "true" : "false",
+                              }))
+                            }
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer transition ${
+                              homepageForm.heroFeaturesVisible !== "false"
+                                ? "bg-emerald-950/80 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60"
+                                : "bg-rose-950/80 border-rose-700 text-rose-300 hover:bg-rose-900/60"
+                            }`}
+                          >
+                            {homepageForm.heroFeaturesVisible !== "false" ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Visible on Storefront (Click to Hide)</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5" />
+                                <span>Hidden on Storefront (Click to Show)</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                heroFeaturesVisible: "true",
+                                heroFeaturesJson: JSON.stringify(DEFAULT_HERO_FEATURES),
+                              }))
+                            }
+                            className="px-3 py-2 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-[10px] font-semibold cursor-pointer transition"
+                          >
+                            Reset 4 Defaults
+                          </button>
+                        </div>
+                      </div>
+
+                      {(() => {
+                        const features = parseHeroFeatures(homepageForm.heroFeaturesJson);
+                        const updateFeature = (index: number, patch: Partial<HeroFeatureItem>) => {
+                          const next = features.map((f, idx) =>
+                            idx === index ? { ...f, ...patch } : f
+                          );
+                          setHomepageForm((prev) => ({
+                            ...prev,
+                            heroFeaturesJson: JSON.stringify(next),
+                          }));
+                        };
+
+                        return (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                            {features.map((feat, idx) => (
+                              <div
+                                key={feat.id || idx}
+                                className={`p-3.5 rounded-2xl border transition space-y-2.5 ${
+                                  feat.enabled !== false && homepageForm.heroFeaturesVisible !== "false"
+                                    ? "bg-slate-950/90 border-slate-800"
+                                    : "bg-slate-950/40 border-slate-900 opacity-60"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400">
+                                      {renderHeroFeatureIcon(feat.icon, "w-4 h-4")}
+                                    </div>
+                                    <span className="text-[10px] font-mono font-bold uppercase text-slate-400">
+                                      Column #{idx + 1}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateFeature(idx, { enabled: feat.enabled === false })
+                                    }
+                                    className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase cursor-pointer border ${
+                                      feat.enabled !== false
+                                        ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                                        : "bg-slate-900 text-slate-500 border-slate-800"
+                                    }`}
+                                  >
+                                    {feat.enabled !== false ? "Active" : "Hidden"}
+                                  </button>
+                                </div>
+
+                                <div>
+                                  <label className="block text-[9px] text-slate-500 uppercase font-mono mb-1">
+                                    Feature Icon
+                                  </label>
+                                  <select
+                                    value={feat.icon}
+                                    onChange={(e) =>
+                                      updateFeature(idx, { icon: e.target.value })
+                                    }
+                                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                                  >
+                                    <option value="ShieldCheck">ShieldCheck (Trusted Suppliers)</option>
+                                    <option value="FlaskConical">FlaskConical (Wide Product Range)</option>
+                                    <option value="Truck">Truck (Secure Shipping)</option>
+                                    <option value="Headphones">Headphones (Dedicated Support)</option>
+                                    <option value="Award">Award Badge</option>
+                                    <option value="Globe">Globe Worldwide</option>
+                                    <option value="Lock">Lock Security</option>
+                                    <option value="CheckCircle2">Verified Check</option>
+                                    <option value="Zap">Fast Dispatch Zap</option>
+                                    <option value="Building2">Industrial Facility</option>
+                                    <option value="Package">Sealed Package</option>
+                                    <option value="Beaker">Laboratory Beaker</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="block text-[9px] text-slate-500 uppercase font-mono mb-1">
+                                    Column Heading
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={feat.title}
+                                    onChange={(e) =>
+                                      updateFeature(idx, { title: e.target.value })
+                                    }
+                                    placeholder="e.g. Trusted Suppliers"
+                                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white font-semibold focus:outline-none focus:border-emerald-500"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-[9px] text-slate-500 uppercase font-mono mb-1">
+                                    Column Subtitle
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={feat.subtitle}
+                                    onChange={(e) =>
+                                      updateFeature(idx, { subtitle: e.target.value })
+                                    }
+                                    placeholder="e.g. Verified & reliable partners"
+                                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* PANEL 2B: ACCEPTED CRYPTOCURRENCY PAYMENTS BAR MANAGEMENT */}
+                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-5 md:col-span-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                          <span>Accepted Cryptocurrency Payments Bar Manager</span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            [INSTANT BLOCKCHAIN LOGO FETCH]
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Add, edit, or delete accepted cryptocurrencies in the Hero bottom bar. Copy &amp; paste any cryptocurrency logo URL (or raw SVG) from any blockchain explorer and the system immediately fetches and previews the live logo.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              cryptoBarVisible:
+                                prev.cryptoBarVisible === "false" ? "true" : "false",
+                            }))
+                          }
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer transition ${
+                            homepageForm.cryptoBarVisible !== "false"
+                              ? "bg-emerald-950/80 border-emerald-700 text-emerald-300 hover:bg-emerald-900/60"
+                              : "bg-rose-950/80 border-rose-700 text-rose-300 hover:bg-rose-900/60"
+                          }`}
+                        >
+                          {homepageForm.cryptoBarVisible !== "false" ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Crypto Bar Visible (Click to Hide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5" />
+                              <span>Crypto Bar Hidden (Click to Show)</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              cryptoBarVisible: "true",
+                              cryptoBarSmallLabel: "We Accept",
+                              cryptoBarTitle: "Cryptocurrency Payments",
+                              acceptedCryptosJson: JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
+                            }))
+                          }
+                          className="px-3 py-2 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-[10px] font-semibold cursor-pointer transition"
+                        >
+                          Restore BTC / ETH / BNB
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bar Title & Prefix Labels */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Crypto Bar Top Small Label
+                        </label>
+                        <input
+                          type="text"
+                          value={homepageForm.cryptoBarSmallLabel}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              cryptoBarSmallLabel: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. We Accept"
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
                         />
                       </div>
 
                       <div>
                         <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          {activeTheme === "indiamart" ? "Wholesale B2B Main Banner Headline" : activeTheme === "emerald" ? "Main Lab Headline Title" : "Main Retail Banner Headline"}
+                          Crypto Bar Main Heading
                         </label>
                         <input
                           type="text"
-                          required
-                          value={homepageForm.heroTitle}
+                          value={homepageForm.cryptoBarTitle}
                           onChange={(e) =>
                             setHomepageForm((prev) => ({
                               ...prev,
-                              heroTitle: e.target.value,
+                              cryptoBarTitle: e.target.value,
                             }))
                           }
-                          placeholder={
-                            activeTheme === "indiamart"
-                              ? "e.g. Wholesale Chemical Supplier & Bulk Quotation Hub"
-                              : activeTheme === "emerald"
-                              ? "e.g. High-Purity Laboratory Reagents & Supplies"
-                              : "e.g. Global Chemistry & Lab Equipment Marketplace"
-                          }
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Storefront Subtitle Description
-                        </label>
-                        <textarea
-                          required
-                          rows={3}
-                          value={homepageForm.heroDescription}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              heroDescription: e.target.value,
-                            }))
-                          }
-                          placeholder={
-                            activeTheme === "indiamart"
-                              ? "e.g. Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals..."
-                              : activeTheme === "emerald"
-                              ? "e.g. Flaskia distributes analytical chemical solutions..."
-                              : "e.g. Shop 10,000+ ACS Grade Chemical Reagents with Express Free Delivery..."
-                          }
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition resize-none leading-relaxed"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                          Primary Callout / Quote Button Text
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={homepageForm.complianceBtnText}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              complianceBtnText: e.target.value,
-                            }))
-                          }
-                          placeholder="e.g. Get Price Quote"
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                          placeholder="e.g. Cryptocurrency Payments"
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
                         />
                       </div>
                     </div>
+
+                    {(() => {
+                      const cryptos = parseAcceptedCryptos(homepageForm.acceptedCryptosJson);
+
+                      const updateCryptoItem = (
+                        index: number,
+                        patch: Partial<AcceptedCryptoItem>
+                      ) => {
+                        const next = cryptos.map((c, idx) =>
+                          idx === index ? { ...c, ...patch } : c
+                        );
+                        setHomepageForm((prev) => ({
+                          ...prev,
+                          acceptedCryptosJson: JSON.stringify(next),
+                        }));
+                      };
+
+                      const deleteCryptoItem = (index: number) => {
+                        const next = cryptos.filter((_, idx) => idx !== index);
+                        setHomepageForm((prev) => ({
+                          ...prev,
+                          acceptedCryptosJson: JSON.stringify(next),
+                        }));
+                      };
+
+                      const handleAddCryptoItem = () => {
+                        if (!newCryptoName.trim() || !newCryptoSymbol.trim()) {
+                          alert("Please enter both the Cryptocurrency Name and Ticker Symbol (e.g. Solana / SOL).");
+                          return;
+                        }
+                        const cleanSym = newCryptoSymbol.trim().toUpperCase().replace(/[()]/g, "");
+                        const resolvedLogo = resolveCryptoLogoUrl(newCryptoLogoUrl, cleanSym);
+                        const newItem: AcceptedCryptoItem = {
+                          id: "crypto-" + Date.now(),
+                          name: newCryptoName.trim(),
+                          symbol: cleanSym,
+                          logoUrl: newCryptoLogoUrl.trim() || resolvedLogo,
+                          enabled: true,
+                        };
+                        const next = [...cryptos, newItem];
+                        setHomepageForm((prev) => ({
+                          ...prev,
+                          acceptedCryptosJson: JSON.stringify(next),
+                        }));
+                        setNewCryptoName("");
+                        setNewCryptoSymbol("");
+                        setNewCryptoLogoUrl("");
+                      };
+
+                      return (
+                        <div className="space-y-4">
+                          {/* Existing Cryptocurrencies List */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {cryptos.map((crypto, idx) => {
+                              const liveLogoSrc = resolveCryptoLogoUrl(crypto.logoUrl, crypto.symbol);
+                              return (
+                                <div
+                                  key={crypto.id || idx}
+                                  className={`p-4 rounded-2xl border transition space-y-3 ${
+                                    crypto.enabled !== false && homepageForm.cryptoBarVisible !== "false"
+                                      ? "bg-slate-950/90 border-slate-800"
+                                      : "bg-slate-950/40 border-slate-900 opacity-60"
+                                  }`}
+                                >
+                                  {/* Live Instant Preview Header */}
+                                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-9 h-9 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                                        <img
+                                          src={liveLogoSrc}
+                                          alt={crypto.name}
+                                          referrerPolicy="no-referrer"
+                                          className="w-full h-full object-contain"
+                                          onError={(e) => {
+                                            e.currentTarget.src = resolveCryptoLogoUrl("", crypto.symbol);
+                                          }}
+                                        />
+                                      </div>
+                                      <div>
+                                        <span className="block text-xs font-bold text-white leading-tight">
+                                          {crypto.name || "Unnamed Coin"}
+                                        </span>
+                                        <span className="block text-[10px] font-mono text-emerald-400">
+                                          ({(crypto.symbol || "").replace(/[()]/g, "")})
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          updateCryptoItem(idx, {
+                                            enabled: crypto.enabled === false,
+                                          })
+                                        }
+                                        className={`px-2 py-1 rounded-lg text-[9px] font-mono font-bold uppercase cursor-pointer border ${
+                                          crypto.enabled !== false
+                                            ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                                            : "bg-slate-900 text-slate-500 border-slate-800"
+                                        }`}
+                                      >
+                                        {crypto.enabled !== false ? "Active" : "Hidden"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => deleteCryptoItem(idx)}
+                                        title="Delete this cryptocurrency from bar"
+                                        className="p-1.5 bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-800 rounded-lg cursor-pointer transition"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <div className="col-span-2">
+                                      <label className="block text-[9px] text-slate-500 uppercase font-mono mb-1">
+                                        Currency Name
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={crypto.name}
+                                        onChange={(e) =>
+                                          updateCryptoItem(idx, { name: e.target.value })
+                                        }
+                                        placeholder="e.g. Bitcoin"
+                                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white font-semibold focus:outline-none focus:border-emerald-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[9px] text-slate-500 uppercase font-mono mb-1">
+                                        Symbol
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={crypto.symbol}
+                                        onChange={(e) =>
+                                          updateCryptoItem(idx, {
+                                            symbol: e.target.value.toUpperCase(),
+                                          })
+                                        }
+                                        placeholder="BTC"
+                                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-emerald-300 font-mono uppercase focus:outline-none focus:border-emerald-500"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] text-slate-400 uppercase font-mono mb-1 flex items-center justify-between">
+                                      <span>Paste Blockchain Logo URL or SVG</span>
+                                      <span className="text-[8px] text-emerald-400">Auto-Fetched Live</span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={crypto.logoUrl}
+                                      onChange={(e) =>
+                                        updateCryptoItem(idx, { logoUrl: e.target.value })
+                                      }
+                                      placeholder="Paste any blockchain logo image URL or <svg>..."
+                                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[10px] text-slate-300 font-mono focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Add New Cryptocurrency Panel with Instant Blockchain Logo Preview */}
+                          <div className="bg-slate-950/90 border border-emerald-900/50 rounded-2xl p-4 space-y-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                <Plus className="w-4 h-4" />
+                                Add New Cryptocurrency to Accepted Payments Bar
+                              </span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[9.5px] text-slate-500 font-mono mr-1">
+                                  Quick Blockchain Presets:
+                                </span>
+                                {BLOCKCHAIN_LOGO_PRESETS.map((preset) => (
+                                  <button
+                                    key={preset.symbol}
+                                    type="button"
+                                    onClick={() => {
+                                      setNewCryptoName(preset.name);
+                                      setNewCryptoSymbol(preset.symbol);
+                                      setNewCryptoLogoUrl(preset.logoUrl);
+                                    }}
+                                    className="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-[9.5px] font-mono text-slate-300 cursor-pointer transition"
+                                  >
+                                    +{preset.symbol}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                              {/* Instant Live Fetched Logo Preview */}
+                              <div className="sm:col-span-2 flex items-center gap-2.5 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
+                                <div className="w-8 h-8 rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+                                  <img
+                                    src={resolveCryptoLogoUrl(newCryptoLogoUrl, newCryptoSymbol || "BTC")}
+                                    alt="Preview"
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                      e.currentTarget.src = resolveCryptoLogoUrl("", "BTC");
+                                    }}
+                                  />
+                                </div>
+                                <div className="truncate">
+                                  <span className="block text-[9px] font-mono uppercase text-emerald-400">
+                                    Live Fetch
+                                  </span>
+                                  <span className="block text-[10px] font-bold text-white truncate">
+                                    {newCryptoSymbol || "LOGO"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="sm:col-span-3">
+                                <label className="block text-[9px] text-slate-400 uppercase font-mono mb-1">
+                                  Crypto Name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newCryptoName}
+                                  onChange={(e) => setNewCryptoName(e.target.value)}
+                                  placeholder="e.g. Tether USD or Solana"
+                                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                                />
+                              </div>
+
+                              <div className="sm:col-span-2">
+                                <label className="block text-[9px] text-slate-400 uppercase font-mono mb-1">
+                                  Ticker Symbol
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newCryptoSymbol}
+                                  onChange={(e) => setNewCryptoSymbol(e.target.value.toUpperCase())}
+                                  placeholder="e.g. USDT"
+                                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-emerald-300 font-mono uppercase focus:outline-none focus:border-emerald-500"
+                                />
+                              </div>
+
+                              <div className="sm:col-span-3">
+                                <label className="block text-[9px] text-slate-400 uppercase font-mono mb-1">
+                                  Paste Logo URL from Any Blockchain
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newCryptoLogoUrl}
+                                  onChange={(e) => setNewCryptoLogoUrl(e.target.value)}
+                                  placeholder="https://... or <svg>..."
+                                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-none focus:border-emerald-500"
+                                />
+                              </div>
+
+                              <div className="sm:col-span-2">
+                                <button
+                                  type="button"
+                                  onClick={handleAddCryptoItem}
+                                  className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl cursor-pointer transition flex items-center justify-center gap-1.5 shadow-xs"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Add Coin</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* PANEL 3: CORE PERFORMANCE METRICS & WATERMARKS */}

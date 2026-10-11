@@ -22,6 +22,17 @@ import MyInquiriesHub from "./components/MyInquiriesHub";
 import CheckoutPromptModal from "./components/CheckoutPromptModal";
 import IndiamartInquiryModal from "./components/IndiamartInquiryModal";
 import { useTheme } from "./context/ThemeContext";
+import { useCurrency } from "./context/CurrencyContext";
+import {
+  DEFAULT_HERO_FEATURES,
+  DEFAULT_ACCEPTED_CRYPTOS,
+  parseHeroFeatures,
+  parseAcceptedCryptos,
+  resolveCryptoLogoUrl,
+  renderHeroFeatureIcon,
+  SUPPORTED_LANGUAGES,
+  UI_TRANSLATIONS,
+} from "./utils/homepageDefaults";
 import { 
   FlaskConical, 
   FlaskConicalOff, 
@@ -53,6 +64,7 @@ import {
 
 export default function App() {
   const { isRetail, isIndiamart } = useTheme();
+  const { syncDefaultCurrency } = useCurrency();
   const isNoCartAuthTheme = isRetail || isIndiamart;
   const [currentView, setCurrentView] = useState<"store" | "product" | "checkout" | "orders" | "inquiries" | "admin" | "policies" | "profile">("store");
   const [activePolicyTab, setActivePolicyTab] = useState<PolicyTab>("about");
@@ -180,17 +192,28 @@ export default function App() {
 
   // Dynamic editable homepage configurations
   const [homepageConfig, setHomepageConfig] = useState({
-    heroTag: "FDA & OSHA GHS COMPLIANT PROCUREMENT",
-    heroTitle: "High-Purity Laboratory Reagents & Supplies",
-    heroDescription: "Flaskia distributes analytical chemicals, buffering solutions, and certified Class A borosilicate glassware designed exclusively for academic synthesis, research modeling, and secondary schools educational labs.",
+    heroTag: "Global Chemical Marketplace",
+    heroTitle: "High-Quality Chemicals for",
+    heroTitleHighlight: "Research, Industry & Innovation",
+    heroDescription: "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place.",
+    heroPrimaryBtnText: "Explore Products",
+    heroSecondaryBtnText: "Browse Categories",
     heroStat1Value: "≤18 MΩ·cm",
     heroStat1Label: "Methylene conductivity standard",
     heroStat2Value: "100%",
     heroStat2Label: "SDS / GHS Clear Documentation",
-    heroImageUrl: "/src/assets/images/chemical_hero_banner_1780924768442.png",
-    heroImageAlt: "High Purity Research Chemistry Lab Illustration",
+    heroImageUrl: "/src/assets/images/chemical_hero_showcase_1791706712241.jpg",
+    heroImageAlt: "High-Quality Laboratory Chemicals & Glassware",
     heroWatermarkTitle: "CHEMLABS REAGENT CELL",
     heroWatermarkBadge: "Sandbox Portal",
+    heroFeaturesVisible: "true",
+    heroFeaturesJson: JSON.stringify(DEFAULT_HERO_FEATURES),
+    cryptoBarVisible: "true",
+    cryptoBarSmallLabel: "We Accept",
+    cryptoBarTitle: "Cryptocurrency Payments",
+    acceptedCryptosJson: JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
+    defaultLanguage: "en",
+    defaultWebsiteCurrency: "INR",
     complianceBtnText: "Open Safety & FAQ Manual",
     complianceEmoji: "🔐",
     complianceTitle: "GHS Custody compliance assurance:",
@@ -284,7 +307,7 @@ export default function App() {
     window.history.pushState({ modal: "help" }, "", "#help");
   };
 
-  // Sync favicon and document title dynamically
+  // Sync favicon, document title, default language, and default website currency dynamically
   useEffect(() => {
     if (homepageConfig.appFaviconUrl) {
       let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
@@ -298,7 +321,22 @@ export default function App() {
     if (homepageConfig.appName) {
       document.title = `${homepageConfig.appName} | ${homepageConfig.appSubtitle || "Premium Reagents Marketplace"}`;
     }
-  }, [homepageConfig.appFaviconUrl, homepageConfig.appName, homepageConfig.appSubtitle]);
+    if (homepageConfig.defaultLanguage) {
+      const langObj = SUPPORTED_LANGUAGES.find(l => l.code === homepageConfig.defaultLanguage);
+      document.documentElement.lang = homepageConfig.defaultLanguage;
+      document.documentElement.dir = langObj?.dir || "ltr";
+    }
+    if (homepageConfig.defaultWebsiteCurrency) {
+      syncDefaultCurrency(homepageConfig.defaultWebsiteCurrency);
+    }
+  }, [
+    homepageConfig.appFaviconUrl,
+    homepageConfig.appName,
+    homepageConfig.appSubtitle,
+    homepageConfig.defaultLanguage,
+    homepageConfig.defaultWebsiteCurrency,
+    syncDefaultCurrency,
+  ]);
 
   // Fetch configurations on init and enforce robust marketplace safety locks (prevent select/copy/paste outside form elements)
   useEffect(() => {
@@ -773,6 +811,7 @@ export default function App() {
           appSubtitle={homepageConfig.appSubtitle}
           appLogoIcon={homepageConfig.appLogoIcon}
           appLogoUrl={homepageConfig.appLogoUrl}
+          defaultLanguage={homepageConfig.defaultLanguage || "en"}
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenInquiry={handleHeaderOpenInquiry}
@@ -818,269 +857,343 @@ export default function App() {
         
         {/* VIEW 1: REAGENTS CATALOGUE HOME PAGE */}
         {currentView === "store" && (
-          <div className="max-w-7xl mx-auto px-4 md:px-10 py-6 space-y-8">
-            
-            {/* Conditional Hero Layout based on Theme */}
-            {isIndiamart ? (
-              <div className="animate-fade-in" id="indiamart-hero-banner">
-                <div className="bg-gradient-to-br from-[#091e42] via-[#0a2540] to-[#0052cc] rounded-2xl p-6 md:p-10 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                  <div className="max-w-2xl space-y-3.5">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white tracking-tight font-heading leading-tight">
-                      {homepageConfig.heroTitle || "Wholesale Chemical Supplier & Bulk Quotation Hub"}
+          <div className="space-y-8">
+            {/* Full-Width Hero Section + Accepted Cryptocurrency Payments Bar */}
+            <section className="w-full border-b border-[#e2ece9] bg-white select-none overflow-hidden">
+              {/* Upper Hero Area */}
+              <div className="relative w-full bg-gradient-to-b lg:bg-gradient-to-r from-[#f8fafb] via-white to-[#eef5f3]">
+                {/* Desktop & Large Tablet Right-Side Studio Lab Showcase Image with Smooth Blend */}
+                <div className="hidden lg:block absolute inset-y-0 right-0 w-[56%] xl:w-[58%] pointer-events-none select-none overflow-hidden">
+                  <img
+                    src={
+                      homepageConfig.heroImageUrl &&
+                      homepageConfig.heroImageUrl.trim() &&
+                      !homepageConfig.heroImageUrl.includes("chemical_hero_banner_1780924768442.png")
+                        ? homepageConfig.heroImageUrl.trim()
+                        : "/src/assets/images/chemical_hero_showcase_1791706712241.jpg"
+                    }
+                    alt={homepageConfig.heroImageAlt || "High-Quality Laboratory Chemicals & Glassware"}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover object-[78%_center] xl:object-right transition-transform duration-700"
+                    onError={(e) => {
+                      e.currentTarget.src = "/src/assets/images/chemical_hero_showcase_1791706712241.jpg";
+                    }}
+                  />
+                  <div className="absolute inset-y-0 left-0 w-[44%] bg-gradient-to-r from-white via-white/90 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white/50 to-transparent" />
+                </div>
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 pt-7 pb-8 sm:pt-10 sm:pb-10 lg:pt-14 lg:pb-14 relative z-10">
+                  <div className="max-w-2xl space-y-5 sm:space-y-6">
+                    {/* Top Green Pill Badge */}
+                    {(homepageConfig.heroTag || "Global Chemical Marketplace") && (
+                      <div>
+                        <span className="inline-flex items-center px-3.5 sm:px-4 py-1.5 rounded-full bg-[#e3f6ec] text-[#059669] text-xs sm:text-[13px] font-semibold tracking-tight shadow-2xs">
+                          {homepageConfig.heroTag &&
+                          homepageConfig.heroTag !== "FDA & OSHA GHS COMPLIANT PROCUREMENT"
+                            ? homepageConfig.heroTag
+                            : "Global Chemical Marketplace"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Main Hero Heading */}
+                    <h1 className="text-[28px] xs:text-[32px] sm:text-4xl md:text-[46px] lg:text-[50px] font-extrabold tracking-tight leading-[1.14] text-[#0b192c]">
+                      {homepageConfig.heroTitle &&
+                      homepageConfig.heroTitle !== "High-Purity Laboratory Reagents & Supplies"
+                        ? homepageConfig.heroTitle
+                        : "High-Quality Chemicals for"}
+                      {(homepageConfig.heroTitleHighlight !== undefined
+                        ? homepageConfig.heroTitleHighlight
+                        : "Research, Industry & Innovation") && (
+                        <span className="block mt-1 text-[#059669]">
+                          {homepageConfig.heroTitleHighlight !== undefined &&
+                          homepageConfig.heroTitleHighlight !== ""
+                            ? homepageConfig.heroTitleHighlight
+                            : "Research, Industry & Innovation"}
+                        </span>
+                      )}
                     </h1>
 
-                    <p className="text-blue-100/90 text-xs md:text-sm leading-relaxed max-w-xl">
-                      {homepageConfig.heroDescription || "Direct manufacturer quotes for ACS, HPLC & Industrial grade chemicals. Complete with lot-certified CoA and fast dispatch."}
+                    {/* Subtitle Paragraph */}
+                    <p className="text-[#4b5c6b] text-[13.5px] sm:text-[15.5px] md:text-[16.5px] leading-relaxed max-w-xl font-normal">
+                      {homepageConfig.heroDescription &&
+                      !homepageConfig.heroDescription.startsWith("Flaskia distributes analytical chemicals")
+                        ? homepageConfig.heroDescription
+                        : "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place."}
                     </p>
-                  </div>
 
-                  {/* Quick 1-Line RFQ Bar */}
-                  <div className="w-full lg:w-auto lg:min-w-[440px]">
-                    {heroRfqSubmitted ? (
-                      <div className="bg-blue-950/80 border border-blue-400/40 p-4 rounded-xl flex items-center justify-between gap-3 text-xs">
-                        <span className="flex items-center gap-2 text-blue-100 font-semibold">
-                          <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
-                          RFQ submitted. Our team will contact {heroRfqPhone} shortly.
-                        </span>
-                        <button
-                          onClick={() => setHeroRfqSubmitted(false)}
-                          className="text-xs font-semibold text-sky-300 hover:underline cursor-pointer shrink-0"
+                    {/* Primary & Secondary Action Buttons */}
+                    <div className="flex flex-col xs:flex-row flex-wrap items-stretch xs:items-center gap-3 sm:gap-4 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById("retail-products-grid");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="inline-flex items-center justify-center gap-2.5 sm:gap-3 px-6 py-3.5 rounded-full bg-gradient-to-r from-[#059669] to-[#0ca678] hover:from-[#047857] hover:to-[#059669] text-white text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer active:scale-[0.99]"
+                      >
+                        <svg
+                          className="w-4 h-4 text-white shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
-                          New Quote
+                          <circle cx="9" cy="21" r="1" />
+                          <circle cx="20" cy="21" r="1" />
+                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                          <path d="M12 9v4" />
+                          <path d="M10 11h4" />
+                        </svg>
+                        <span>{homepageConfig.heroPrimaryBtnText || "Explore Products"}</span>
+                        <svg
+                          className="w-4 h-4 text-white/90 shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById("catalog-categories-bar");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="inline-flex items-center justify-center gap-2.5 sm:gap-3 px-6 py-3.5 rounded-full bg-white hover:bg-slate-50 text-[#0b192c] border border-[#1e293b]/75 hover:border-[#0b192c] text-xs sm:text-sm font-semibold transition-all cursor-pointer active:scale-[0.99]"
+                      >
+                        <span>{homepageConfig.heroSecondaryBtnText || "Browse Categories"}</span>
+                        <svg
+                          className="w-4 h-4 text-[#0b192c] shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Responsive Mobile & Tablet Hero Showcase Image (Auto-adjusts framing to highlight glassware) */}
+                    <div className="lg:hidden relative -mx-4 sm:mx-0 sm:rounded-2xl overflow-hidden border-y sm:border border-[#e2ece9] bg-white shadow-2xs my-2">
+                      <div className="aspect-[16/10] sm:aspect-[16/8] w-full relative overflow-hidden bg-[#f4f8f7]">
+                        <img
+                          src={
+                            homepageConfig.heroImageUrl &&
+                            homepageConfig.heroImageUrl.trim() &&
+                            !homepageConfig.heroImageUrl.includes("chemical_hero_banner_1780924768442.png")
+                              ? homepageConfig.heroImageUrl.trim()
+                              : "/src/assets/images/chemical_hero_showcase_1791706712241.jpg"
+                          }
+                          alt={homepageConfig.heroImageAlt || "High-Quality Laboratory Chemicals & Glassware"}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover object-[85%_center] sm:object-[75%_center] scale-[1.08] sm:scale-100 origin-right"
+                          onError={(e) => {
+                            e.currentTarget.src = "/src/assets/images/chemical_hero_showcase_1791706712241.jpg";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-transparent to-transparent pointer-events-none" />
+                      </div>
+                    </div>
+
+                    {/* 4-Column Feature Highlights Row (Managed & One-Click Hideable from Admin Panel) */}
+                    {homepageConfig.heroFeaturesVisible !== "false" && (() => {
+                      const activeFeatures = parseHeroFeatures(homepageConfig.heroFeaturesJson).filter(
+                        (f) => f.enabled !== false
+                      );
+                      if (activeFeatures.length === 0) return null;
+                      return (
+                        <div className="pt-2 sm:pt-4 grid grid-cols-2 sm:grid-cols-4 gap-y-5 gap-x-4 sm:gap-x-0 border-t border-slate-200/70 sm:border-t-0">
+                          {activeFeatures.map((feat, idx) => (
+                            <div
+                              key={feat.id || idx}
+                              className={`pt-3 sm:pt-0 ${
+                                idx === 0
+                                  ? "sm:pr-5"
+                                  : idx === activeFeatures.length - 1
+                                  ? "pl-3 sm:pl-5 border-l border-slate-200/90"
+                                  : "pl-3 sm:px-5 border-l border-slate-200/90"
+                              } ${idx >= 2 ? "border-t sm:border-t-0" : ""}`}
+                            >
+                              <div className="mb-1.5 sm:mb-2 text-[#0b192c]">
+                                {renderHeroFeatureIcon(feat.icon)}
+                              </div>
+                              <h3 className="text-xs sm:text-[13px] font-bold text-[#0b192c] leading-snug">
+                                {feat.title}
+                              </h3>
+                              <p className="text-[11px] sm:text-[11.5px] text-[#526071] mt-0.5 leading-snug">
+                                {feat.subtitle}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Bar: Accepted Cryptocurrency Payments (Managed & One-Click Hideable from Admin Panel) */}
+              {homepageConfig.cryptoBarVisible !== "false" && (() => {
+                const activeCryptos = parseAcceptedCryptos(homepageConfig.acceptedCryptosJson).filter(
+                  (c) => c.enabled !== false
+                );
+                if (activeCryptos.length === 0) return null;
+                return (
+                  <div className="w-full bg-[#eef7f4] border-t border-[#dfeee8]">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-4 sm:py-5 flex flex-col lg:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-10">
+                      {/* Left: We Accept Cryptocurrency Payments */}
+                      <div className="flex items-center gap-3 sm:gap-3.5">
+                        {/* Green Droplet + Bitcoin Badge */}
+                        <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 relative flex items-center justify-center">
+                          <svg
+                            className="w-full h-full drop-shadow-2xs"
+                            viewBox="0 0 44 44"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M22 3C22 3 8 15.6 8 25.5C8 33.232 14.268 39.5 22 39.5C29.732 39.5 36 33.232 36 25.5C36 15.6 22 3 22 3Z"
+                              fill="#059669"
+                            />
+                            <path
+                              d="M27.32 23.85c.23-1.52-.93-2.34-2.51-2.88l.51-2.06-1.25-.31-.5 2c-.33-.08-.67-.16-1-.24l.5-2.01-1.25-.31-.51 2.05c-.27-.06-.54-.12-.8-.19l-1.73-.43-.33 1.34s.93.21.91.23c.51.13.6.46.58.73l-.58 2.34c.03.01.08.03.13.05l-.13-.03-.82 3.29c-.06.15-.22.38-.58.29.01.02-.91-.23-.91-.23l-.62 1.43 1.63.41c.3.08.6.16.89.23l-.52 2.09 1.25.31.51-2.06c.34.09.67.18 1 .26l-.51 2.05 1.25.31.52-2.08c2.14.41 3.75.24 4.43-1.69.55-1.56-.03-2.46-1.16-3.05.82-.19 1.44-.73 1.61-1.84zm-2.88 4.04c-.39 1.57-3.04.72-3.9.51l.7-2.79c.86.21 3.61.64 3.2 2.28zm.39-4.06c-.36 1.43-2.57.7-3.29.52l.63-2.53c.72.18 3.04.52 2.66 2.01z"
+                              fill="#FFFFFF"
+                            />
+                          </svg>
+                        </div>
+                        <div className="text-left">
+                          <span className="block text-[11px] sm:text-xs font-semibold text-[#334155] leading-tight">
+                            {homepageConfig.cryptoBarSmallLabel || "We Accept"}
+                          </span>
+                          <span className="block text-base sm:text-lg md:text-xl font-extrabold text-[#0b192c] tracking-tight leading-tight">
+                            {homepageConfig.cryptoBarTitle || "Cryptocurrency Payments"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Divider (Horizontal on Mobile/Tablet, Vertical on Desktop) */}
+                      <div className="w-full max-w-xs h-px lg:w-px lg:h-10 bg-[#cbd5e1]/80" />
+
+                      {/* Right: Dynamic Native Cryptocurrency Badges */}
+                      <div className="w-full lg:w-auto flex flex-wrap items-center justify-center gap-5 sm:gap-8 md:gap-11">
+                        {activeCryptos.map((crypto) => {
+                          const resolvedLogo = resolveCryptoLogoUrl(crypto.logoUrl, crypto.symbol);
+                          return (
+                            <div
+                              key={crypto.id}
+                              className="flex flex-col xs:flex-row items-center justify-center gap-1.5 sm:gap-3 text-center xs:text-left px-1"
+                            >
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 drop-shadow-2xs bg-white/80">
+                                <img
+                                  src={resolvedLogo}
+                                  alt={crypto.name}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    e.currentTarget.src = resolveCryptoLogoUrl("", crypto.symbol);
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                <span className="block text-xs sm:text-sm font-bold text-[#0b192c] leading-tight">
+                                  {crypto.name}
+                                </span>
+                                <span className="block text-[10.5px] sm:text-xs text-[#64748b] font-medium leading-tight mt-0.5">
+                                  ({crypto.symbol.replace(/[()]/g, "")})
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </section>
+
+            <div className="max-w-7xl mx-auto px-4 md:px-10 space-y-8">
+              {/* Reagents Categorization Panels */}
+              {(() => {
+                const t = UI_TRANSLATIONS[homepageConfig.defaultLanguage || "en"] || UI_TRANSLATIONS.en;
+                return (
+                  <>
+                    <div
+                      id="catalog-categories-bar"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 select-none"
+                    >
+                      <div className="w-full sm:w-auto overflow-hidden">
+                        <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none font-heading flex-nowrap whitespace-nowrap scroll-smooth max-w-full">
+                          {["All", ...appCategories.map(c => c.name), ...Array.from(new Set(appProducts.map(p => typeof p.category === 'object' && p.category !== null ? (p.category as any).name : p.category))).filter(c => c && !appCategories.find(ac => ac.name === c))].map((catName) => (
+                            <button
+                              key={catName}
+                              onClick={() => setActiveCategory(catName)}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition shrink-0 ${
+                                activeCategory === catName
+                                  ? isRetail
+                                    ? "bg-[#2874f0] text-white shadow-xs font-extrabold"
+                                    : "bg-slate-900 text-white font-semibold shadow-xs"
+                                  : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
+                              }`}
+                            >
+                              {catName === "All" ? t.allCategories : catName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-[10.5px] text-slate-400 font-mono shrink-0">
+                        {t.showingReagents} <strong className="text-slate-700 font-bold">{filteredProducts.length}</strong> {t.authenticatedReagents}
+                      </div>
+                    </div>
+
+                    {/* Product card grid */}
+                    {filteredProducts.length === 0 ? (
+                      <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl max-w-lg mx-auto select-none shadow-xs animate-fade-in">
+                        <FlaskConicalOff className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                        <h3 className="text-base font-bold text-slate-700 font-heading">{t.noReagentsFound}</h3>
+                        <p className="text-xs text-slate-400 mt-1">Adjust your catalog filters or correct the nomenclature query.</p>
+                        <button
+                          onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
+                          className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs rounded-xl cursor-pointer font-medium transition"
+                        >
+                          {t.resetFilters}
                         </button>
                       </div>
                     ) : (
-                      <form onSubmit={handleHeroRfqSubmit} className="bg-white/10 backdrop-blur-md border border-white/15 p-3.5 rounded-xl space-y-2.5">
-                        <div className="text-[11px] font-semibold text-blue-100 px-1">
-                          Request Instant Bulk Quotation
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <input
-                            type="text"
-                            required
-                            value={heroRfqProduct}
-                            onChange={(e) => setHeroRfqProduct(e.target.value)}
-                            placeholder="Chemical name or CAS..."
-                            className="flex-1 bg-white text-slate-900 text-xs font-medium rounded-lg px-3.5 py-2.5 border border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400 placeholder:text-slate-400"
+                      <div 
+                        id="retail-products-grid"
+                        className={`grid gap-6 animate-fade-in ${
+                          isRetail 
+                            ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
+                            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                        }`}
+                      >
+                        {filteredProducts.map((prod) => (
+                          <ProductCard
+                            key={prod.id}
+                            product={prod}
+                            onSelect={handleProductSelect}
+                            onAddToCart={handleQuickAddToCart}
+                            onOpenInquiry={handleOpenInquiry}
                           />
-                          <input
-                            type="tel"
-                            required
-                            value={heroRfqPhone}
-                            onChange={(e) => setHeroRfqPhone(e.target.value)}
-                            placeholder="Mobile / WhatsApp"
-                            className="w-full sm:w-36 bg-white text-slate-900 text-xs font-medium rounded-lg px-3 py-2.5 border border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400 placeholder:text-slate-400"
-                          />
-                          <button
-                            type="submit"
-                            disabled={heroRfqLoading}
-                            className="bg-[#0052cc] hover:bg-[#0747a6] border border-blue-400/30 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition cursor-pointer whitespace-nowrap active:scale-[0.99] shadow-xs"
-                          >
-                            {heroRfqLoading ? "Sending..." : (homepageConfig.complianceBtnText || "Get Quote")}
-                          </button>
-                        </div>
-                      </form>
+                        ))}
+                      </div>
                     )}
-                  </div>
-                </div>
-              </div>
-            ) : isRetail ? (
-              <div className="space-y-4 animate-fade-in" id="retail-hero-banner">
-                {/* Flipkart / Amazon Mega Sale Big Banner */}
-                <div className="bg-gradient-to-r from-[#2874f0] via-[#1f5bc0] to-[#131921] rounded-2xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="space-y-3 z-10 max-w-xl">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="bg-[#febd69] text-slate-950 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider font-sans shadow-xs">
-                        🔥 BIG SAVING DAYS • LIMITED TIME DEALS
-                      </span>
-                      <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
-                        UP TO 60% OFF DIRECT
-                      </span>
-                    </div>
-                    <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight font-sans leading-tight">
-                      {homepageConfig.heroTitle || "Global Chemistry & Lab Equipment Marketplace"}
-                    </h2>
-                    <p className="text-blue-100 text-xs md:text-sm leading-relaxed">
-                      {homepageConfig.heroDescription || "Shop 10,000+ ACS Grade Chemical Reagents, Glassware & Safety Equipment with Express Free Delivery."}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 pt-2">
-                      <button 
-                        onClick={() => { const el = document.getElementById('retail-products-grid'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} 
-                        className="bg-[#ff9f00] hover:bg-[#e08c00] text-slate-950 font-extrabold px-6 py-2.5 rounded-lg text-xs transition cursor-pointer shadow-md uppercase tracking-wide"
-                      >
-                        EXPLORE DEALS NOW
-                      </button>
-                      <a
-                        href="https://wa.me/15099941048"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition"
-                      >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        <span>WhatsApp Help Line</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Right Hero Product Feature */}
-                  <div className="relative z-10 shrink-0 w-full md:w-72 h-44 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 flex flex-col items-center justify-center text-center">
-                    <img 
-                      src={homepageConfig.heroImageUrl} 
-                      alt={homepageConfig.heroImageAlt} 
-                      className="w-full h-32 object-cover rounded-lg shadow-md" 
-                      referrerPolicy="no-referrer" 
-                      onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400"; }} 
-                    />
-                    <span className="text-[10px] font-bold text-emerald-300 mt-1 uppercase font-mono flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-emerald-400" /> 256-Bit SSL Encrypted Vault
-                    </span>
-                  </div>
-                </div>
-
-                {/* Marketplace Security & Trust Ribbon */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-slate-200 flex-wrap gap-3 font-mono shadow-xs">
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px]">
-                    <span className="flex items-center gap-1.5 font-bold text-amber-300">
-                      <Lock className="w-3.5 h-3.5 text-amber-300" /> 256-Bit SSL Encrypted
-                    </span>
-                    <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> PCI-DSS Gateway Security
-                    </span>
-                    <span className="flex items-center gap-1.5 font-bold text-cyan-300">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300" /> GHS Chemical Safety Standard
-                    </span>
-                  </div>
-                  <span className="bg-emerald-950 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded border border-emerald-800 uppercase">OFFICIAL SECURE STORE</span>
-                </div>
-              </div>
-            ) : (
-              /* Elegant Hero Welcome Layout complete with responsive generated artwork */
-              <div className="relative bg-white border border-slate-200 rounded-3xl overflow-hidden p-6 md:p-10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-8 select-none">
-                
-                {/* Background gradient overlays */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-80 h-80 bg-slate-500/5 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="space-y-4 max-w-xl relative z-10">
-                  <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 font-mono text-[10.5px] font-semibold px-3 py-1 rounded-full border border-blue-100 uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    {homepageConfig.heroTag}
-                  </span>
-                  <h2 className="text-2xl md:text-4xl font-light text-slate-800 tracking-tight leading-none font-heading">
-                    {homepageConfig.heroTitle}
-                  </h2>
-                  <p className="text-slate-500 text-xs md:text-sm leading-relaxed">
-                    {homepageConfig.heroDescription}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 pt-1 pb-1">
-                    <a
-                      href="https://wa.me/15099941048"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 hover:scale-[1.01] text-white text-[10.5px] font-bold rounded-xl shadow-xs transition-all active:scale-[0.99] cursor-pointer z-10"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>WhatsApp Helpline: +1 (509) 994-1048 (Text Only-Chat 24/7)</span>
-                    </a>
-                  </div>
-                  
-                  {/* Detailed Marketplace Security Specs */}
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 font-mono text-[11px] text-slate-600 border-t border-slate-100">
-                    <span className="flex items-center gap-1.5 font-bold text-slate-800">
-                      <Lock className="w-3.5 h-3.5 text-amber-600" /> 256-Bit SSL/TLS Encryption
-                    </span>
-                    <span className="flex items-center gap-1.5 font-bold text-slate-800">
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> PCI-DSS Secure Payments
-                    </span>
-                    <span className="flex items-center gap-1.5 font-bold text-slate-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" /> GHS & OSHA Chemical Compliance
-                    </span>
-                  </div>
-                </div>
-
-                {/* Lab glassware visual graphics card */}
-                <div className="w-full md:w-80 h-48 bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden shadow-xs relative shrink-0">
-                  {/* Embedding generated modern realistic chemistry lab photo */}
-                  <img 
-                    src={homepageConfig.heroImageUrl} 
-                    alt={homepageConfig.heroImageAlt} 
-                    className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-300"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      // Fallback to cute unsplash if generated can't load
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/25 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 text-[10px] text-slate-600 flex items-center justify-between z-10">
-                    <span className="font-semibold font-mono">{homepageConfig.heroWatermarkTitle}</span>
-                    <span className="bg-white/90 text-blue-600 px-2.5 py-0.5 rounded border border-slate-200 font-bold uppercase font-mono">{homepageConfig.heroWatermarkBadge}</span>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* Reagents Categorization Panels */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 select-none">
-              <div className="w-full sm:w-auto overflow-hidden">
-                <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none font-heading flex-nowrap whitespace-nowrap scroll-smooth max-w-full">
-                  {["All", ...appCategories.map(c => c.name), ...Array.from(new Set(appProducts.map(p => typeof p.category === 'object' && p.category !== null ? (p.category as any).name : p.category))).filter(c => c && !appCategories.find(ac => ac.name === c))].map((catName) => (
-                    <button
-                      key={catName}
-                      onClick={() => setActiveCategory(catName)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition shrink-0 ${
-                        activeCategory === catName
-                          ? isRetail
-                            ? "bg-[#2874f0] text-white shadow-xs font-extrabold"
-                            : "bg-slate-900 text-white font-semibold shadow-xs"
-                          : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
-                      }`}
-                    >
-                      {catName}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="text-[10.5px] text-slate-400 font-mono shrink-0">
-                Showing <strong className="text-slate-700 font-bold">{filteredProducts.length}</strong> authenticated reagents
-              </div>
-            </div>
-
-            {/* Product card grid */}
-            {filteredProducts.length === 0 ? (
-              <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl max-w-lg mx-auto select-none shadow-xs animate-fade-in">
-                <FlaskConicalOff className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-base font-bold text-slate-700 font-heading">No corresponding reagents located</h3>
-                <p className="text-xs text-slate-400 mt-1">Adjust your catalog filters or correct the nomenclature query.</p>
-                <button
-                  onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
-                  className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs rounded-xl cursor-pointer font-medium transition"
-                >
-                  Reset Catalog filters
-                </button>
-              </div>
-            ) : (
-              <div 
-                id="retail-products-grid"
-                className={`grid gap-6 animate-fade-in ${
-                  isRetail 
-                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
-                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                }`}
-              >
-                {filteredProducts.map((prod) => (
-                  <ProductCard
-                    key={prod.id}
-                    product={prod}
-                    onSelect={handleProductSelect}
-                    onAddToCart={handleQuickAddToCart}
-                    onOpenInquiry={handleOpenInquiry}
-                  />
-                ))}
-              </div>
-            )}
+                  </>
+                );
+              })()}
 
             {/* Compliance advisory footnote */}
             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between select-none text-slate-500 shadow-xs">
@@ -1099,7 +1212,7 @@ export default function App() {
                 {homepageConfig.complianceBtnText}
               </button>
             </div>
-
+            </div>
           </div>
         )}
 
