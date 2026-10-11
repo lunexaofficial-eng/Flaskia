@@ -1411,6 +1411,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     acceptedCryptosJson: JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
     defaultLanguage: "en",
     defaultWebsiteCurrency: "INR",
+    ratingsReviewsEnabled: "true",
     complianceEmoji: "🔐",
     complianceTitle: "GHS Custody compliance assurance:",
     complianceText: "",
@@ -2025,6 +2026,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
           JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
         defaultLanguage: homeData.defaultLanguage || "en",
         defaultWebsiteCurrency: homeData.defaultWebsiteCurrency || "INR",
+        ratingsReviewsEnabled:
+          homeData.ratingsReviewsEnabled !== undefined
+            ? homeData.ratingsReviewsEnabled
+            : "true",
         complianceEmoji: homeData.complianceEmoji || "🔐",
         complianceTitle:
           homeData.complianceTitle || "GHS Custody compliance assurance:",
@@ -2146,6 +2151,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         acceptedCryptosJson: JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
         defaultLanguage: "en",
         defaultWebsiteCurrency: "INR",
+        ratingsReviewsEnabled: "true",
         complianceEmoji: "🔐",
         complianceTitle: "GHS Custody compliance assurance:",
         complianceText:
@@ -6313,6 +6319,92 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         <p className="text-[10.5px] text-slate-400 leading-relaxed">
                           Sets the primary default currency across all product cards, detail pages, and checkout calculations using live exchange rates.
                         </p>
+                      </div>
+                    </div>
+
+                    {/* Product Rating & Review System Enable / Disable Control */}
+                    <div className="bg-slate-950/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                            Product Rating &amp; Customer Review System
+                          </span>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase ${
+                              homepageForm.ratingsReviewsEnabled !== "false"
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                                : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                            }`}
+                          >
+                            {homepageForm.ratingsReviewsEnabled !== "false"
+                              ? "● ACTIVE across Marketplace"
+                              : "○ DISABLED / HIDDEN"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 leading-relaxed max-w-2xl">
+                          Enable or disable product star ratings and customer reviews across the entire marketplace in one click. When disabled, all product rating badges and the customer review submission section are completely hidden from product cards and product detail pages.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = {
+                              ...homepageForm,
+                              ratingsReviewsEnabled: "true",
+                            };
+                            setHomepageForm(updated);
+                            fetch("/api/homepage", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(updated),
+                            })
+                              .then(() => {
+                                showToast(
+                                  "Product Rating & Review feature ENABLED across the marketplace",
+                                  "success"
+                                );
+                              })
+                              .catch(() => {});
+                          }}
+                          className={`px-3.5 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition cursor-pointer border ${
+                            homepageForm.ratingsReviewsEnabled !== "false"
+                              ? "bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-950"
+                              : "bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700"
+                          }`}
+                        >
+                          Enable Ratings &amp; Reviews
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = {
+                              ...homepageForm,
+                              ratingsReviewsEnabled: "false",
+                            };
+                            setHomepageForm(updated);
+                            fetch("/api/homepage", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(updated),
+                            })
+                              .then(() => {
+                                showToast(
+                                  "Product Rating & Review feature DISABLED across the marketplace",
+                                  "success"
+                                );
+                              })
+                              .catch(() => {});
+                          }}
+                          className={`px-3.5 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition cursor-pointer border ${
+                            homepageForm.ratingsReviewsEnabled === "false"
+                              ? "bg-rose-600 text-white border-rose-500 shadow-sm shadow-rose-950"
+                              : "bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700"
+                          }`}
+                        >
+                          Disable Ratings &amp; Reviews
+                        </button>
                       </div>
                     </div>
                   </div>

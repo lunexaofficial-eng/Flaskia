@@ -55,6 +55,7 @@ interface ProductDetailsProps {
   appSubtitle?: string;
   whatsappNumber?: string;
   language?: string;
+  showRatings?: boolean;
   customer?: { id?: string; name?: string; email?: string } | null;
   onRatingUpdated?: () => void;
 }
@@ -68,6 +69,7 @@ export default function ProductDetails({
   appSubtitle = "Academic Supply Direct",
   whatsappNumber = "15099941048",
   language = "en",
+  showRatings = true,
   customer = null,
   onRatingUpdated,
 }: ProductDetailsProps) {
@@ -522,34 +524,36 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               </h2>
 
               {/* Dynamic Product Rating Summary Row */}
-              <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
-                <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-full">
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((starIdx) => (
-                      <Star
-                        key={starIdx}
-                        className={`w-3.5 h-3.5 ${
-                          starIdx <= Math.round(ratingStats.rating)
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-slate-300"
-                        }`}
-                      />
-                    ))}
+              {showRatings && (
+                <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
+                  <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-full">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((starIdx) => (
+                        <Star
+                          key={starIdx}
+                          className={`w-3.5 h-3.5 ${
+                            starIdx <= Math.round(ratingStats.rating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-slate-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-extrabold font-mono text-slate-900">
+                      {ratingStats.ratingFormatted}
+                    </span>
                   </div>
-                  <span className="text-xs font-extrabold font-mono text-slate-900">
-                    {ratingStats.ratingFormatted}
+                  <span className="text-xs text-slate-500 font-medium">
+                    ({ratingStats.reviewCount.toLocaleString()} {t.basedOnReviews})
                   </span>
+                  {ratingStats.isRealCustomerRating && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      {t.verifiedCustomerBadge}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs text-slate-500 font-medium">
-                  ({ratingStats.reviewCount.toLocaleString()} {t.basedOnReviews})
-                </span>
-                {ratingStats.isRealCustomerRating && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    {t.verifiedCustomerBadge}
-                  </span>
-                )}
-              </div>
+              )}
 
               <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-sans pt-1">
                 {product.description}
@@ -771,6 +775,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
             </div>
 
             {/* CUSTOMER RATINGS & VERIFIED BUYER REVIEWS SECTION */}
+            {showRatings && (
             <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs">
               <div className="bg-slate-50/70 px-5 py-3.5 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -905,6 +910,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
 

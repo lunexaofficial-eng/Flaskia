@@ -1332,6 +1332,7 @@ export async function initDb(frontProducts?: any[]) {
         cryptoBarTitle: "Cryptocurrency Payments",
         defaultLanguage: "en",
         defaultWebsiteCurrency: "INR",
+        ratingsReviewsEnabled: "true",
         complianceBtnText: "Open Safety & FAQ Manual",
         complianceEmoji: "🔐",
         complianceTitle: "GHS Custody compliance assurance:",

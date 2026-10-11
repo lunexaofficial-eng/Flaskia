@@ -14,6 +14,7 @@ interface ProductCardProps {
   onAddToCart?: (product: Product, event: React.MouseEvent) => void;
   onOpenInquiry?: (product: Product) => void;
   language?: string;
+  showRatings?: boolean;
 }
 
 export default function ProductCard({
@@ -21,6 +22,7 @@ export default function ProductCard({
   onSelect,
   onOpenInquiry,
   language = "en",
+  showRatings = true,
 }: ProductCardProps) {
   const { isRetail, isIndiamart } = useTheme();
   const { formatPrice } = useCurrency();
@@ -52,15 +54,17 @@ export default function ProductCard({
             className="w-full h-full object-contain group-hover:scale-103 transition-transform duration-200"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur-xs border border-slate-200/90 px-2 py-0.5 rounded-full shadow-2xs">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-            <span className="text-[11px] font-bold text-slate-800 font-mono">
-              {ratingStats.ratingFormatted}
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono">
-              ({ratingStats.reviewCount})
-            </span>
-          </div>
+          {showRatings && (
+            <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 backdrop-blur-xs border border-slate-200/90 px-2 py-0.5 rounded-full shadow-2xs">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <span className="text-[11px] font-bold text-slate-800 font-mono">
+                {ratingStats.ratingFormatted}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                ({ratingStats.reviewCount})
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Product Details Content */}
@@ -167,19 +171,21 @@ export default function ProductCard({
             </h3>
 
             {/* Star Rating & Review Count */}
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="bg-[#388e3c] text-white text-[10.5px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-2xs font-mono">
-                {ratingStats.ratingFormatted} <Star className="w-2.5 h-2.5 fill-white text-white" />
-              </span>
-              <span className="text-[11px] text-slate-500 font-medium">
-                ({ratingStats.reviewCount.toLocaleString()})
-              </span>
-              {ratingStats.isRealCustomerRating && (
-                <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
-                  ✓ {t.verifiedCustomerBadge}
+            {showRatings && (
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="bg-[#388e3c] text-white text-[10.5px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-2xs font-mono">
+                  {ratingStats.ratingFormatted} <Star className="w-2.5 h-2.5 fill-white text-white" />
                 </span>
-              )}
-            </div>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  ({ratingStats.reviewCount.toLocaleString()})
+                </span>
+                {ratingStats.isRealCustomerRating && (
+                  <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                    ✓ {t.verifiedCustomerBadge}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Price Section: Deal Price + Original MRP Strikethrough */}
             <div className="mt-2.5 flex items-baseline gap-2">
@@ -252,11 +258,13 @@ export default function ProductCard({
         )}
 
         {/* Rating Pill on Standard Card */}
-        <span className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-xs border border-slate-200 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-xs flex items-center gap-1">
-          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-          {ratingStats.ratingFormatted}
-          <span className="text-slate-400 font-normal">({ratingStats.reviewCount})</span>
-        </span>
+        {showRatings && (
+          <span className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-xs border border-slate-200 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-xs flex items-center gap-1">
+            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+            {ratingStats.ratingFormatted}
+            <span className="text-slate-400 font-normal">({ratingStats.reviewCount})</span>
+          </span>
+        )}
       </div>
 
       {/* Reagent Data Specs */}

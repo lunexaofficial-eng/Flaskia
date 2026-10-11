@@ -214,6 +214,7 @@ export default function App() {
     acceptedCryptosJson: JSON.stringify(DEFAULT_ACCEPTED_CRYPTOS),
     defaultLanguage: "en",
     defaultWebsiteCurrency: "INR",
+    ratingsReviewsEnabled: "true",
     complianceBtnText: "Open Safety & FAQ Manual",
     complianceEmoji: "🔐",
     complianceTitle: "GHS Custody compliance assurance:",
@@ -1250,6 +1251,7 @@ export default function App() {
                         onAddToCart={handleQuickAddToCart}
                         onOpenInquiry={handleOpenInquiry}
                         language={activeLangCode}
+                        showRatings={homepageConfig.ratingsReviewsEnabled !== "false"}
                       />
                     ))}
                   </div>
@@ -1308,6 +1310,7 @@ export default function App() {
             appSubtitle={homepageConfig.appSubtitle}
             whatsappNumber={homepageConfig.adminWhatsappNumber || "15099941048"}
             language={activeLangCode}
+            showRatings={homepageConfig.ratingsReviewsEnabled !== "false"}
             customer={currentUser}
             onRatingUpdated={() => {
               fetch("/api/products")
