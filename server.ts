@@ -567,13 +567,40 @@ app.delete("/api/faqs/:id", async (req, res) => {
 app.get("/api/homepage", async (req, res) => {
   try {
     if (dbCache.homepage) {
-      return res.json(dbCache.homepage);
+      const cached = { ...dbCache.homepage };
+      for (const k of Object.keys(cached)) {
+        if (typeof cached[k] === "string" && /flaskia/i.test(cached[k])) {
+          cached[k] = cached[k]
+            .replace(/FLASKIA/g, "ANIIXA")
+            .replace(/Flaskia/g, "Aniixa")
+            .replace(/flaskia/g, "aniixa");
+        }
+      }
+      return res.json(cached);
     }
     const { rows } = await pool.query("SELECT key, value FROM homepage_config");
     const config: Record<string, string> = {};
+    let hadLegacyBrand = false;
     rows.forEach((r) => {
-      config[r.key] = r.value;
+      let val = r.value;
+      if (typeof val === "string" && /flaskia/i.test(val)) {
+        val = val
+          .replace(/FLASKIA/g, "ANIIXA")
+          .replace(/Flaskia/g, "Aniixa")
+          .replace(/flaskia/g, "aniixa");
+        hadLegacyBrand = true;
+      }
+      config[r.key] = val;
     });
+    if (hadLegacyBrand) {
+      pool
+        .query(`
+          UPDATE homepage_config
+          SET value = REPLACE(REPLACE(REPLACE(value, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa')
+          WHERE value ILIKE '%flaskia%';
+        `)
+        .catch(() => {});
+    }
     dbCache.homepage = config;
     return res.json(config);
   } catch (err: any) {

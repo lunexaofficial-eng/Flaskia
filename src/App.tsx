@@ -246,7 +246,16 @@ export default function App() {
       })
       .then(data => {
         if (data && typeof data === "object") {
-          setHomepageConfig(prev => ({ ...prev, ...data }));
+          const normalized: Record<string, any> = { ...data };
+          for (const k of Object.keys(normalized)) {
+            if (typeof normalized[k] === "string" && /flaskia/i.test(normalized[k])) {
+              normalized[k] = normalized[k]
+                .replace(/FLASKIA/g, "ANIIXA")
+                .replace(/Flaskia/g, "Aniixa")
+                .replace(/flaskia/g, "aniixa");
+            }
+          }
+          setHomepageConfig(prev => ({ ...prev, ...normalized }));
         }
       })
       .catch(err => {

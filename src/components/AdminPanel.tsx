@@ -1947,7 +1947,21 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     }
 
     // 6. Fetch Homepage Configuration
-    const homeData = await safeFetch("/api/homepage");
+    const rawHomeData = await safeFetch("/api/homepage");
+    const homeData =
+      rawHomeData && typeof rawHomeData === "object" && !Array.isArray(rawHomeData)
+        ? Object.fromEntries(
+            Object.entries(rawHomeData).map(([k, v]) => [
+              k,
+              typeof v === "string"
+                ? v
+                    .replace(/FLASKIA/g, "ANIIXA")
+                    .replace(/Flaskia/g, "Aniixa")
+                    .replace(/flaskia/g, "aniixa")
+                : v,
+            ])
+          )
+        : null;
     if (homeData && typeof homeData === "object" && !Array.isArray(homeData)) {
       setHomepageForm({
         heroTag:
