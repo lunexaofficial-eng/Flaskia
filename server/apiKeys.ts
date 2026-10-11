@@ -47,7 +47,7 @@ export async function getDynamicR2Client() {
   const accountId = await getStoredApiKey("r2_account_id", process.env.R2_ACCOUNT_ID);
   const accessKeyId = await getStoredApiKey("r2_access_key_id", process.env.R2_ACCESS_KEY_ID);
   const secretAccessKey = await getStoredApiKey("r2_secret_access_key", process.env.R2_SECRET_ACCESS_KEY);
-  const bucketName = await getStoredApiKey("r2_bucket_name", process.env.R2_BUCKET_NAME || "flaskia-storage");
+  const bucketName = await getStoredApiKey("r2_bucket_name", process.env.R2_BUCKET_NAME || "aniixa-storage");
   const publicUrl = await getStoredApiKey("r2_public_url", process.env.R2_PUBLIC_URL || "");
   const enabledStr = await getStoredApiKey("r2_enabled", "true");
   const isEnabled = enabledStr !== "false";
@@ -93,10 +93,10 @@ export async function getDynamicResendClient() {
   }
 
   const apiKey = await getStoredApiKey("resend_api_key", process.env.RESEND_API_KEY);
-  const domain = await getStoredApiKey("resend_domain", "flaskia.com");
+  const domain = await getStoredApiKey("resend_domain", "aniixa.com");
   const fromEmail = await getStoredApiKey(
     "resend_from_email",
-    process.env.RESEND_FROM_EMAIL || `Flaskia Marketplace <noreply@${domain || "flaskia.com"}>`
+    process.env.RESEND_FROM_EMAIL || `Aniixa Marketplace <noreply@${domain || "aniixa.com"}>`
   );
   const enabledStr = await getStoredApiKey("resend_enabled", "true");
   const isEnabled = enabledStr !== "false";
@@ -115,8 +115,8 @@ export async function getDynamicResendClient() {
 
   cachedResend = {
     client,
-    fromEmail: (fromEmail || `Flaskia Marketplace <noreply@${domain || "flaskia.com"}>`).trim(),
-    domain: (domain || "flaskia.com").trim(),
+    fromEmail: (fromEmail || `Aniixa Marketplace <noreply@${domain || "aniixa.com"}>`).trim(),
+    domain: (domain || "aniixa.com").trim(),
     apiKey: cleanKey,
     enabled: isEnabled,
     timestamp: now,
@@ -134,7 +134,7 @@ export async function getDynamicBetterAuthConfig() {
 
   const secret = await getStoredApiKey(
     "better_auth_secret",
-    process.env.BETTER_AUTH_SECRET || "flaskia_better_auth_production_secret_key_2026_matrix"
+    process.env.BETTER_AUTH_SECRET || "aniixa_better_auth_production_secret_key_2026_matrix"
   );
   const url = await getStoredApiKey(
     "better_auth_url",
@@ -144,7 +144,7 @@ export async function getDynamicBetterAuthConfig() {
   const enabledStr = await getStoredApiKey("better_auth_enabled", "true");
 
   cachedBetterAuth = {
-    secret: (secret || "flaskia_better_auth_production_secret_key_2026_matrix").trim(),
+    secret: (secret || "aniixa_better_auth_production_secret_key_2026_matrix").trim(),
     url: (url || "").trim(),
     sessionDuration: (sessionDuration || "7d").trim(),
     enabled: enabledStr !== "false",
@@ -323,7 +323,7 @@ export async function testResendConnection(params?: {
 
     const cleanKey = apiKey.trim();
     const testResend = new Resend(cleanKey);
-    const cleanFrom = (fromEmail || `Flaskia Marketplace <noreply@${domain || "flaskia.com"}>`).trim();
+    const cleanFrom = (fromEmail || `Aniixa Marketplace <noreply@${domain || "aniixa.com"}>`).trim();
 
     // Send a real verification email via Resend
     const sendResult = await testResend.emails.send({

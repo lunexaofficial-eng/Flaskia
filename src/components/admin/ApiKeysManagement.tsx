@@ -79,14 +79,14 @@ export const ApiKeysManagement: React.FC<ApiKeysManagementProps> = ({
     r2_account_id: "",
     r2_access_key_id: "",
     r2_secret_access_key: "",
-    r2_bucket_name: "flaskia-files",
+    r2_bucket_name: "aniixa-files",
     r2_public_url: "",
     r2_endpoint: "",
     r2_enabled: true,
 
     resend_api_key: "",
     resend_domain: "",
-    resend_from_email: "Flaskia Marketplace <noreply@flaskia.com>",
+    resend_from_email: "Aniixa Marketplace <noreply@aniixa.com>",
     resend_enabled: true,
 
     better_auth_secret: "",
@@ -253,9 +253,9 @@ export const ApiKeysManagement: React.FC<ApiKeysManagementProps> = ({
             ...prev,
             resend_domain: verified.name,
             resend_from_email:
-              prev.resend_from_email && !prev.resend_from_email.includes("flaskia.com")
+              prev.resend_from_email && !prev.resend_from_email.includes("aniixa.com")
                 ? prev.resend_from_email
-                : `Flaskia Marketplace <noreply@${verified.name}>`,
+                : `Aniixa Marketplace <noreply@${verified.name}>`,
           }));
         }
       }
@@ -645,7 +645,7 @@ export const ApiKeysManagement: React.FC<ApiKeysManagementProps> = ({
                 onChange={(e) =>
                   setKeys((prev) => ({ ...prev, r2_bucket_name: e.target.value }))
                 }
-                placeholder="flaskia-files"
+                placeholder="aniixa-files"
                 className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -949,7 +949,7 @@ export const ApiKeysManagement: React.FC<ApiKeysManagementProps> = ({
                               setKeys((prev) => ({
                                 ...prev,
                                 resend_domain: dom.name,
-                                resend_from_email: `Flaskia Marketplace <noreply@${dom.name}>`,
+                                resend_from_email: `Aniixa Marketplace <noreply@${dom.name}>`,
                               }))
                             }
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-medium cursor-pointer transition ${

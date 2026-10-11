@@ -159,10 +159,9 @@ export default function CheckoutPage({
 
   React.useEffect(() => {
     fetch("/api/payment-methods")
-      .then(res => res.ok ? res.json() : [])
+      .then(res => res.json())
       .then(data => {
-        const list = Array.isArray(data) ? data : [];
-        const activeMethods = list.filter((m: any) => m.is_active);
+        const activeMethods = data.filter((m: any) => m.is_active);
         setPaymentMethods(activeMethods);
       })
       .catch(console.error);
@@ -489,7 +488,7 @@ export default function CheckoutPage({
           <Truck className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-base font-bold text-slate-800 font-heading">Your lab shopping cart is empty</h3>
           <p className="text-xs text-slate-500 mt-2 leading-relaxed px-6">
-            Review the Flaskia catalog and add high-purity chemicals, buffers, or class A laboratory borosilicate glassware to proceed.
+            Review the Aniixa catalog and add high-purity chemicals, buffers, or class A laboratory borosilicate glassware to proceed.
           </p>
           <button
             onClick={onBackToStore}

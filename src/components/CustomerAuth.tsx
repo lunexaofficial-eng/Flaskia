@@ -125,7 +125,7 @@ export default function CustomerAuth({ onAuthSuccess, onClose }: CustomerAuthPro
         localStorage.setItem("customer_user", JSON.stringify(data.user));
       }
 
-      setInfoMessage("Authentication successful! Welcome to Flaskia Marketplace.");
+      setInfoMessage("Authentication successful! Welcome to Aniixa Marketplace.");
 
       setTimeout(() => {
         if (onAuthSuccess) {

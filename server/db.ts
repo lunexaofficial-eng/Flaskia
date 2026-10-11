@@ -610,16 +610,16 @@ export async function initDb(frontProducts?: any[]) {
       { key_name: "r2_account_id", key_value: process.env.R2_ACCOUNT_ID || "", service_category: "r2", is_active: true, description: "Cloudflare Account ID" },
       { key_name: "r2_access_key_id", key_value: process.env.R2_ACCESS_KEY_ID || "", service_category: "r2", is_active: true, description: "Cloudflare R2 S3 Access Key ID" },
       { key_name: "r2_secret_access_key", key_value: process.env.R2_SECRET_ACCESS_KEY || "", service_category: "r2", is_active: true, description: "Cloudflare R2 Secret Access Key" },
-      { key_name: "r2_bucket_name", key_value: process.env.R2_BUCKET_NAME || "flaskia-storage", service_category: "r2", is_active: true, description: "Cloudflare R2 Bucket Name" },
+      { key_name: "r2_bucket_name", key_value: process.env.R2_BUCKET_NAME || "aniixa-storage", service_category: "r2", is_active: true, description: "Cloudflare R2 Bucket Name" },
       { key_name: "r2_public_url", key_value: process.env.R2_PUBLIC_URL || "", service_category: "r2", is_active: true, description: "Cloudflare R2 Public Domain or Worker URL" },
       { key_name: "r2_enabled", key_value: "true", service_category: "r2", is_active: true, description: "Toggle Cloudflare R2 storage integration" },
       
       { key_name: "resend_api_key", key_value: process.env.RESEND_API_KEY || "", service_category: "resend", is_active: true, description: "Resend.com API Key (re_...)" },
-      { key_name: "resend_domain", key_value: "flaskia.com", service_category: "resend", is_active: true, description: "Resend.com Verified Sending Domain" },
-      { key_name: "resend_from_email", key_value: process.env.RESEND_FROM_EMAIL || "Flaskia Marketplace <noreply@flaskia.com>", service_category: "resend", is_active: true, description: "Verified From Email sender address" },
+      { key_name: "resend_domain", key_value: "aniixa.com", service_category: "resend", is_active: true, description: "Resend.com Verified Sending Domain" },
+      { key_name: "resend_from_email", key_value: process.env.RESEND_FROM_EMAIL || "Aniixa Marketplace <noreply@aniixa.com>", service_category: "resend", is_active: true, description: "Verified From Email sender address" },
       { key_name: "resend_enabled", key_value: "true", service_category: "resend", is_active: true, description: "Toggle Resend.com email delivery" },
 
-      { key_name: "better_auth_secret", key_value: process.env.BETTER_AUTH_SECRET || "flaskia_better_auth_production_secret_key_2026_matrix", service_category: "better_auth", is_active: true, description: "BETTER_AUTH_SECRET cryptographic signing key" },
+      { key_name: "better_auth_secret", key_value: process.env.BETTER_AUTH_SECRET || "aniixa_better_auth_production_secret_key_2026_matrix", service_category: "better_auth", is_active: true, description: "BETTER_AUTH_SECRET cryptographic signing key" },
       { key_name: "better_auth_url", key_value: process.env.BETTER_AUTH_URL || "https://ais-dev-drrzqjsllss3kzhvvx4a35-646852900977.asia-east1.run.app", service_category: "better_auth", is_active: true, description: "BETTER_AUTH_URL Base URL for authentication flows" },
       { key_name: "better_auth_session_duration", key_value: "7d", service_category: "better_auth", is_active: true, description: "Better Auth session duration" },
       { key_name: "better_auth_enabled", key_value: "true", service_category: "better_auth", is_active: true, description: "Toggle Better Auth module" },
@@ -1148,7 +1148,7 @@ export async function initDb(frontProducts?: any[]) {
           category: "safety",
           question: "What is an SDS (Safety Data Sheet) and how can I find it?",
           answer:
-            "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Flaskia reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
+            "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Aniixa reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
           keywords: [
             "sds",
             "safety data sheet",
@@ -1197,7 +1197,7 @@ export async function initDb(frontProducts?: any[]) {
           question:
             "Can chemicals be shipped directly to residential/home addresses?",
           answer:
-            "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Flaskia strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
+            "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Aniixa strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
           keywords: [
             "residential",
             "home",
@@ -1212,7 +1212,7 @@ export async function initDb(frontProducts?: any[]) {
           category: "shipping",
           question: "What temperature controls are used during transit?",
           answer:
-            "Flaskia utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
+            "Aniixa utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
           keywords: [
             "temperature",
             "transit",
@@ -1228,7 +1228,7 @@ export async function initDb(frontProducts?: any[]) {
           question:
             "Do I need institutional verification or a license to purchase?",
           answer:
-            "Yes. Flaskia requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
+            "Yes. Aniixa requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
           keywords: [
             "license",
             "verification",
@@ -1258,7 +1258,7 @@ export async function initDb(frontProducts?: any[]) {
         {
           id: "compliance-3",
           category: "compliance",
-          question: "How does Flaskia uphold legal custody regulations?",
+          question: "How does Aniixa uphold legal custody regulations?",
           answer:
             "Our operations comply directly with EPA toxic control standards, DOT transport manuals, and OSHA safety guidelines. All orders undergo rigorous institutional checks, and all packaging includes physical safety documentation (SDS and GHS warning prints) directly in the parcel. We also record strict digital logs of lot numbers, purities, and transport chains for complete traceability.",
           keywords: [
@@ -1320,20 +1320,20 @@ export async function initDb(frontProducts?: any[]) {
         complianceEmoji: "🔐",
         complianceTitle: "GHS Custody compliance assurance:",
         complianceText:
-          "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
-        appName: "Flaskia",
+          "Aniixa monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+        appName: "Aniixa",
         appBrandBadge: "PRO",
         appSubtitle: "Academic Supply Direct",
         appLogoIcon: "FlaskConical",
         appLogoUrl: "",
         footerLogoUrl: "",
         appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
-        footerCompanyName: "Flaskia Supplies International Co.",
+        footerCompanyName: "Aniixa Supplies International Co.",
         footerLicence1: "OSHA ID: 44321-REAG",
         footerLicence2: "EPA LICENSE: 7385-CHEM",
         footerLicence3: "DOT TRANSPORT: CLASS 9",
         footerCopyright:
-          "Flaskia. Educational Material Logistics. Sandbox Checkout Portal.",
+          "Aniixa. Educational Material Logistics. Sandbox Checkout Portal.",
       };
 
       for (const key of Object.keys(defaultHomepageConfig)) {
@@ -1359,7 +1359,7 @@ export async function initDb(frontProducts?: any[]) {
           id: "contact",
           title: "Contact Us",
           subtitle: "Our support staff, physical logistics desk, and regulatory officers are at your service.",
-          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@flaskia.com, compliance@flaskia.com\nPhone: +1 (800) 555-CHEM (M-F 8:00 AM - 5:00 PM PST)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`
+          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@aniixa.com, compliance@aniixa.com\nPhone: +1 (800) 555-CHEM (M-F 8:00 AM - 5:00 PM PST)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`
         },
         {
           id: "privacy",
@@ -1395,7 +1395,7 @@ export async function initDb(frontProducts?: any[]) {
           id: "return",
           title: "Return Policy",
           subtitle: "Strict guidelines regarding return parcels under chemical regulations.",
-          content: `Once a chemical security seal is ruptured, regulatory rules strictly prohibit return shipment via standard public couriers. Reagents return is confined strictly to un-opened, factory-locked packages.\n\nNo delivery parcel can be returned to our warehouse without a pre-authorized Return Merchandise Authorization (RMA) ticket. Please contact our support desk (compliance@flaskia.com) to obtain the RMA documentation prior to making shipping arrangements.\n\nReturn windows close exactly thirty (30) days from original order dispatch. The outer regulatory seals, heat-locked bands, GHS decals, safety rings, and inner secure caps must look completely un-ruptured and clean to pass return audits.`
+          content: `Once a chemical security seal is ruptured, regulatory rules strictly prohibit return shipment via standard public couriers. Reagents return is confined strictly to un-opened, factory-locked packages.\n\nNo delivery parcel can be returned to our warehouse without a pre-authorized Return Merchandise Authorization (RMA) ticket. Please contact our support desk (compliance@aniixa.com) to obtain the RMA documentation prior to making shipping arrangements.\n\nReturn windows close exactly thirty (30) days from original order dispatch. The outer regulatory seals, heat-locked bands, GHS decals, safety rings, and inner secure caps must look completely un-ruptured and clean to pass return audits.`
         },
         {
           id: "refund",
@@ -1497,8 +1497,39 @@ export async function initDb(frontProducts?: any[]) {
         INSERT INTO payment_methods (id, name, type, is_active, details) VALUES
         ('pm_manual_1', 'Manual Bank Transfer / UPI', 'manual', true, $1::jsonb)
       `, [JSON.stringify({
-          instructions: "Please manually transfer the exact order amount to the bank account below. Include your Order ID in the payment reference.\n\nUPI ID: flaskia@bank\nAccount Holder: Flaskia Labs Logistics\nBank Name: Central Bank\nAccount Number: 1234567890\nIFSC Code: CNRB0001234\n\nYour order will remain pending until payment is verified by our team."
+          instructions: "Please manually transfer the exact order amount to the bank account below. Include your Order ID in the payment reference.\n\nUPI ID: aniixa@bank\nAccount Holder: Aniixa Labs Logistics\nBank Name: Central Bank\nAccount Number: 1234567890\nIFSC Code: CNRB0001234\n\nYour order will remain pending until payment is verified by our team."
       })]);
+    }
+
+    // Automatically migrate any existing database records from Flaskia -> Aniixa
+    try {
+      await client.query(`
+        UPDATE homepage_config
+        SET value = REPLACE(REPLACE(REPLACE(value, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa')
+        WHERE value ILIKE '%flaskia%';
+      `);
+      await client.query(`
+        UPDATE faqs
+        SET
+          question = REPLACE(REPLACE(REPLACE(question, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa'),
+          answer = REPLACE(REPLACE(REPLACE(answer, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa')
+        WHERE question ILIKE '%flaskia%' OR answer ILIKE '%flaskia%';
+      `);
+      await client.query(`
+        UPDATE company_policies
+        SET
+          title = REPLACE(REPLACE(REPLACE(title, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa'),
+          subtitle = REPLACE(REPLACE(REPLACE(subtitle, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa'),
+          content = REPLACE(REPLACE(REPLACE(content, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa')
+        WHERE title ILIKE '%flaskia%' OR subtitle ILIKE '%flaskia%' OR content ILIKE '%flaskia%';
+      `);
+      await client.query(`
+        UPDATE system_api_keys
+        SET key_value = REPLACE(REPLACE(REPLACE(key_value, 'FLASKIA', 'ANIIXA'), 'Flaskia', 'Aniixa'), 'flaskia', 'aniixa')
+        WHERE key_value ILIKE '%flaskia%';
+      `);
+    } catch (migErr) {
+      console.warn("Brand name migration notice:", migErr);
     }
 
   } catch (error) {

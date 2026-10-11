@@ -165,7 +165,7 @@ export async function getDynamicResendClient(): Promise<{
 }> {
   const { keys, sources } = await getResolvedSystemKeys();
   const apiKey = keys.resend_api_key;
-  const fromEmail = keys.resend_from_email || "Flaskia Marketplace <noreply@flaskia.com>";
+  const fromEmail = keys.resend_from_email || "Aniixa Marketplace <noreply@aniixa.com>";
   const verifiedDomain = keys.resend_verified_domain || "";
 
   if (apiKey && apiKey.startsWith("re_")) {
@@ -359,7 +359,7 @@ export async function testResendConnection(testEmail?: string): Promise<{
       const sendResult = await client.emails.send({
         from: fromEmail,
         to: [testEmail.trim()],
-        subject: "Flaskia Cloud Integration: Resend is Active & Verified!",
+        subject: "Aniixa Cloud Integration: Resend is Active & Verified!",
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 20px auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
             <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 20px;">
@@ -367,7 +367,7 @@ export async function testResendConnection(testEmail?: string): Promise<{
               <span style="font-size: 11px; color: #10b981; font-weight: 600; text-transform: uppercase;">Connection Status: 100% Operational</span>
             </div>
             <p style="color: #334155; font-size: 14px; line-height: 1.6;">
-              This test email confirms that your <strong>Resend API Key</strong> and <strong>Sender Domain (${fromEmail})</strong> configured in the Flaskia Admin Panel are working flawlessly.
+              This test email confirms that your <strong>Resend API Key</strong> and <strong>Sender Domain (${fromEmail})</strong> configured in the Aniixa Admin Panel are working flawlessly.
             </p>
             <div style="background: #f8fafc; border-radius: 12px; padding: 14px; margin: 20px 0; font-size: 12px; color: #475569; font-family: monospace;">
               <div>• Active Source: ${source.toUpperCase()} Configuration</div>
@@ -375,7 +375,7 @@ export async function testResendConnection(testEmail?: string): Promise<{
               <div>• Timestamp: ${new Date().toUTCString()}</div>
             </div>
             <p style="font-size: 11px; color: #94a3b8; margin-top: 24px; text-align: center;">
-              Flaskia Chemical Marketplace • Cloud Key Management Bureau
+              Aniixa Chemical Marketplace • Cloud Key Management Bureau
             </p>
           </div>
         `,

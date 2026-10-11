@@ -63,73 +63,6 @@ import {
   saveBatchStoredApiKeys,
 } from "./server/db.js";
 
-// --- SERVERLESS & COLD-START AUTO-INITIALIZATION GUARD ---
-let dbInitPromise: Promise<void> | null = null;
-let dbInitialized = false;
-
-export async function ensureDbInitialized() {
-  if (dbInitialized) return;
-  if (!dbInitPromise) {
-    dbInitPromise = (async () => {
-      try {
-        // Quick check if core tables exist; if not, or on initial boot, run full idempotent initDb
-        const check = await pool.query(`
-          SELECT
-            to_regclass('public.products') AS products_tbl,
-            to_regclass('public.categories') AS categories_tbl,
-            to_regclass('public.customers') AS customers_tbl,
-            to_regclass('public.orders') AS orders_tbl,
-            to_regclass('public.homepage_config') AS homepage_tbl,
-            to_regclass('public.inquiries') AS inquiries_tbl,
-            to_regclass('public.system_api_keys') AS api_keys_tbl
-        `);
-        const row = check.rows[0] || {};
-        const missingAny =
-          !row.products_tbl ||
-          !row.categories_tbl ||
-          !row.customers_tbl ||
-          !row.orders_tbl ||
-          !row.homepage_tbl ||
-          !row.inquiries_tbl ||
-          !row.api_keys_tbl;
-
-        if (missingAny) {
-          console.log("New or uninitialized PostgreSQL database detected. Running initDb(PRODUCTS)...");
-          await initDb(PRODUCTS);
-        } else {
-          // Even if tables exist, ensure baseline seed if products table is empty
-          const prodCount = await pool.query("SELECT COUNT(*) FROM products");
-          if (parseInt(prodCount.rows[0].count) === 0) {
-            await initDb(PRODUCTS);
-          }
-        }
-        dbInitialized = true;
-      } catch (err) {
-        console.error("Auto-initDb check failed, attempting full initDb:", err);
-        try {
-          await initDb(PRODUCTS);
-          dbInitialized = true;
-        } catch (innerErr) {
-          console.error("Full initDb recovery error:", innerErr);
-        }
-      } finally {
-        dbInitPromise = null;
-      }
-    })();
-  }
-  await dbInitPromise;
-}
-
-// Middleware to guarantee PostgreSQL schema & seed data exist before any /api route executes (critical for Vercel serverless & fresh Neon DBs)
-app.use("/api", async (req, res, next) => {
-  try {
-    await ensureDbInitialized();
-  } catch (e) {
-    console.error("Database initialization middleware warning:", e);
-  }
-  next();
-});
-
 import {
   getDynamicR2Client,
   getDynamicResendClient,
@@ -360,7 +293,7 @@ async function broadcastNewProductNotification(product: any) {
     console.log(`[Product Broadcast] Broadcasting new product alert to ${emails.length} subscriber emails for: ${product.name}`);
 
     const resendConfig = await getDynamicResendClient();
-    const fromAddress = resendConfig.fromEmail || "Flaskia Marketplace <noreply@flaskia.com>";
+    const fromAddress = resendConfig.fromEmail || "Aniixa Marketplace <noreply@aniixa.com>";
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -382,7 +315,7 @@ async function broadcastNewProductNotification(product: any) {
             <p style="margin: 4px 0; color: #94a3b8; font-size: 13px;"><strong>Purity / Grade:</strong> ${product.purity || "Standard"} (${product.grade || "ACS"})</p>
             <p style="margin: 4px 0; color: #10b981; font-size: 16px; font-weight: bold;">$${parseFloat(product.price || 0).toFixed(2)} / ${product.unit || "unit"}</p>
           </div>
-          <p style="color: #64748b; font-size: 12px;">This is an automated notification from Flaskia Chemical Marketplace.</p>
+          <p style="color: #64748b; font-size: 12px;">This is an automated notification from Aniixa Chemical Marketplace.</p>
         </div>
       </body>
       </html>
@@ -394,7 +327,7 @@ async function broadcastNewProductNotification(product: any) {
           await resendConfig.client.emails.send({
             from: fromAddress,
             to: [targetEmail],
-            subject: `🔥 New Arrival: ${product.name} Now Available on Flaskia`,
+            subject: `🔥 New Arrival: ${product.name} Now Available on Aniixa`,
             html: emailHtml,
           });
           console.log(`[Product Broadcast OK] Sent email alert to ${targetEmail} for ${product.name}`);
@@ -896,7 +829,7 @@ app.post("/api/inquiries/:id/messages", async (req, res) => {
       INSERT INTO inquiry_messages (id, inquiry_id, sender_role, sender_name, sender_email, message, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW())
     `,
-      [msgId, id, role, senderName || (role === "ADMIN" ? "Flaskia Admin" : "Customer"), senderEmail || "", message.trim()]
+      [msgId, id, role, senderName || (role === "ADMIN" ? "Aniixa Admin" : "Customer"), senderEmail || "", message.trim()]
     );
 
     const newStatus = role === "ADMIN" ? "REPLIED" : "IN_PROGRESS";
@@ -962,7 +895,7 @@ app.post("/api/admin/inquiries/:id/reply", checkAdminAuth, async (req, res) => {
       INSERT INTO inquiry_messages (id, inquiry_id, sender_role, sender_name, sender_email, message, created_at)
       VALUES ($1, $2, 'ADMIN', $3, $4, $5, NOW())
     `,
-      [msgId, id, adminName || "Flaskia Support", "support@flaskia.com", message.trim()]
+      [msgId, id, adminName || "Aniixa Support", "support@aniixa.com", message.trim()]
     );
 
     await pool.query("UPDATE inquiries SET status = 'REPLIED', updated_at = NOW() WHERE id = $1", [id]);
@@ -974,20 +907,20 @@ app.post("/api/admin/inquiries/:id/reply", checkAdminAuth, async (req, res) => {
         const inqRes = await pool.query("SELECT buyer_email, buyer_name, product_name FROM inquiries WHERE id = $1", [id]);
         if (inqRes.rows.length > 0) {
           const inq = inqRes.rows[0];
-          const fromAddress = resendConfig.fromEmail || "Flaskia Marketplace <noreply@flaskia.com>";
+          const fromAddress = resendConfig.fromEmail || "Aniixa Marketplace <noreply@aniixa.com>";
           await resendConfig.client.emails.send({
             from: fromAddress,
             to: [inq.buyer_email],
-            subject: `💬 Admin Replied to Your Inquiry [${id}] - Flaskia Marketplace`,
+            subject: `💬 Admin Replied to Your Inquiry [${id}] - Aniixa Marketplace`,
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-                <h2 style="color: #059669; margin-top: 0;">Flaskia Support Replied</h2>
+                <h2 style="color: #059669; margin-top: 0;">Aniixa Support Replied</h2>
                 <p>Hello <strong>${inq.buyer_name}</strong>,</p>
                 <p>Our administration team has posted a reply regarding your inquiry for <strong>${inq.product_name}</strong>:</p>
                 <div style="background-color: #f8fafc; border-left: 4px solid #10b981; padding: 16px; margin: 20px 0; border-radius: 4px; color: #1e293b; font-size: 14px;">
                   ${message.replace(/\n/g, "<br/>")}
                 </div>
-                <p style="color: #64748b; font-size: 13px;">You can view and reply to this conversation directly in your <strong>My Inquiries</strong> portal on Flaskia Marketplace.</p>
+                <p style="color: #64748b; font-size: 13px;">You can view and reply to this conversation directly in your <strong>My Inquiries</strong> portal on Aniixa Marketplace.</p>
               </div>
             `
           });
@@ -1143,7 +1076,7 @@ function buildOrderConfirmationEmailHtml(orderId: string, paymentMethod: string,
       <!-- Header / Logo -->
       <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 24px; margin-bottom: 30px;">
         <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; display: flex; align-items: center;">
-          <span style="color: #2563eb; margin-right: 8px;">🔬</span> FLASKIA <span style="color: #94a3b8; font-weight: 300; font-size: 14px; margin-left: 10px; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.05em; text-transform: uppercase;">LAB DIRECT</span>
+          <span style="color: #2563eb; margin-right: 8px;">🔬</span> ANIIXA <span style="color: #94a3b8; font-weight: 300; font-size: 14px; margin-left: 10px; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.05em; text-transform: uppercase;">LAB DIRECT</span>
         </div>
       </div>
 
@@ -1211,13 +1144,13 @@ function buildOrderConfirmationEmailHtml(orderId: string, paymentMethod: string,
       <div style="background: #eff6ff; border: 1px dashed #bfdbfe; border-radius: 12px; padding: 14px; margin-bottom: 30px; display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 18px;">📄</span>
         <div style="font-size: 12.5px; color: #1e40af; line-height: 1.4;">
-          <strong>PDF Invoice attached below:</strong> Flaskia system auto-generated invoice <strong>PDF-${orderId.substring(4, 10).toUpperCase()}</strong> is generated and packed under security audit regulations.
+          <strong>PDF Invoice attached below:</strong> Aniixa system auto-generated invoice <strong>PDF-${orderId.substring(4, 10).toUpperCase()}</strong> is generated and packed under security audit regulations.
         </div>
       </div>
 
       <!-- Footer Policy -->
       <div style="border-top: 1px solid #e2e8f0; padding-top: 24px; text-align: center; font-size: 11.5px; color: #94a3b8; line-height: 1.6;">
-        Flaskia Chemical Logistics & Regulatory Compliance Bureau<br/>
+        Aniixa Chemical Logistics & Regulatory Compliance Bureau<br/>
         This communication record complies with OSHA Hazard Communication Standard (HCS) and GHS mandates.
       </div>
     </div>
@@ -1230,7 +1163,7 @@ function buildTransitUpdateEmailHtml(orderId: string, statusText: string, locati
       <!-- Header -->
       <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 24px; margin-bottom: 30px;">
         <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; display: flex; align-items: center;">
-          <span style="color: #2563eb; margin-right: 8px;">🔬</span> FLASKIA <span style="color: #94a3b8; font-weight: 300; font-size: 14px; margin-left: 10px; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.05em; text-transform: uppercase;">LAB DIRECT</span>
+          <span style="color: #2563eb; margin-right: 8px;">🔬</span> ANIIXA <span style="color: #94a3b8; font-weight: 300; font-size: 14px; margin-left: 10px; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.05em; text-transform: uppercase;">LAB DIRECT</span>
         </div>
       </div>
 
@@ -1269,7 +1202,7 @@ function buildTransitUpdateEmailHtml(orderId: string, statusText: string, locati
 
       <!-- Footer Policy -->
       <div style="border-top: 1px solid #e2e8f0; padding-top: 24px; text-align: center; font-size: 11.5px; color: #94a3b8; line-height: 1.6;">
-        Flaskia Chemical Logistics & Regulatory Compliance Bureau<br/>
+        Aniixa Chemical Logistics & Regulatory Compliance Bureau<br/>
         This official transit log satisfies dynamic logistics notification metrics.
       </div>
     </div>
@@ -1292,7 +1225,7 @@ async function generateInvoicePdfBuffer(ord: any, dbItems: any[]): Promise<Buffe
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text("FLASKIA", 14, 28);
+    doc.text("ANIIXA", 14, 28);
     
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
@@ -1329,10 +1262,10 @@ async function generateInvoicePdfBuffer(ord: any, dbItems: any[]): Promise<Buffe
     ].filter(Boolean).join("\n");
 
     const senderText = [
-      "Flaskia Chemical Marketplace Corp.",
+      "Aniixa Chemical Marketplace Corp.",
       "100 Molecular Way, Dispatch Dock 4G",
       "Cambridge, MA 02139 | United States",
-      "E-mail: logistics@flaskia.com",
+      "E-mail: logistics@aniixa.com",
       "EPA Custody License: #EPA-4491-09B"
     ].join("\n");
 
@@ -1467,7 +1400,7 @@ async function sendSimulatedEmail(targetEmail: string, subject: string, body: st
   const resendConfig = await getDynamicResendClient();
   if (resendConfig.client && resendConfig.enabled) {
     try {
-      const fromAddress = resendConfig.fromEmail || "Flaskia Marketplace <noreply@flaskia.com>";
+      const fromAddress = resendConfig.fromEmail || "Aniixa Marketplace <noreply@aniixa.com>";
       const mailPayload: any = {
         from: fromAddress,
         to: [targetEmail.toLowerCase().trim()],
@@ -1683,7 +1616,7 @@ app.post("/api/paypal/create-order", async (req, res) => {
           }
         ],
         application_context: {
-          brand_name: "Flaskia Chemicals Supply",
+          brand_name: "Aniixa Chemicals Supply",
           landing_page: "BILLING",
           user_action: "PAY_NOW"
         }
@@ -2064,7 +1997,7 @@ app.get("/api/admin/invoices", checkAdminAuth, async (req, res) => {
     const { rows } = await pool.query("SELECT i.*, o.order_id as local_order_no, o.date as order_date, o.currency FROM invoices i LEFT JOIN orders o ON i.order_id = o.id ORDER BY i.created_at DESC");
     return res.json(rows);
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(555).json({ error: err.message });
   }
 });
 
@@ -2373,7 +2306,7 @@ app.post("/api/orders", async (req: any, res) => {
           o.currency || "INR"
         );
 
-        await sendSimulatedEmail(email, `Flaskia confirmation: Order ${o.orderId || o.id} cleared GHS check`, emailHtmlManual, o.id);
+        await sendSimulatedEmail(email, `Aniixa confirmation: Order ${o.orderId || o.id} cleared GHS check`, emailHtmlManual, o.id);
       } catch (emailErr) {
         console.error("Failed to generate manual order confirmation email:", emailErr);
       }
@@ -2436,7 +2369,7 @@ app.put("/api/tracker/:id", async (req, res) => {
            orderBefore.currency || "INR"
          );
 
-         await sendSimulatedEmail(email, `Flaskia confirmation: Order ${orderBefore.order_id || orderBefore.id} cleared GHS check`, emailHtmlManual, orderBefore.id);
+         await sendSimulatedEmail(email, `Aniixa confirmation: Order ${orderBefore.order_id || orderBefore.id} cleared GHS check`, emailHtmlManual, orderBefore.id);
        } catch (e) {
          console.error("Failed to generate approval order confirmation email", e);
        }
@@ -2466,7 +2399,7 @@ app.put("/api/tracker/:id", async (req, res) => {
           </div>
         `;
 
-        await sendSimulatedEmail(email, `Flaskia cancellation: Order ${orderBefore.order_id || orderBefore.id} was cancelled`, cancelHtml, orderBefore.id);
+        await sendSimulatedEmail(email, `Aniixa cancellation: Order ${orderBefore.order_id || orderBefore.id} was cancelled`, cancelHtml, orderBefore.id);
       } catch (e) {
         console.error("Failed to generate cancellation email", e);
       }
@@ -2741,7 +2674,7 @@ app.put("/api/shipments/:id/update", async (req, res) => {
         const customerEmail = shipInfo[0].email;
         const transitText = status_text || status;
         const emailHtml = buildTransitUpdateEmailHtml(orderId, transitText, location_text || "In Transit");
-        await sendSimulatedEmail(customerEmail, `Flaskia tracking update: Order ${orderId} is ${transitText}`, emailHtml, shipInfo[0].order_id);
+        await sendSimulatedEmail(customerEmail, `Aniixa tracking update: Order ${orderId} is ${transitText}`, emailHtml, shipInfo[0].order_id);
       }
     } catch (emailErr) {
       console.error("Failed to dispatch transit updates email:", emailErr);
@@ -2811,7 +2744,7 @@ app.put("/api/shipments/:id/courier", async (req, res) => {
         const customerEmail = shipInfo[0].email;
         const transitText = "Handed over to external courier: " + courier_name;
         const emailHtml = buildTransitUpdateEmailHtml(orderId, transitText, "Courier Facility");
-        await sendSimulatedEmail(customerEmail, `Flaskia tracking update: Order ${orderId} handed to courier`, emailHtml, shipInfo[0].order_id);
+        await sendSimulatedEmail(customerEmail, `Aniixa tracking update: Order ${orderId} handed to courier`, emailHtml, shipInfo[0].order_id);
       }
     } catch (emailErr) {
       console.error("Failed to dispatch courier assignment email:", emailErr);
@@ -2879,7 +2812,7 @@ app.post("/api/shipments/:id/verify-otp", async (req, res) => {
           const orderId = shipInfo[0].friendly_order_id || shipInfo[0].order_id;
           const customerEmail = shipInfo[0].email;
           const emailHtml = buildTransitUpdateEmailHtml(orderId, "Delivered successfully - OTP verified by logistics agent", "Customer Address");
-          await sendSimulatedEmail(customerEmail, `Flaskia Delivery Complete: Order ${orderId} has been delivered`, emailHtml, shipInfo[0].order_id);
+          await sendSimulatedEmail(customerEmail, `Aniixa Delivery Complete: Order ${orderId} has been delivered`, emailHtml, shipInfo[0].order_id);
         }
       } catch (emailErr) {
         console.error("Failed to dispatch delivery complete email:", emailErr);
@@ -3050,7 +2983,7 @@ app.post("/api/customers", async (req, res) => {
 
 // --- SECURE ENTERPRISE AUTHENTICATION MODULES ---
 
-const JWT_SECRET = process.env.JWT_SECRET || "flaskia_enterprise_secret_2026_secure";
+const JWT_SECRET = process.env.JWT_SECRET || "aniixa_enterprise_secret_2026_secure";
 
 
 
@@ -3253,11 +3186,11 @@ app.post("/api/auth/otp/send", async (req, res) => {
 
     if (resendConfig.client && resendConfig.enabled) {
       try {
-        const fromAddress = resendConfig.fromEmail || "Flaskia Marketplace <noreply@flaskia.com>";
+        const fromAddress = resendConfig.fromEmail || "Aniixa Marketplace <noreply@aniixa.com>";
         const sendResult = await resendConfig.client.emails.send({
           from: fromAddress,
           to: [lowerEmail],
-          subject: `🔐 Your Access Code: ${code} - Flaskia Marketplace`,
+          subject: `🔐 Your Access Code: ${code} - Aniixa Marketplace`,
           html: `
             <!DOCTYPE html>
             <html>
@@ -3273,7 +3206,7 @@ app.post("/api/auth/otp/send", async (req, res) => {
                       <tr>
                         <td style="background-color: #0f172a; padding: 24px 32px; border-bottom: 2px solid #10b981; text-align: center;">
                           <div style="font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
-                            🧪 FLASKIA <span style="color: #10b981; font-weight: 400; font-size: 14px; font-family: monospace;">MARKETPLACE</span>
+                            🧪 ANIIXA <span style="color: #10b981; font-weight: 400; font-size: 14px; font-family: monospace;">MARKETPLACE</span>
                           </div>
                           <div style="margin-top: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #34d399; font-weight: 700;">
                             Instant Security Authentication
@@ -3299,7 +3232,7 @@ app.post("/api/auth/otp/send", async (req, res) => {
                       <tr>
                         <td style="background-color: #0f172a; padding: 16px 32px; border-top: 1px solid #334155; text-align: center;">
                           <p style="margin: 0; font-size: 11px; color: #64748b;">
-                            &copy; 2026 Flaskia Enterprise. All rights reserved.
+                            &copy; 2026 Aniixa Enterprise. All rights reserved.
                           </p>
                         </td>
                       </tr>
@@ -3566,21 +3499,21 @@ app.post("/api/profile/otp/send", async (req, res) => {
 
     if (resendConfig.client && resendConfig.enabled) {
       try {
-        const fromAddress = resendConfig.fromEmail || "Flaskia Marketplace <noreply@flaskia.com>";
+        const fromAddress = resendConfig.fromEmail || "Aniixa Marketplace <noreply@aniixa.com>";
         const sendResult = await resendConfig.client.emails.send({
           from: fromAddress,
           to: [lowerEmail],
-          subject: `Secure Profile Verification: ${code} - Flaskia`,
+          subject: `Secure Profile Verification: ${code} - Aniixa`,
           html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #fafafa; padding: 40px 20px; color: #222;">
               <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 35px; border-radius: 20px; border: 1px solid #e5e5e5; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
                 <div style="text-align: center; margin-bottom: 25px;">
-                  <h1 style="color: #000000; font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.5px;">Flaskia</h1>
+                  <h1 style="color: #000000; font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.5px;">Aniixa</h1>
                   <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; font-weight: 600;">Secure Identity Verification</span>
                 </div>
                 
                 <p style="font-size: 14px; line-height: 1.6; color: #444; margin-bottom: 20px; text-align: center;">
-                  You requested to update your secure Billing Details on Flaskia. Please verify with this 6-digit access OTP.
+                  You requested to update your secure Billing Details on Aniixa. Please verify with this 6-digit access OTP.
                 </p>
                 
                 <div style="background-color: #f5f5f5; border-radius: 12px; padding: 18px 24px; text-align: center; margin: 25px 0; border: 1px solid #eaeaea;">
@@ -3594,7 +3527,7 @@ app.post("/api/profile/otp/send", async (req, res) => {
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;" />
                 
                 <p style="font-size: 11px; line-height: 1.5; color: #888; text-align: center; margin: 0;">
-                  Flaskia Supply logistics portal. Secure environment token.
+                  Aniixa Supply logistics portal. Secure environment token.
                 </p>
               </div>
             </div>
@@ -3942,7 +3875,7 @@ app.post("/api/safety-assistant", async (req, res) => {
     }
 
     // Set a strict safety & educational instruction
-    const systemPrompt = `You are a professional academic laboratory safety assistant for the Flaskia e-commerce platform.
+    const systemPrompt = `You are a professional academic laboratory safety assistant for the Aniixa e-commerce platform.
 Your mandate is to provide helpful, accurate, educational, and safety-focused advice regarding common chemicals, lab glassware, and educational science reagents.
 
 CRITICAL DIRECTIVES:
@@ -4017,7 +3950,6 @@ function checkAdminAuth(
 
 app.get("/api/admin/db/tables", checkAdminAuth, async (req, res) => {
   try {
-    await ensureDbInitialized();
     const tables = [
       {
         name: "categories",
@@ -4047,37 +3979,12 @@ app.get("/api/admin/db/tables", checkAdminAuth, async (req, res) => {
         name: "homepage_config",
         desc: "Editable landing content, watermark branding parameters, and footnote licenses",
       },
-      {
-        name: "inquiries",
-        desc: "B2B wholesale RFQ inquiries and customer quote requests",
-      },
-      {
-        name: "inquiry_messages",
-        desc: "Threaded messages between B2B customers and administration",
-      },
-      {
-        name: "company_policies",
-        desc: "Storefront company policies, terms, privacy, and shipping rules",
-      },
-      {
-        name: "media_uploads",
-        desc: "Cloudflare R2 & persistent storage media asset registry",
-      },
-      {
-        name: "system_api_keys",
-        desc: "Dynamic third-party API keys & service integration credentials",
-      },
     ];
 
     const results = [];
     for (const tbl of tables) {
-      let count = 0;
-      try {
-        const countRes = await pool.query(`SELECT COUNT(*) FROM ${tbl.name}`);
-        count = parseInt(countRes.rows[0].count) || 0;
-      } catch (_) {
-        count = 0;
-      }
+      const countRes = await pool.query(`SELECT COUNT(*) FROM ${tbl.name}`);
+      const count = parseInt(countRes.rows[0].count);
 
       const colRes = await pool.query(
         `
@@ -4130,41 +4037,22 @@ app.post("/api/admin/db/query", checkAdminAuth, async (req, res) => {
 app.post("/api/admin/db/reset", checkAdminAuth, async (req, res) => {
   const client = await pool.connect();
   try {
-    dbInitialized = false;
     await client.query("BEGIN");
 
-    await client.query("DROP TABLE IF EXISTS inquiry_messages CASCADE");
-    await client.query("DROP TABLE IF EXISTS inquiries CASCADE");
     await client.query("DROP TABLE IF EXISTS tracking_updates CASCADE");
     await client.query("DROP TABLE IF EXISTS shipments CASCADE");
     await client.query("DROP TABLE IF EXISTS order_items CASCADE");
-    await client.query("DROP TABLE IF EXISTS invoices CASCADE");
-    await client.query("DROP TABLE IF EXISTS refunds CASCADE");
-    await client.query("DROP TABLE IF EXISTS payments CASCADE");
-    await client.query("DROP TABLE IF EXISTS payment_webhooks CASCADE");
     await client.query("DROP TABLE IF EXISTS orders CASCADE");
     await client.query("DROP TABLE IF EXISTS products CASCADE");
     await client.query("DROP TABLE IF EXISTS categories CASCADE");
-    await client.query("DROP TABLE IF EXISTS admin_sessions CASCADE");
-    await client.query("DROP TABLE IF EXISTS login_logs CASCADE");
-    await client.query("DROP TABLE IF EXISTS addresses CASCADE");
-    await client.query("DROP TABLE IF EXISTS customer_otps CASCADE");
     await client.query("DROP TABLE IF EXISTS customers CASCADE");
     await client.query("DROP TABLE IF EXISTS faqs CASCADE");
     await client.query("DROP TABLE IF EXISTS homepage_config CASCADE");
-    await client.query("DROP TABLE IF EXISTS company_policies CASCADE");
-    await client.query("DROP TABLE IF EXISTS payment_methods CASCADE");
 
     await client.query("COMMIT");
     client.release();
 
     await initDb(PRODUCTS);
-    dbInitialized = true;
-    invalidateCache("products");
-    invalidateCache("categories");
-    invalidateCache("homepage");
-    invalidateCache("policies");
-    invalidateCache("faqs");
 
     return res.json({
       success: true,
@@ -4471,10 +4359,8 @@ app.post("/api/admin/api-keys/generate-secret", checkAdminAuth, async (req, res)
 
 // --- CLOUDFLARE R2 UPLOAD ENDPOINT ---
 
-// Ensure local storage directory exists for file uploads fallback (use /tmp/uploads on Vercel serverless)
-const localUploadsDir = process.env.VERCEL
-  ? path.join("/tmp", "uploads")
-  : path.join(process.cwd(), "uploads");
+// Ensure local storage directory exists for file uploads fallback
+const localUploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(localUploadsDir)) {
   try {
     fs.mkdirSync(localUploadsDir, { recursive: true });
@@ -4799,7 +4685,7 @@ app.delete("/api/uploads/:id", checkAdminAuth, async (req, res) => {
 const startServer = async () => {
   // Initialize live PostgreSQL schema and seed baseline dataset collections when empty
   try {
-    await ensureDbInitialized();
+    await initDb(PRODUCTS);
     console.log(
       "PostgreSQL database setup and seeding verified on Neon startup.",
     );
@@ -4828,7 +4714,7 @@ const startServer = async () => {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Flaskia backend running on http://localhost:${PORT}`);
+    console.log(`Aniixa backend running on http://localhost:${PORT}`);
   });
 };
 

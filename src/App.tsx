@@ -143,7 +143,7 @@ export default function App() {
 
   // Load local customer user state from localStorage on init
   useEffect(() => {
-    const saved = localStorage.getItem("flaskia_customer_user");
+    const saved = localStorage.getItem("aniixa_customer_user");
     if (saved) {
       try {
         setCurrentUser(JSON.parse(saved));
@@ -157,9 +157,9 @@ export default function App() {
   const handleSetUser = (user: any) => {
     setCurrentUser(user);
     if (user) {
-      localStorage.setItem("flaskia_customer_user", JSON.stringify(user));
+      localStorage.setItem("aniixa_customer_user", JSON.stringify(user));
     } else {
-      localStorage.removeItem("flaskia_customer_user");
+      localStorage.removeItem("aniixa_customer_user");
     }
   };
 
@@ -217,10 +217,10 @@ export default function App() {
     complianceBtnText: "Open Safety & FAQ Manual",
     complianceEmoji: "🔐",
     complianceTitle: "GHS Custody compliance assurance:",
-    complianceText: "Flaskia monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
+    complianceText: "Aniixa monitors safety profiles continuously. Safe handling documentation complies with international chemistry standards. Settle transactions securely with our verified secure PayPal Sandbox.",
     
     // Brand identity defaults
-    appName: "Flaskia",
+    appName: "Aniixa",
     appBrandBadge: "PRO",
     appSubtitle: "Academic Supply Direct",
     appLogoIcon: "FlaskConical",
@@ -231,11 +231,11 @@ export default function App() {
     adminWhatsappNumber: "15099941048",
     
     // Complete adaptive footer defaults
-    footerCompanyName: "Flaskia Supplies International Co.",
+    footerCompanyName: "Aniixa Supplies International Co.",
     footerLicence1: "OSHA ID: 44321-REAG",
     footerLicence2: "EPA LICENSE: 7385-CHEM",
     footerLicence3: "DOT TRANSPORT: CLASS 9",
-    footerCopyright: "Flaskia Supplies International Co. All rights reserved."
+    footerCopyright: "Aniixa Supplies International Co. All rights reserved."
   });
 
   const loadHomepageConfig = () => {
@@ -789,7 +789,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white" id="flaskia-app">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans selection:bg-blue-600 selection:text-white" id="aniixa-app">
       
       {/* Dynamic Header block */}
       <div className="print:hidden">
@@ -918,7 +918,7 @@ export default function App() {
                     {/* Subtitle Paragraph */}
                     <p className="text-[#4b5c6b] text-[13.5px] sm:text-[15.5px] md:text-[16.5px] leading-relaxed max-w-xl font-normal">
                       {homepageConfig.heroDescription &&
-                      !homepageConfig.heroDescription.startsWith("Flaskia distributes analytical chemicals")
+                      !homepageConfig.heroDescription.startsWith("Aniixa distributes analytical chemicals")
                         ? homepageConfig.heroDescription
                         : "Discover a wide range of laboratory chemicals, industrial chemicals and specialty compounds from trusted suppliers — all in one place."}
                     </p>
@@ -1559,7 +1559,7 @@ export default function App() {
         onClose={() => setIsInquiryModalOpen(false)}
         defaultQty={inquiryDefaultQty}
         whatsappNumber={homepageConfig.adminWhatsappNumber || "15099941048"}
-        appName={homepageConfig.appName || "Flaskia"}
+        appName={homepageConfig.appName || "Aniixa"}
         onSuccess={fetchInquiries}
       />
 

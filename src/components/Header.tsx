@@ -68,7 +68,7 @@ export default function Header({
   searchQuery,
   onSearchChange,
   onOpenHelp,
-  appName = "Flaskia",
+  appName = "Aniixa",
   appLogoIcon = "FlaskConical",
   appLogoUrl = "",
   defaultLanguage = "en",

@@ -55,21 +55,21 @@ export interface Product {
 export const PRODUCTS: Product[] = [
   {
     id: "copper-sulfate",
-    name: "Kupfer(II)-sulfat-Pentahydrat",
+    name: "Copper(II) Sulfate Pentahydrate",
     formula: "CuSO4 · 5H2O",
     grade: "ACS Reagent",
     cas: "7758-99-8",
     purity: "≥99.0%",
     description:
-      "Hochreines blaues Kristallsalz, weit verbreitet in der Ausbildung für Kristallzüchtungsexperimente, als analytisches Reagenz und im Chemieunterricht.",
+      "High-purity blue crystalline salt widely used in education for crystal growing experiments, as an analytical reagent, and in school laboratory chemistry curriculum.",
     price: 34.5,
     unit: "500g",
     stock: 45,
-    category: "Reagenzien",
+    category: "Reagents",
     image:
       "https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?auto=format&fit=crop&q=80&w=600",
-    physicalState: "Blauer kristalliner Feststoff",
-    meltingPoint: "110 °C (verliert Kristallwasser)",
+    physicalState: "Blue crystalline solid",
+    meltingPoint: "110 °C (loses water of hydration)",
     molecularWeight: "249.69 g/mol",
     ghsPictograms: ["environment", "irritant", "toxic"],
     nfpa: {
@@ -79,49 +79,49 @@ export const PRODUCTS: Product[] = [
     },
     sds: {
       hazardStatements: [
-        "H302: Gesundheitsschädlich bei Verschlucken.",
-        "H315: Verursacht Hautreizungen.",
-        "H319: Verursacht schwere Augenreizung.",
-        "H410: Sehr giftig für Wasserorganismen mit langfristiger Wirkung.",
+        "H302: Harmful if swallowed.",
+        "H315: Causes skin irritation.",
+        "H319: Causes serious eye irritation.",
+        "H410: Very toxic to aquatic life with long lasting effects.",
       ],
       precautionaryStatements: [
-        "P264: Nach Gebrauch Haut gründlich waschen.",
-        "P273: Freisetzung in die Umwelt vermeiden.",
-        "P280: Schutzhandschuhe / Augenschutz / Gesichtsschutz tragen.",
-        "P305+P351+P338: BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam mit Wasser spülen.",
+        "P264: Wash skin thoroughly after handling.",
+        "P273: Avoid release to the environment.",
+        "P280: Wear protective gloves / eye protection / face protection.",
+        "P305+P351+P338: IF IN EYES: Rinse cautiously with water for several minutes.",
       ],
       sections: [
         {
-          title: "Abschnitt 1: Bezeichnung des Stoffs",
+          title: "Section 1: Identification",
           content: [
-            "Produktname: Kupfer(II)-sulfat-Pentahydrat",
-            "Empfohlene Verwendung: Laborchemikalie, analytisches Reagenz, Lehrdemonstration.",
-            "Hersteller: Flaskia Supplies International Co.",
+            "Product Name: Copper(II) Sulfate Pentahydrate",
+            "Recommended Use: Laboratory chemical, analytical reagent, educational demonstration.",
+            "Manufacturer: Aniixa Supplies International Co.",
           ],
         },
         {
-          title: "Abschnitt 4: Erste-Hilfe-Maßnahmen",
+          title: "Section 4: First-Aid Measures",
           content: [
-            "Einatmen: Betroffene Person an die frische Luft bringen. Bei Atembeschwerden Arzt aufsuchen.",
-            "Hautkontakt: Haut sofort mit viel Wasser und Seife abwaschen. Kontaminierte Kleidung entfernen.",
-            "Augenkontakt: Augen mindestens 15 Minuten lang bei geöffnetem Lidspalt mit fließendem Wasser spülen. Augenarzt konsultieren.",
-            "Verschlucken: Sofort ärztlichen Rat einholen. Einer bewusstlosen Person niemals etwas durch den Mund verabreichen.",
+            "Inhalation: Move subject to fresh air. Seek medical attention if breathing is difficult.",
+            "Skin Contact: Immediately flush skin with plenty of soap and water. Remove contaminated clothing.",
+            "Eye Contact: Flush eyes with warm running water for at least 15 minutes, holding eyelids open. Consult an ophthalmologist.",
+            "Ingestion: Induce vomiting immediately as directed by medical personnel. Never give anything by mouth to an unconscious person.",
           ],
         },
         {
-          title: "Abschnitt 7: Handhabung und Lagerung",
+          title: "Section 7: Handling and Storage",
           content: [
-            "Sichere Handhabung: Staub- und Aerosolbildung vermeiden. Nach Umgang mit chemischen Reagenzien Hände waschen.",
-            "Lagerbedingungen: In einem dicht verschlossenen Behälter aufbewahren. An einem trockenen, kühlen und gut belüfteten Ort lagern.",
+            "Safe Handling: Avoid formation of dust and aerosols. Wash hands after handling chemical reagents.",
+            "Storage Conditions: Store in a tightly closed container. Keep in a dry, cool, well-ventilated location, remote from incompatible bases.",
           ],
         },
         {
-          title: "Abschnitt 8: Begrenzung und Überwachung der Exposition / PSA",
+          title: "Section 8: Exposure Controls & PPE",
           content: [
-            "Technische Schutzmaßnahmen: Für ausreichende Belüftung sorgen, insbesondere in geschlossenen Räumen.",
-            "Augenschutz: Dicht schließende Schutzbrille (EN 166 / ANSI Z87.1 geprüft).",
-            "Hautschutz: Nitrilhandschuhe (Mindeststärke 0,11 mm) und Standard-Laborkittel.",
-            "Atemschutz: Bei wahrscheinlicher Staubentwicklung Staubmaske oder Partikelfilter tragen.",
+            "Engineering Controls: Ensure adequate ventilation, especially in confined areas.",
+            "Eye Protection: Tight-fitting safety goggles (ANSI Z87.1 approved).",
+            "Skin Protection: Nitrile gloves (minimum thickness 0.11 mm) and standard laboratory white coat.",
+            "Respiratory Protection: Wear dust mask or particulate respirator when dust generation is likely.",
           ],
         },
       ],
@@ -129,20 +129,20 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "citric-acid",
-    name: "Zitronensäure-Monohydrat",
+    name: "Citric Acid Monohydrate",
     formula: "C6H8O7 · H2O",
     grade: "USP Grade",
     cas: "5949-29-1",
     purity: "99.5% - 100.5%",
     description:
-      "Hochreine organische Säure, geeignet für Pufferformulierungen, Neutralisationen, Reinigung und chemische Standardisierung. Ideal für Säure-Base-Titrationen im Labor.",
+      "Highly pure organic acid suitable for food formulations, neutralizations, cleaning, and chemical standardizing. Great for school laboratory acid-base titrations.",
     price: 18.2,
     unit: "1kg",
     stock: 120,
-    category: "Pufferlösungen",
+    category: "Buffers",
     image:
       "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=600",
-    physicalState: "Weißes kristallines Pulver",
+    physicalState: "White crystalline powder",
     meltingPoint: "135 °C",
     molecularWeight: "210.14 g/mol",
     ghsPictograms: ["irritant"],
@@ -153,39 +153,39 @@ export const PRODUCTS: Product[] = [
     },
     sds: {
       hazardStatements: [
-        "H319: Verursacht schwere Augenreizung.",
-        "H315: Verursacht Hautreizungen.",
+        "H319: Causes serious eye irritation.",
+        "H315: Causes skin irritation.",
       ],
       precautionaryStatements: [
-        "P280: Schutzhandschuhe und Augenschutz tragen.",
-        "P305+P351+P338: BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam mit Wasser spülen.",
+        "P280: Wear protective gloves and eye protection.",
+        "P305+P351+P338: IF IN EYES: Rinse cautiously with water for several minutes. Remove contact lenses if present.",
       ],
       sections: [
         {
-          title: "Abschnitt 1: Bezeichnung des Stoffs",
+          title: "Section 1: Identification",
           content: [
-            "Produktname: Zitronensäure-Monohydrat",
-            "Empfohlene Verwendung: Laborpuffersubstanz, Wirkstoff, analytisches Reagenz.",
+            "Product Name: Citric Acid Monohydrate",
+            "Recommended Use: Food additive, active ingredient, laboratory buffer agent.",
           ],
         },
         {
-          title: "Abschnitt 4: Erste-Hilfe-Maßnahmen",
+          title: "Section 4: First-Aid Measures",
           content: [
-            "Einatmen: Für Frischluft sorgen. Bei anhaltendem Husten oder Reizung Arzt aufsuchen.",
-            "Hautkontakt: Haut mit kühlem Wasser abspülen.",
-            "Augenkontakt: Augen gründlich mit Wasser ausspülen. Bei anhaltenden Beschwerden Arzt aufsuchen.",
+            "Inhalation: Provide fresh air. If coughing or throat irritation persists, consult a physician.",
+            "Skin Contact: Rinse skin with cool water. Soap can be used.",
+            "Eye Contact: Flush eyes thoroughly with water. Seek medical evaluation if discomfort persists.",
           ],
         },
         {
-          title: "Abschnitt 7: Handhabung und Lagerung",
+          title: "Section 7: Handling and Storage",
           content: [
-            "Lagerung: Trocken und kühl lagern. Wasserlöslich, vor Feuchtigkeit und Nässe schützen.",
+            "Storage: Keep in a dry, cool warehouse. Soluble in water, protect from moisture and humidity.",
           ],
         },
         {
-          title: "Abschnitt 8: Begrenzung und Überwachung der Exposition / PSA",
+          title: "Section 8: Exposure Controls & PPE",
           content: [
-            "Standard-Schutzbrille mit Seitenschutz tragen. Im Laborumfeld werden Nitrilhandschuhe empfohlen.",
+            "Wear standard safety glasses with side shields. Standard rubber or nitrile gloves are recommended inside the laboratory environment.",
           ],
         },
       ],
@@ -193,21 +193,21 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "sodium-bicarbonate",
-    name: "Natriumhydrogencarbonat",
+    name: "Sodium Bicarbonate",
     formula: "NaHCO3",
     grade: "ACS Reagent",
     cas: "144-55-8",
     purity: "≥99.7%",
     description:
-      "Erstklassiges Säureneutralisationsmittel, Pufferreagenz und sichere Reaktionsbasis. Unverzichtbar für Labordemonstrationen und pH-Kalibrierung.",
+      "Premium acid-neutralizing agent, buffer reagent, and safe student reaction base. Vital for school volcano demonstrations and pH chemistry calibration.",
     price: 14.8,
     unit: "1kg",
     stock: 85,
-    category: "Pufferlösungen",
+    category: "Buffers",
     image:
       "https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=600",
-    physicalState: "Weißes kristallines Pulver",
-    meltingPoint: "270 °C (Zersetzung)",
+    physicalState: "White crystalline powder",
+    meltingPoint: "270 °C (decomposes)",
     molecularWeight: "84.01 g/mol",
     ghsPictograms: ["safe"],
     nfpa: {
@@ -217,31 +217,31 @@ export const PRODUCTS: Product[] = [
     },
     sds: {
       hazardStatements: [
-        "Kein gefährlicher Stoff gemäß GHS-Richtlinien.",
+        "Not a hazardous substance according to GHS guidelines.",
       ],
       precautionaryStatements: [
-        "P262: Nicht in die Augen gelangen lassen.",
-        "P281: Vorgeschriebene persönliche Schutzausrüstung verwenden.",
+        "P262: Avoid contact with eyes.",
+        "P281: Use personal protective equipment as required.",
       ],
       sections: [
         {
-          title: "Abschnitt 1: Bezeichnung des Stoffs",
+          title: "Section 1: Identification",
           content: [
-            "Produktname: Natriumhydrogencarbonat",
-            "Empfohlene Verwendung: Puffersubstanz, Neutralisationsmittel, Laborreaktant.",
+            "Product Name: Sodium Bicarbonate",
+            "Recommended Use: Buffer substance, neutralizer, baking component, laboratory reactant.",
           ],
         },
         {
-          title: "Abschnitt 4: Erste-Hilfe-Maßnahmen",
+          title: "Section 4: First-Aid Measures",
           content: [
-            "Einatmen: Nach übermäßigem Einatmen von Staub an die frische Luft bringen.",
-            "Augenkontakt: Mit reichlich Wasser auswaschen.",
+            "Inhalation: In case of excessive dust inhalation, remove to fresh air.",
+            "Eye Contact: Wash with plenty of water. Mild mechanical irritation may occur.",
           ],
         },
         {
-          title: "Abschnitt 7: Handhabung und Lagerung",
+          title: "Section 7: Handling and Storage",
           content: [
-            "Lagerbedingungen: Vor Feuchtigkeit schützen. In trockener Atmosphäre getrennt von starken Säuren aufbewahren.",
+            "Storage Constraints: Protect from moisture. Keep in dry atmosphere away from strong acids.",
           ],
         },
       ],
@@ -249,21 +249,21 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "methyl-orange",
-    name: "Methylorange-Indikatorlösung 0,1%",
+    name: "Methyl Orange Indicator Solution 0.1%",
     formula: "C14H14N3NaO3S",
     grade: "ACS Reagent",
     cas: "547-58-0",
-    purity: "0,1% wässrige Lösung",
+    purity: "0.1% aqueous solution",
     description:
-      "Klassischer pH-Indikator. Farbumschlag von Rot (pH 3,1) nach Gelb (pH 4,4) zur präzisen Überwachung von Säure-Base-Titrationen in Analytik und Ausbildung.",
+      "Classic pH indicator. Changes color from red (pH 3.1) to yellow (pH 4.4) for precise acid-base titration monitoring in analytical and educational settings.",
     price: 22.0,
     unit: "125mL",
     stock: 38,
-    category: "Indikatoren",
+    category: "Indicators",
     image:
       "https://images.unsplash.com/photo-1617155093730-a8bf47be792d?auto=format&fit=crop&q=80&w=600",
-    physicalState: "Orangefarbene Flüssigkeit, geruchlos",
-    boilingPoint: "ca. 100 °C",
+    physicalState: "Orange liquid, odorless",
+    boilingPoint: "approx. 100 °C",
     molecularWeight: "327.33 g/mol",
     ghsPictograms: ["toxic", "irritant"],
     nfpa: {
@@ -273,27 +273,27 @@ export const PRODUCTS: Product[] = [
     },
     sds: {
       hazardStatements: [
-        "H301: Giftig bei Verschlucken.",
-        "H317: Kann allergische Hautreaktionen verursachen.",
+        "H301: Toxic if swallowed.",
+        "H317: May cause an allergic skin reaction.",
       ],
       precautionaryStatements: [
-        "P261: Einatmen von Dampf oder Aerosol vermeiden.",
-        "P280: Schutzhandschuhe und Schutzbrille tragen.",
-        "P301+P310: BEI VERSCHLUCKEN: Sofort GIFTINFORMATIONSZENTRUM oder Arzt anrufen.",
+        "P261: Avoid breathing vapor or spray.",
+        "P280: Wear protective gloves and safety glasses.",
+        "P301+P310: IF SWALLOWED: Immediately call a POISON CENTER or doctor/physician.",
       ],
       sections: [
         {
-          title: "Abschnitt 1: Bezeichnung des Stoffs",
+          title: "Section 1: Identification",
           content: [
-            "Produktname: Methylorange 0,1% wässrige Lösung",
-            "Empfohlene Verwendung: Laborindikator für pH-Übergangstitrationen.",
+            "Product Name: Methyl Orange 0.1% Aqueous Solution",
+            "Recommended Use: Laboratory laboratory indicator for pH transition titration.",
           ],
         },
         {
-          title: "Abschnitt 4: Erste-Hilfe-Maßnahmen",
+          title: "Section 4: First-Aid Measures",
           content: [
-            "Verschlucken: Vergiftungsgefahr! Sofort Giftnotrufzentrale anrufen. Bei Bewusstsein Mund gründlich mit Wasser ausspülen.",
-            "Hautkontakt: Sofort mit milder Seife und Wasser abwaschen.",
+            "Ingestion: Poison risk! Call poison center immediately. If conscious, rinse mouth thoroughly with water.",
+            "Skin Exposure: Wash immediately with mild soap and water.",
           ],
         },
       ],
@@ -301,21 +301,21 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "borosilicate-beaker-set",
-    name: "Borosilikatglas-Becherglas-Set (5-teilig)",
-    formula: "SiO2 / B2O3 Glas",
+    name: "Borosilicate Glass Beaker Set (5 Pieces)",
+    formula: "SiO2 / B2O3 Glass",
     grade: "ACS Reagent",
     cas: "65997-17-3",
-    purity: "Klasse A Borosilikat GG-17",
+    purity: "Class A Borosilicate GG-17",
     description:
-      "Robustes Becherglas-Set in Laborqualität, bestehend aus 50 mL, 100 mL, 250 mL, 500 mL und 1000 mL Bechergläsern mit doppelter Graduierung und Ausguss.",
+      "Heavy-duty lab laboratory grade glassware beaker set including 50mL, 100mL, 250mL, 500mL, and 1000mL beakers with double graduations and spouts.",
     price: 39.9,
     unit: "1 Set",
     stock: 55,
-    category: "Glaswaren",
+    category: "Glassware",
     image:
       "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=600",
-    physicalState: "Transparentes hitzebeständiges Glas",
-    meltingPoint: "820 °C (Erweichungspunkt)",
+    physicalState: "Transparent heat-resistant glass",
+    meltingPoint: "820 °C (softening point)",
     molecularWeight: "N/A",
     ghsPictograms: ["safe"],
     nfpa: {
@@ -325,24 +325,24 @@ export const PRODUCTS: Product[] = [
     },
     sds: {
       hazardStatements: [
-        "Kein gefährliches Erzeugnis. Physikalische Gefahr bei Bruch (Schnittgefahr durch scharfes Glas).",
+        "Non-hazardous article. Physical hazard if broken (sharp glass puncture hazard).",
       ],
       precautionaryStatements: [
-        "P280: Beim Umgang mit angeschlagenem oder zerbrochenem Glas Schutzhandschuhe tragen.",
-        "P233: Vor extremen mechanischen Stößen schützen.",
+        "P280: Wear leather gloves when handling chipped or broken glass.",
+        "P233: Protect against extreme mechanical shock.",
       ],
       sections: [
         {
-          title: "Abschnitt 1: Sicherheitsrichtlinien für Glaswaren",
+          title: "Section 1: Glassware Safety Guidelines",
           content: [
-            "Material: Borosilikatglas (hohe Temperaturbeständigkeit, niedriger Wärmeausdehnungskoeffizient).",
-            "Physikalische Gefahr: Vorsicht vor plötzlichen Temperaturschocks über 150 °C Temperaturdifferenz.",
+            "Material: Borosilicate Glass (high thermo-resistance, low coefficient of thermal expansion).",
+            "Physical Hazard: Exercise caution against sudden thermal shocks exceeding 150 °C temperature delta.",
           ],
         },
         {
-          title: "Abschnitt 4: Erste Hilfe bei Glasbruch",
+          title: "Section 4: Broken Glass First-Aid",
           content: [
-            "Stich-/Schnittwunden: Sofort mit Wasser und Seife reinigen. Mit sterilem Verband abdecken und Erste Hilfe leisten.",
+            "Punctures/Cuts: Wash immediately with soap and water. Cover with sterile dressing and seek first aid.",
           ],
         },
       ],
@@ -350,20 +350,20 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: "distilled-water",
-    name: "Deionisiertes / Destilliertes Reinwasser",
+    name: "Deionized / Distilled Pure Water",
     formula: "H2O",
     grade: "ACS Reagent",
     cas: "7732-18-5",
-    purity: "Reinstwasser spezifischer Widerstand ≥18 MΩ·cm",
+    purity: "Ultra-pure resistivity ≥18 MΩ·cm",
     description:
-      "Hochgradig demineralisiertes Reinstwasser für analytische Verdünnungen, HPLC-Eluentenherstellung, Medienrekonstitution und allgemeines Labor-Spülen.",
+      "Highly demineralized ultra-pure water designed for analytical dilution, HPLC mobile phase preparation, media reconstitution, and general clean rinsing.",
     price: 12.0,
     unit: "4L (1 Gal)",
     stock: 200,
-    category: "Pufferlösungen",
+    category: "Buffers",
     image:
       "https://images.unsplash.com/photo-1495556650867-99238382b61a?auto=format&fit=crop&q=80&w=600",
-    physicalState: "Klare farblose Flüssigkeit",
+    physicalState: "Clear color liquid",
     boilingPoint: "100 °C",
     meltingPoint: "0 °C",
     molecularWeight: "18.015 g/mol",
@@ -374,21 +374,21 @@ export const PRODUCTS: Product[] = [
       instability: 0,
     },
     sds: {
-      hazardStatements: ["Kein gefährlicher Stoff oder Gemisch."],
+      hazardStatements: ["Not a hazardous substance or mixture."],
       precautionaryStatements: [
-        "Keine besonderen Vorsichtsmaßnahmen erforderlich. Saubere Laborpraxis einhalten.",
+        "No special precautions needed. Practice clean laboratory habits.",
       ],
       sections: [
         {
-          title: "Abschnitt 1: Angaben zur Zusammensetzung",
+          title: "Section 1: Composition Information",
           content: [
-            "Bestandteil: Destilliertes Wasser 100%. Frei von organischen, ionischen, partikulären und biologischen Bestandteilen.",
+            "Component: Distilled water 100%. Free from organic, ionic, particulate, and biological elements.",
           ],
         },
         {
-          title: "Abschnitt 4: Erste-Hilfe-Maßnahmen",
+          title: "Section 4: First-Aid",
           content: [
-            "Keine schädlichen Symptome zu erwarten. Verschüttete Flüssigkeit sofort aufwischen, um Rutschgefahr zu vermeiden.",
+            "No harmful symptoms expected. In case of spills, dry off immediately to avoid slips.",
           ],
         },
       ],
