@@ -32,6 +32,8 @@ import {
   renderHeroFeatureIcon,
   SUPPORTED_LANGUAGES,
   UI_TRANSLATIONS,
+  formatWhatsappDisplay,
+  sanitizeWhatsappPhone,
 } from "./utils/homepageDefaults";
 import { 
   FlaskConical, 
@@ -795,7 +797,18 @@ export default function App() {
   });
 
   if (currentView === "admin") {
-    return <AdminPanel onBackToStore={handleBackToStore} />;
+    return (
+      <AdminPanel
+        onBackToStore={handleBackToStore}
+        onHomepageUpdated={(updatedConfig) => {
+          if (updatedConfig && typeof updatedConfig === "object") {
+            setHomepageConfig((prev) => ({ ...prev, ...updatedConfig }));
+          } else {
+            loadHomepageConfig();
+          }
+        }}
+      />
+    );
   }
 
   const activeLangCode = homepageConfig.defaultLanguage || "en";
@@ -1406,6 +1419,7 @@ export default function App() {
             appName={homepageConfig.appName}
             appSubtitle={homepageConfig.appSubtitle}
             footerCompanyName={homepageConfig.footerCompanyName}
+            whatsappNumber={homepageConfig.adminWhatsappNumber || "15099941048"}
           />
         )}
 
@@ -1498,13 +1512,13 @@ export default function App() {
 
               <div className="pt-1 flex flex-wrap items-center gap-3">
                 <a
-                  href={`https://wa.me/${(homepageConfig.adminWhatsappNumber || "15099941048").replace(/[^0-9]/g, "")}`}
+                  href={`https://wa.me/${sanitizeWhatsappPhone(homepageConfig.adminWhatsappNumber)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-medium transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5 text-[#0052cc]" />
-                  <span>{t.whatsappDesk}: +{homepageConfig.adminWhatsappNumber || "1 (509) 994-1048"}</span>
+                  <span>{t.whatsappDesk}: {formatWhatsappDisplay(homepageConfig.adminWhatsappNumber)}</span>
                 </a>
               </div>
             </div>
@@ -1665,13 +1679,13 @@ export default function App() {
           </div>
           <div>
             <p className="font-extrabold text-emerald-800 uppercase tracking-widest text-[8.5px] font-mono leading-none">WhatsApp Helpline</p>
-            <p className="font-bold text-slate-705 mt-1 select-all">+1 (509) 994-1048</p>
+            <p className="font-bold text-slate-705 mt-1 select-all">{formatWhatsappDisplay(homepageConfig.adminWhatsappNumber)}</p>
             <p className="text-[9px] text-slate-400 mt-0.5 whitespace-nowrap">Text Only (No Calls) - Online 24/7</p>
           </div>
         </div>
         
         <a
-          href="https://wa.me/15099941048"
+          href={`https://wa.me/${sanitizeWhatsappPhone(homepageConfig.adminWhatsappNumber)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white p-3 md:p-3.5 md:px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 font-bold text-xs cursor-pointer border border-emerald-400/20"

@@ -89,6 +89,8 @@ import {
   parseAcceptedCryptos,
   resolveCryptoLogoUrl,
   renderHeroFeatureIcon,
+  formatWhatsappDisplay,
+  sanitizeWhatsappPhone,
 } from "../utils/homepageDefaults";
 import { ApiKeysManagement } from "./admin/ApiKeysManagement";
 
@@ -495,10 +497,12 @@ const MOCK_FAQS: FaqItem[] = [
 function ShipmentCard({
   ship,
   onUpdate,
+  whatsappNumber = "15099941048",
 }: {
   key?: any;
   ship: any;
   onUpdate: () => void;
+  whatsappNumber?: string;
 }) {
   const [locInput, setLocInput] = useState("");
   const [statSel, setStatSel] = useState("in_transit");
@@ -612,7 +616,7 @@ function ShipmentCard({
     doc.text("100 Molecular Way, Dispatch Dock 4G", 14, 53);
     doc.text("Cambridge, MA 02139 | United States", 14, 57);
     doc.text("E-mail: logistics@aniixa.com", 14, 61);
-    doc.text("WhatsApp Help Line: +1 (509) 994-1048 (Chat Only)", 14, 65);
+    doc.text(`WhatsApp Help Line: ${formatWhatsappDisplay(whatsappNumber)} (Chat Only)`, 14, 65);
     doc.text("EPA Custody Lic: #EPA-4491-09B", 14, 69);
     
     // To: Target Custody Holder (Recipient and Billing Details)
@@ -1091,9 +1095,10 @@ function ShipmentCard({
 
 interface AdminPanelProps {
   onBackToStore: () => void;
+  onHomepageUpdated?: (config?: Record<string, any>) => void;
 }
 
-export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
+export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPanelProps) {
   // Authentication states
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authEmail, setAuthEmail] = useState<string>(
@@ -3258,6 +3263,9 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
       if (response.ok) {
         const data = await response.json();
         setHomepageForm((prev) => ({ ...prev, ...data }));
+        if (onHomepageUpdated) {
+          onHomepageUpdated(data);
+        }
         setHomepageSaveFeedback({
           type: "success",
           message: "Homepage & Site Branding settings saved and published live across the marketplace!",
@@ -5813,18 +5821,70 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           <span>WhatsApp Helpline</span>
                           <span className="text-[9px] text-slate-500 font-normal">With Country Code</span>
                         </label>
-                        <input
-                          type="text"
-                          value={homepageForm.adminWhatsappNumber}
-                          onChange={(e) =>
-                            setHomepageForm((prev) => ({
-                              ...prev,
-                              adminWhatsappNumber: e.target.value,
-                            }))
-                          }
-                          placeholder="e.g. 15099941048"
-                          className="w-full px-3 py-2 bg-slate-950 border border-emerald-900/60 rounded-xl text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500 transition"
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={homepageForm.adminWhatsappNumber}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                adminWhatsappNumber: e.target.value,
+                              }))
+                            }
+                            onBlur={() => {
+                              const cleaned = sanitizeWhatsappPhone(homepageForm.adminWhatsappNumber);
+                              const updated = {
+                                ...homepageForm,
+                                adminWhatsappNumber: cleaned,
+                              };
+                              setHomepageForm(updated);
+                              fetch("/api/homepage", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(updated),
+                              })
+                                .then((r) => (r.ok ? r.json() : updated))
+                                .then((saved) => {
+                                  if (onHomepageUpdated) onHomepageUpdated(saved);
+                                })
+                                .catch(() => {});
+                            }}
+                            placeholder="e.g. 15099941048"
+                            className="w-full px-3 py-2 bg-slate-950 border border-emerald-900/60 rounded-xl text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500 transition"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cleaned = sanitizeWhatsappPhone(homepageForm.adminWhatsappNumber);
+                              const updated = {
+                                ...homepageForm,
+                                adminWhatsappNumber: cleaned,
+                              };
+                              setHomepageForm(updated);
+                              fetch("/api/homepage", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(updated),
+                              })
+                                .then((r) => (r.ok ? r.json() : updated))
+                                .then((saved) => {
+                                  if (onHomepageUpdated) onHomepageUpdated(saved);
+                                  showToast(
+                                    `WhatsApp Helpline updated to ${formatWhatsappDisplay(cleaned)} across the marketplace!`,
+                                    "success"
+                                  );
+                                })
+                                .catch(() => {});
+                            }}
+                            className="shrink-0 px-2.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition cursor-pointer shadow-xs"
+                            title="Save & Apply WhatsApp Helpline across entire marketplace"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                        <p className="text-[9.5px] text-slate-400 mt-1 font-mono">
+                          Active Display: <span className="text-emerald-300 font-semibold">{formatWhatsappDisplay(homepageForm.adminWhatsappNumber)}</span>
+                        </p>
                       </div>
                     </div>
 
@@ -8692,6 +8752,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                         key={ship.id}
                         ship={ship}
                         onUpdate={loadAllData}
+                        whatsappNumber={homepageForm.adminWhatsappNumber || "15099941048"}
                       />
                     ))
                   )}

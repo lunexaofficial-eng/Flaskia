@@ -22,6 +22,7 @@ import {
   MessageCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { formatWhatsappDisplay, sanitizeWhatsappPhone } from "../utils/homepageDefaults";
 
 export type PolicyTab = 
   | "about"
@@ -41,6 +42,7 @@ interface CompanyPoliciesProps {
   appName?: string;
   appSubtitle?: string;
   footerCompanyName?: string;
+  whatsappNumber?: string;
 }
 
 export default function CompanyPolicies({
@@ -48,8 +50,11 @@ export default function CompanyPolicies({
   onBack,
   appName = "Aniixa",
   appSubtitle = "Academic Supply Direct",
-  footerCompanyName = "Aniixa Supplies International Co."
+  footerCompanyName = "Aniixa Supplies International Co.",
+  whatsappNumber = "15099941048"
 }: CompanyPoliciesProps) {
+  const cleanWaPhone = sanitizeWhatsappPhone(whatsappNumber);
+  const displayWaPhone = formatWhatsappDisplay(whatsappNumber);
   const [activeTab, setActiveTab] = useState<PolicyTab>(initialTab);
   const [policies, setPolicies] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
@@ -91,7 +96,7 @@ export default function CompanyPolicies({
         return {
           title: "Contact Us",
           subtitle: "Our support staff, physical logistics desk, and regulatory officers are at your service.",
-          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@aniixa.com, compliance@aniixa.com\nWhatsApp Helpline: +1 (509) 994-1048 (Text Only, Chat 24/7)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`,
+          content: `Headquarters: {footerCompanyName}\nScience logistics park, Bay 9, Seattle, WA 98101\n\nEmail: support@aniixa.com, compliance@aniixa.com\nWhatsApp Helpline: {whatsappNumber} (Text Only, Chat 24/7)\n\nFor chemical spills or transport accidents in transit, refer directly to DOT Emergency Response Guidebook (ERG) instructions.`,
         };
       case "privacy":
         return {
@@ -150,7 +155,10 @@ export default function CompanyPolicies({
     return text
       .replaceAll("{appName}", appName)
       .replaceAll("{appSubtitle}", appSubtitle)
-      .replaceAll("{footerCompanyName}", footerCompanyName);
+      .replaceAll("{footerCompanyName}", footerCompanyName)
+      .replaceAll("{whatsappNumber}", displayWaPhone)
+      .replaceAll("+1 (509) 994-1048", displayWaPhone)
+      .replaceAll("15099941048", cleanWaPhone);
   };
 
   const formatText = (text: string) => {
@@ -420,13 +428,13 @@ export default function CompanyPolicies({
                           <div>
                             <p className="text-[10.5px] font-bold text-emerald-800 uppercase tracking-wide font-mono">WhatsApp Helpline</p>
                             <p className="text-[11px] text-slate-800 font-bold mt-0.5 select-all">
-                              +1 (509) 994-1048
+                              {displayWaPhone}
                             </p>
                             <p className="text-[9.5px] text-emerald-750 font-medium leading-tight mt-1">
                               Text Only (No Calling) — Chat 24/7
                             </p>
                             <a 
-                              href="https://wa.me/15099941048" 
+                              href={`https://wa.me/${cleanWaPhone}`}
                               target="_blank" 
                               rel="noopener noreferrer" 
                               className="inline-flex items-center gap-1 mt-2 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 px-2.5 py-1 rounded-lg shadow-xs transition select-none cursor-pointer"

@@ -866,6 +866,26 @@ export const UI_TRANSLATIONS: Record<string, MarketplaceTranslations> = {
  * for any product until a customer submits a real rating/review.
  * Once a product has real customer reviews (`realReviewCount > 0`), it returns the exact real average rating and real count!
  */
+export function sanitizeWhatsappPhone(rawPhone?: string): string {
+  const cleaned = (rawPhone || "").replace(/[^0-9]/g, "");
+  return cleaned || "15099941048";
+}
+
+export function formatWhatsappDisplay(rawPhone?: string): string {
+  const raw = (rawPhone || "").trim();
+  const digits = sanitizeWhatsappPhone(raw);
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return `+91 ${digits.slice(2, 7)} ${digits.slice(7)}`;
+  }
+  if (raw.startsWith("+")) {
+    return raw;
+  }
+  return `+${digits}`;
+}
+
 export function getProductRatingStats(product: {
   id: string;
   name?: string;

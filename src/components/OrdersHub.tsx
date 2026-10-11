@@ -4,6 +4,7 @@ import autoTable from "jspdf-autotable";
 import { PRODUCTS, Product } from "../data";
 import { getLedgerConfig } from "./CheckoutPage";
 import { useTheme } from "../context/ThemeContext";
+import { formatWhatsappDisplay } from "../utils/homepageDefaults";
 
 import {
   FileText,
@@ -720,7 +721,7 @@ export default function OrdersHub({
       "100 Molecular Way, Dispatch Dock 4G",
       "Cambridge, MA 02139 | United States",
       "E-mail: logistics@aniixa.com",
-      "WhatsApp Help Line: +1 (509) 994-1048 (Chat Only)",
+      `WhatsApp Help Line: ${formatWhatsappDisplay(homepageConfig?.adminWhatsappNumber)} (Chat Only)`,
       "EPA Custody License: #EPA-4491-09B"
     ].join("\n");
 
