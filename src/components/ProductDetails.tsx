@@ -55,7 +55,7 @@ export default function ProductDetails({
   const { formatPrice } = useCurrency();
   const [activeTab, setActiveTab] = useState<number>(0);
   const [qty, setQty] = useState(1);
-  const [selectedPkg, setSelectedPkg] = useState("Glass Lab Bottle");
+  const [selectedPkg, setSelectedPkg] = useState("Glas-Laborflasche");
   const [declaredCompliance, setDeclaredCompliance] = useState(false);
   const [activeMedia, setActiveMedia] = useState<string>(product.image);
   const [showAgreementError, setShowAgreementError] = useState(false);
@@ -121,19 +121,19 @@ export default function ProductDetails({
   // Volumetric Packaging Options
   const PACKAGING_OPTIONS = [
     {
-      name: "Glass Lab Bottle",
+      name: "Glas-Laborflasche",
       priceDelta: 0,
-      desc: "Triple-sealed amber glass bottle for oxidation protection.",
+      desc: "Dreifach versiegelte Braunglasflasche zum Schutz vor Oxidation.",
     },
     {
-      name: "High-Density Polyethylene",
+      name: "Hochdichtes Polyethylen (HDPE)",
       priceDelta: -2.5,
-      desc: "Corrosion-proof lightweight HDPE container.",
+      desc: "Korrosionsbeständiger, leichter HDPE-Behälter.",
     },
     {
-      name: "Heavy-Duty Metal Canister",
+      name: "Schwerlast-Metallkanister",
       priceDelta: 4.0,
-      desc: "Impact-resistant canister with pressure sealing.",
+      desc: "Stoßfester Kanister mit Druckversiegelung.",
     },
   ];
 
@@ -148,29 +148,29 @@ export default function ProductDetails({
     const brandName = appName.toUpperCase();
     const printContent = `
 ========================================
-MATERIAL SAFETY DATA SHEET (MSDS / SDS)
-${brandName} STANDARD - REGISTERED PROTOCOL
+SICHERHEITSDATENBLATT (MSDS / SDB)
+${brandName} STANDARD - REGISTRIERTES PROTOKOLL
 ========================================
-Product Name: ${product.name}
-CAS Number: ${product.cas}
-Formula: ${product.formula}
-Molecular Weight: ${product.molecularWeight}
-Grade: ${product.grade}
+Produktname: ${product.name}
+CAS-Nummer: ${product.cas}
+Formel: ${product.formula}
+Molekulargewicht: ${product.molecularWeight}
+Qualität: ${product.grade}
 ----------------------------------------
-GHS CLASSIFICATION:
+GHS-EINSTUFUNG:
 ${product.sds.hazardStatements.join("\n")}
 ----------------------------------------
-PRECAUTIONARY PROTOCOLS:
+SICHERHEITSHINWEISE:
 ${product.sds.precautionaryStatements.join("\n")}
 ----------------------------------------
-EXPOSURE CONTROLS & LABORATORY PROTECTION:
-- Wear Nitrile Goggles (ANSI Z87.1 approved)
-- White Laboratory Coat
-- Impervious Nitrile chemical resistance gloves
-- Store below 30°C in dry warehouse logic.
+EXPOSITIONSBEGRENZUNG & LABORSCHUTZ:
+- Schutzbrille tragen (EN 166 / ANSI Z87.1 geprüft)
+- Weißer Laborkittel
+- Chemikalienbeständige Schutzhandschuhe aus Nitril
+- Unter 30 °C an einem trockenen Ort lagern.
 ----------------------------------------
-${appName} Safety Registry Verification Office
-Regulatory compliance timestamp: ${new Date().toISOString()}
+${appName} Sicherheitsregister-Prüfstelle
+Zeitstempel der Konformität: ${new Date().toISOString()}
 ========================================
     `;
 
@@ -178,7 +178,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `SDS-${product.id}-${product.cas}.txt`;
+    link.download = `SDB-${product.id}-${product.cas}.txt`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -194,7 +194,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
           className="flex items-center gap-2 font-medium mb-6 group cursor-pointer transition text-xs select-none text-slate-500 hover:text-[#0052cc]"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1.5 transition-transform" />
-          Return to Chemical Registry Catalogue
+          Zurück zum Chemikalienregister-Katalog
         </button>
 
         {/* Main product structure */}
@@ -228,7 +228,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                   <button
                     type="button"
                     onClick={() => setIsLightboxOpen(true)}
-                    title="View Full Image"
+                    title="Vollbild anzeigen"
                     className="absolute top-3.5 right-3.5 p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#0052cc] hover:border-blue-200 shadow-2xs transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
                   >
                     <Maximize2 className="w-4 h-4" />
@@ -241,7 +241,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     <button
                       type="button"
                       onClick={handlePrevMedia}
-                      aria-label="Previous image"
+                      aria-label="Vorheriges Bild"
                       className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-[#0052cc] hover:border-blue-200 shadow-xs flex items-center justify-center transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -249,7 +249,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     <button
                       type="button"
                       onClick={handleNextMedia}
-                      aria-label="Next image"
+                      aria-label="Nächstes Bild"
                       className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-[#0052cc] hover:border-blue-200 shadow-xs flex items-center justify-center transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -289,7 +289,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                         ) : (
                           <img
                             src={getProxiedImageUrl(item.url)}
-                            alt={`${product.name} thumbnail ${idx + 1}`}
+                            alt={`${product.name} Vorschaubild ${idx + 1}`}
                             className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-200 group-hover/thumb:scale-105"
                             referrerPolicy="no-referrer"
                           />
@@ -304,13 +304,13 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
             {/* Quick Technical Specs Table */}
             <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-3 shadow-xs">
               <h3 className="text-xs uppercase tracking-wider font-bold text-slate-400 font-heading">
-                Technical Specifications
+                Technische Spezifikationen
               </h3>
 
               <div className="grid grid-cols-2 gap-3.5 text-xs">
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    Empirical Formula
+                    Summenformel
                   </span>
                   <span className="font-semibold text-slate-700 font-mono block mt-1">
                     {product.formula}
@@ -318,7 +318,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    Molecular Weight
+                    Molekulargewicht
                   </span>
                   <span className="font-semibold text-slate-700 font-mono block mt-1">
                     {product.molecularWeight}
@@ -326,7 +326,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    CAS Number Registry
+                    CAS-Registrierungsnummer
                   </span>
                   <span className="font-semibold text-slate-700 font-mono block mt-1">
                     {product.cas}
@@ -334,7 +334,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span className="text-[10px] text-slate-400 block">
-                    Physical Appearance
+                    Aggregatzustand / Aussehen
                   </span>
                   <span className="font-semibold text-slate-700 block mt-1">
                     {product.physicalState}
@@ -343,7 +343,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 {product.meltingPoint && (
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <span className="text-[10px] text-slate-400 block">
-                      Melting Threshold
+                      Schmelzpunkt
                     </span>
                     <span className="font-semibold text-slate-700 font-mono block mt-1">
                       {product.meltingPoint}
@@ -353,7 +353,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 {product.boilingPoint && (
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <span className="text-[10px] text-slate-400 block">
-                      Boiling Threshold
+                      Siedepunkt
                     </span>
                     <span className="font-semibold text-slate-700 font-mono block mt-1">
                       {product.boilingPoint}
@@ -376,7 +376,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
                 <div>
                   <h4 className="text-[11px] uppercase tracking-wider text-slate-400 font-medium font-heading">
-                    GHS Class Pictograms
+                    GHS-Gefahrenpiktogramme
                   </h4>
                   <div className="flex gap-4.5 mt-3">
                     {product.ghsPictograms.map((pt, idx) => (
@@ -385,9 +385,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                   </div>
                 </div>
                 <p className="text-[10.5px] text-slate-400 mt-4 leading-relaxed font-sans border-t border-slate-100 pt-2.5">
-                  Inspect pictograms for handling guidelines. Click components
-                  on the left or use GHS safety codes to manage laboratory
-                  protocols.
+                  Beachten Sie die Piktogramme für Handhabungsrichtlinien und Sicherheitsprotokolle im Labor.
                 </p>
               </div>
             </div>
@@ -399,9 +397,9 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 font-mono">
                 <span>{typeof product.category === "object" && product.category !== null ? (product.category as any).name : product.category}</span>
                 <span className="text-slate-300">•</span>
-                <span>{product.grade} Grade</span>
+                <span>{product.grade} Qualität</span>
                 <span className="text-slate-300">•</span>
-                <span>Purity: {product.purity}</span>
+                <span>Reinheit: {product.purity}</span>
                 {product.cas && (
                   <>
                     <span className="text-slate-300">•</span>
@@ -422,7 +420,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono block">
-                    {isIndiamart ? "Unit Reference Price" : isRetail ? "Deal Price" : "Volumetric unit price"}
+                    {isIndiamart ? "Referenz-Stückpreis" : isRetail ? "Angebotspreis" : "Volumetrischer Stückpreis"}
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-3xl font-bold text-slate-900 font-mono">
@@ -433,7 +431,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Estimated Dispatch & Transit: <span className="font-medium text-slate-700">10–15 Business Days</span>
+                    Geschätzter Versand & Lieferzeit: <span className="font-medium text-slate-700">10–15 Werktage</span>
                   </p>
                 </div>
 
@@ -464,7 +462,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
               {/* Packaging and safety containment options */}
               <div className="space-y-2.5">
                 <label className="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-                  Safety Containment Type
+                  Sicherheitsbehälter-Typ
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {PACKAGING_OPTIONS.map((opt) => (
@@ -505,10 +503,10 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs py-3 px-4 rounded-xl cursor-pointer transition active:scale-[0.99] text-center font-semibold"
-                    title="Download Official SDS PDF"
+                    title="Offizielles SDB als PDF herunterladen"
                   >
                     <Download className="w-4 h-4 text-slate-500 shrink-0" />
-                    <span>Download SDS</span>
+                    <span>SDB herunterladen</span>
                   </a>
                 )}
 
@@ -520,14 +518,14 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                       onOpenInquiry(product, qty);
                     } else {
                       const cleanPhone = (whatsappNumber || "15099941048").replace(/[^0-9]/g, "");
-                      const textMsg = `*NEW B2B PRODUCT ENQUIRY*\n------------------------------------\n*Product Name:* ${product.name}\n*Product ID:* ${product.id}\n*CAS Registry:* ${product.cas || "N/A"}\n*Purity & Grade:* ${product.purity || "ACS Grade"} | ${product.grade || "Technical"} Grade\n*Price:* $${product.price} / ${product.unit || "unit"}\n------------------------------------\n*Inquiry Quantity:* ${qty}\nHello, I would like to request a quotation for this product.`;
+                      const textMsg = `*NEUE B2B-PRODUKTANFRAGE*\n------------------------------------\n*Produktname:* ${product.name}\n*Produkt-ID:* ${product.id}\n*CAS-Registrierung:* ${product.cas || "N/A"}\n*Reinheit & Qualität:* ${product.purity || "ACS-Qualität"} | ${product.grade || "Technisch"}\n*Preis:* $${product.price} / ${product.unit || "Einheit"}\n------------------------------------\n*Angefragte Menge:* ${qty}\nHallo, ich möchte ein Angebot für dieses Produkt anfordern.`;
                       window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`, "_blank");
                     }
                   }}
                   className="flex-1 flex min-w-[200px] items-center gap-2 justify-center font-semibold text-xs py-3 px-6 rounded-xl cursor-pointer transition active:scale-[0.99] text-center bg-[#0052cc] hover:bg-[#0747a6] text-white"
                 >
                   <MessageCircle className="w-4 h-4 shrink-0" />
-                  <span>Enquire on WhatsApp</span>
+                  <span>Auf WhatsApp anfragen</span>
                 </button>
               </div>
             </div>
@@ -538,7 +536,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-[#0052cc]" />
                   <h3 className="text-xs font-semibold text-slate-800 leading-none font-heading uppercase tracking-wider">
-                    Material Safety Data Sheet (SDS)
+                    Sicherheitsdatenblatt (SDB / SDS)
                   </h3>
                 </div>
               </div>
@@ -568,7 +566,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  GHS Codes
+                  GHS-Sätze
                 </button>
               </div>
 
@@ -578,7 +576,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                   <div className="space-y-4">
                     <div>
                       <h4 className="text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-1 font-heading">
-                        Hazard Statements
+                        Gefahrenhinweise (H-Sätze)
                       </h4>
                       <ul className="space-y-1 my-2">
                         {product.sds.hazardStatements.map((h, i) => (
@@ -594,7 +592,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                     </div>
                     <div>
                       <h4 className="text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-1 font-heading">
-                        Precautionary Statements
+                        Sicherheitshinweise (P-Sätze)
                       </h4>
                       <ul className="space-y-1 my-2">
                         {product.sds.precautionaryStatements.map((p, i) => (
@@ -650,7 +648,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 </h4>
                 {mediaItems.length > 1 && (
                   <p className="text-xs text-slate-400 font-mono">
-                    Image {activeMediaIndex + 1} of {mediaItems.length}
+                    Bild {activeMediaIndex + 1} von {mediaItems.length}
                   </p>
                 )}
               </div>
@@ -658,7 +656,7 @@ Regulatory compliance timestamp: ${new Date().toISOString()}
                 type="button"
                 onClick={() => setIsLightboxOpen(false)}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
-                aria-label="Close full image view"
+                aria-label="Vollbildansicht schließen"
               >
                 <X className="w-5 h-5" />
               </button>

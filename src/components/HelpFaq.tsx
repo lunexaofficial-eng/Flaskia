@@ -59,72 +59,72 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
     {
       id: "safety-1",
       category: "safety",
-      question: "What are GHS Pictograms and why are they important?",
-      answer: "GHS (Globally Harmonized System) pictograms are standardized graphic symbols used to communicate specific hazard information on chemical labels and Safety Data Sheets (SDS). They classify physical, environmental, and health hazards (e.g., Flammability, Toxicity, Corrosion) to alert laboratory personnel and support safe storage and handling precautions prior to synthesis.",
-      keywords: ["ghs", "pictogram", "hazard", "label", "symbol", "classification"]
+      question: "Was sind GHS-Piktogramme und warum sind sie wichtig?",
+      answer: "GHS-Piktogramme (Global Harmonisiertes System) sind standardisierte Grafiksymbole zur Kennzeichnung spezifischer Gefahreninformationen auf Chemikalienetiketten und Sicherheitsdatenblättern (SDB). Sie klassifizieren physikalische, Umwelt- und Gesundheitsgefahren (z. B. Entzündbarkeit, Toxizität, Ätzwirkung), um Laborpersonal zu warnen und eine sichere Lagerung und Handhabung zu unterstützen.",
+      keywords: ["ghs", "piktogramm", "gefahr", "etikett", "symbol", "klassifizierung"]
     },
     {
       id: "safety-2",
       category: "safety",
-      question: "How should I handle a potential chemical spill or emergency?",
-      answer: "Always follow your institution's specific chemical hygiene protocol: (1) Immediately isolate the area and notify others. (2) Consult the product's Safety Data Sheet (Section 6: Accidental Release Measures) to identify the neutralizer or absorbents required. (3) Equip appropriate PPE (goggles, chemical-resistant gloves, apron). (4) Carefully clean up using solid binder material or spill kits, package the waste in a designated heavy-duty container, and consult local environmental safety guidelines for disposal.",
-      keywords: ["spill", "emergency", "handling", "clean", "safety", "accident"]
+      question: "Wie verhalte ich mich bei einem verschütteten Chemikalienunfall oder Notfall?",
+      answer: "Befolgen Sie stets das spezifische Chemikalienhygieneprotokoll Ihrer Einrichtung: (1) Isolieren Sie sofort den Bereich und informieren Sie andere. (2) Konsultieren Sie das Sicherheitsdatenblatt des Produkts (Abschnitt 6: Maßnahmen bei unbeabsichtigter Freisetzung). (3) Tragen Sie geeignete persönliche Schutzausrüstung (Schutzbrille, chemikalienbeständige Handschuhe, Laborkittel). (4) Binden Sie die Flüssigkeit vorsichtig mit geeignetem Bindemittel und entsorgen Sie diese gemäß den örtlichen Umweltvorschriften.",
+      keywords: ["verschüttet", "notfall", "handhabung", "reinigung", "sicherheit", "unfall"]
     },
     {
       id: "safety-3",
       category: "safety",
-      question: "What is an SDS (Safety Data Sheet) and how can I find it?",
-      answer: "An SDS is a comprehensive document detailing safety, physical properties, toxicity, ecological impacts, chemical transport classification, and disposal recommendations. You can access the complete SDS for any Flaskia reagent by clicking on the product card to open 'Detailed Specs' and expanding the interactive SDS section, which outlines OSHA-compliant Sections 1 through 16.",
-      keywords: ["sds", "safety data sheet", "pdf", "section", "document", "spec"]
+      question: "Was ist ein SDB (Sicherheitsdatenblatt) und wo finde ich es?",
+      answer: "Ein Sicherheitsdatenblatt (SDB / SDS) ist ein umfassendes Dokument über Sicherheit, physikalische Eigenschaften, Toxizität, Umweltauswirkungen, Gefahrguttransport und Entsorgungsempfehlungen. Sie finden das vollständige SDB für jedes Flaskia-Reagenz direkt auf der Produktdetailseite im Bereich Sicherheitsdatenblatt.",
+      keywords: ["sdb", "sds", "sicherheitsdatenblatt", "pdf", "abschnitt", "dokument"]
     },
     {
       id: "safety-4",
       category: "safety",
-      question: "What do the NFPA 704 Diamond values represent?",
-      answer: "The National Fire Protection Association (NFPA) 704 standard uses a color-coded quadrant diamond to convey risk: Blue indicates Health hazard, Red indicates Flammability, Yellow indicates Instability, and White lists Special Hazards (such as oxidizers, acidic compounds, or air/water reactive chemicals). Values range from 0 (minimal risk, like pure water) to 4 (extreme reactive danger, like unstable concentrated organic peroxides).",
-      keywords: ["nfpa", "diamond", "color", "red", "blue", "yellow", "health", "flammability"]
+      question: "Was bedeuten die Werte des NFPA 704 Gefahrendiamanten?",
+      answer: "Der NFPA 704 Standard verwendet einen farbcodierten Diamanten zur Risikodarstellung: Blau steht für Gesundheitsgefahr, Rot für Entzündbarkeit, Gelb für Instabilität/Reaktivität und Weiß für besondere Gefahren. Die Werte reichen von 0 (minimales Risiko) bis 4 (extreme Gefahr).",
+      keywords: ["nfpa", "diamant", "farbe", "rot", "blau", "gelb", "gesundheit", "entzündbarkeit"]
     },
     {
       id: "shipping-1",
       category: "shipping",
-      question: "Why is there a Hazmat surcharge on certain products?",
-      answer: "State and international department of transportation (DOT) regulations categorize certain high-purity chemical reagents as hazardous materials (Hazmat Class 3, 8, or 9). These products require climate-temperature buffers, double-walled specialized containment packaging, and secure handling during dispatch. To offset the high insurance risk and mandatory certified logistics carriers, a $15.00 Hazmat surcharge is automatically applied to orders containing active hazard reagents.",
-      keywords: ["hazmat", "shipping", "surcharge", "delivery", "fee", "cost", "transport"]
+      question: "Warum fällt bei bestimmten Produkten ein Gefahrgutzuschlag an?",
+      answer: "Nationale und internationale Transportvorschriften stufen bestimmte hochreine Laborreagenzien als Gefahrgut ein. Diese Produkte erfordern temperaturregulierte Spezialverpackungen, doppelwandige Sicherheitsbehälter und zertifizierte Gefahrgutspeditionen.",
+      keywords: ["gefahrgut", "hazmat", "versand", "zuschlag", "lieferung", "gebühr", "transport"]
     },
     {
       id: "shipping-2",
       category: "shipping",
-      question: "Can chemicals be shipped directly to residential/home addresses?",
-      answer: "No. To maintain custody control, prevent accidental poisoning, and abide by environmental regulations, Flaskia strictly ships academic reagents and laboratory equipment to verified educational institutions, commercial facilities, and dedicated research entities with active license credentials. Residential deliveries of chemical reagents are completely prohibited.",
-      keywords: ["residential", "home", "address", "shipping", "place", "deliver"]
+      question: "Können Chemikalien an private Wohnadressen geliefert werden?",
+      answer: "Nein. Zur Einhaltung gesetzlicher Vorschriften liefert Flaskia Laborreagenzien und Chemikalien ausschließlich an geprüfte Bildungseinrichtungen, Universitäten, gewerbliche Labore und registrierte Forschungseinrichtungen. Lieferungen an Privatadressen sind ausgeschlossen.",
+      keywords: ["privat", "wohnadresse", "adresse", "versand", "lieferung"]
     },
     {
       id: "shipping-3",
       category: "shipping",
-      question: "What temperature controls are used during transit?",
-      answer: "Flaskia utilizes proprietary climate-regulated packaging consisting of thermal insulated foil inserts and cold gel packs for high-volatility compounds or sensitive indicators. This shields reagents from excessive summer heat spikes or extreme winter drops, preserving chemical stability and preventing container pressurized degasification from synthesis warehouse to classroom labs.",
-      keywords: ["temperature", "transit", "climate", "cold", "heat", "stability"]
+      question: "Welche Temperaturkontrollen werden beim Versand eingesetzt?",
+      answer: "Flaskia verwendet klimaregulierte Spezialverpackungen mit thermischer Isolierung und Kühlakkus für flüchtige Verbindungen oder empfindliche Indikatoren, um die chemische Stabilität während des gesamten Transports zu gewährleisten.",
+      keywords: ["temperatur", "versand", "klima", "kühlung", "hitze", "stabilität"]
     },
     {
       id: "compliance-1",
       category: "compliance",
-      question: "Do I need institutional verification or a license to purchase?",
-      answer: "Yes. Flaskia requires all customers seeking active chemical reagents to register with a valid institutional identifier, academic email, researchers' credentials, and a chemical custody license matching DEA, OSHA, or local toxic control regulations. You can input these credentials during checkout. Our automated compliance checker verifies licenses against active registries before dispatch.",
-      keywords: ["license", "verification", "institution", "academic", "purchase", "checkout"]
+      question: "Benötige ich eine institutionelle Verifizierung für die Bestellung?",
+      answer: "Ja. Kunden, die aktive chemische Reagenzien anfragen, müssen einer autorisierten Bildungseinrichtung, einem Forschungslabor oder einem gewerblichen Unternehmen angehören.",
+      keywords: ["lizenz", "verifizierung", "institution", "universität", "bestellung"]
     },
     {
       id: "compliance-2",
       category: "compliance",
-      question: "What is the difference between chemical grades (e.g., ACS vs. Tech)?",
-      answer: "ACS Reagent grade indicates the chemical conforms to strict purity specifications set by the American Chemical Society (usually ≥95-99% absolute concentration with micro-impurity thresholds), making it high-fidelity for quantitative analysis. Technical or Educational grade chemicals are lower-cost solutions designed for school demonstrations where extremely minute trace metallic impurities will not disrupt experiment synthesis outcomes.",
-      keywords: ["grade", "purity", "acs", "reagent", "technical", "difference", "demonstration"]
+      question: "Was ist der Unterschied zwischen den Chemikalienqualitäten (z. B. ACS vs. Technisch)?",
+      answer: "ACS-Reagenzienqualität bedeutet, dass die Chemikalie strengen Reinheitsspezifikationen der American Chemical Society entspricht (meist ≥95–99% Reinheit) und sich für präzise quantitative Analysen eignet. Technische oder Lehrzweck-Qualitäten sind für allgemeine Laborversuche und Demonstrationen konzipiert.",
+      keywords: ["qualität", "reinheit", "acs", "reagenz", "technisch", "unterschied"]
     },
     {
       id: "compliance-3",
       category: "compliance",
-      question: "How does Flaskia uphold legal custody regulations?",
-      answer: "Our operations comply directly with EPA toxic control standards, DOT transport manuals, and OSHA safety guidelines. All orders undergo rigorous institutional checks, and all packaging includes physical safety documentation (SDS and GHS warning prints) directly in the parcel. We also record strict digital logs of lot numbers, purities, and transport chains for complete traceability.",
-      keywords: ["regulation", "compliance", "legal", "safety", "epa", "osha", "traceability"]
+      question: "Wie stellt Flaskia die gesetzliche Konformität sicher?",
+      answer: "Unsere Prozesse entsprechen strengen Umwelt-, Transport- und Arbeitsschutzrichtlinien (GHS, REACH, CLP, OSHA). Alle Lieferungen enthalten vollständige Sicherheitsdatenblätter (SDB) und GHS-Gefahrenkennzeichnungen sowie eine lückenlose Chargenrückverfolgbarkeit.",
+      keywords: ["vorschrift", "compliance", "rechtlich", "sicherheit", "ghs", "rückverfolgbarkeit"]
     }
   ], []);
 
@@ -173,15 +173,15 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
   };
 
   // Quick action search trigger terms
-  const quickSearchTags = ["SDS Sheets", "Hazmat Fee", "License", "ACS Grade", "Spill Acc"];
+  const quickSearchTags = ["SDB-Blätter", "Gefahrgut", "Lizenz", "ACS-Qualität", "Notfall"];
 
   const handleSelectQuickTag = (tag: string) => {
     let searchVal = tag;
-    if (tag === "SDS Sheets") searchVal = "sds";
-    else if (tag === "Hazmat Fee") searchVal = "hazmat";
-    else if (tag === "License") searchVal = "license";
-    else if (tag === "ACS Grade") searchVal = "acs";
-    else if (tag === "Spill Acc") searchVal = "spill";
+    if (tag === "SDB-Blätter") searchVal = "sdb";
+    else if (tag === "Gefahrgut") searchVal = "gefahrgut";
+    else if (tag === "Lizenz") searchVal = "lizenz";
+    else if (tag === "ACS-Qualität") searchVal = "acs";
+    else if (tag === "Notfall") searchVal = "notfall";
     
     setSearchQuery(searchVal);
   };
@@ -209,13 +209,13 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
             </div>
             <div className="min-w-0">
               <h2 className="text-sm md:text-base font-extrabold text-slate-800 tracking-tight leading-tight flex items-center gap-1.5">
-                <span>Help & Safety Center</span>
+                <span>Hilfe- & Sicherheitszentrum</span>
                 <span className="hidden sm:inline-flex items-center gap-1 bg-blue-100/60 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
-                  <Sparkles className="w-2.5 h-2.5" /> Live FAQ
+                  <Sparkles className="w-2.5 h-2.5" /> Live-FAQ
                 </span>
               </h2>
               <p className="text-[10px] md:text-[11px] text-slate-400 font-medium uppercase font-mono tracking-wider truncate">
-                Regulatory Standards & Laboratory safety manuals
+                Gesetzliche Standards & Laborsicherheitshandbücher
               </p>
             </div>
           </div>
@@ -223,10 +223,10 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
             onClick={onClose}
             className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shrink-0 hover:scale-102 active:scale-98"
             id="close-help-faq-btn"
-            title="Close Help & FAQ"
+            title="Hilfe & FAQ schließen"
           >
             <span className="text-sm">❌</span>
-            <span>Close</span>
+            <span>Schließen</span>
           </button>
         </div>
 
@@ -235,7 +235,7 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
           <div className="relative">
             <input 
               type="text"
-              placeholder="Search safety keywords, SDS, Hazmat limits, storage, etc..."
+              placeholder="Suche nach Sicherheitsbegriffen, SDB, Gefahrgut, Lagerung usw..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:bg-white rounded-xl pl-9 pr-8 py-2 md:py-2.5 text-xs text-slate-800 placeholder-slate-400 transition outline-none"
@@ -247,14 +247,14 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
                 onClick={() => setSearchQuery("")}
                 className="absolute right-3 top-2.5 md:top-3 text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer font-semibold"
               >
-                Clear
+                Löschen
               </button>
             )}
           </div>
 
           {/* Quick-select Safety query tags */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[10px] select-none">
-            <span className="text-slate-400 font-bold uppercase font-mono shrink-0 mr-1">Quick:</span>
+            <span className="text-slate-400 font-bold uppercase font-mono shrink-0 mr-1">Schnellwahl:</span>
             {quickSearchTags.map((tag) => (
               <button
                 key={tag}
@@ -269,10 +269,10 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
           {/* Fully Responsive Tab Strip */}
           <div className="flex gap-1 overflow-x-auto pb-1.5 scrollbar-none border-b border-slate-150">
             {[
-              { id: "all", label: "All QA", icon: HelpCircle, count: categoryCounts.all },
-              { id: "safety", label: "Safety Laws", icon: FlaskConical, count: categoryCounts.safety },
-              { id: "shipping", label: "Hazmat / Shipping", icon: Truck, count: categoryCounts.shipping },
-              { id: "compliance", label: "GHS Standard", icon: ShieldCheck, count: categoryCounts.compliance }
+              { id: "all", label: "Alle Fragen", icon: HelpCircle, count: categoryCounts.all },
+              { id: "safety", label: "Sicherheitsregeln", icon: FlaskConical, count: categoryCounts.safety },
+              { id: "shipping", label: "Gefahrgut / Versand", icon: Truck, count: categoryCounts.shipping },
+              { id: "compliance", label: "GHS-Standard", icon: ShieldCheck, count: categoryCounts.compliance }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -303,9 +303,9 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
           {filteredFaqs.length === 0 ? (
             <div className="text-center py-10 bg-slate-50 border border-slate-200 border-dashed rounded-2xl max-w-md mx-auto my-6 p-4">
               <AlertOctagon className="w-9 h-9 text-slate-400 mx-auto mb-3" />
-              <h4 className="text-xs font-bold text-slate-700">No matching manuals located</h4>
+              <h4 className="text-xs font-bold text-slate-700">Keine passenden Einträge gefunden</h4>
               <p className="text-[11px] text-slate-400 mt-1 leading-normal max-w-xs mx-auto">
-                No articles matching "{searchQuery}" under the selected tab. Try testing clear tags like "SDS", "purity", or click "Clear" to restart.
+                Keine Artikel für "{searchQuery}" gefunden. Versuchen Sie Begriffe wie "SDB", "Reinheit" oder klicken Sie auf "Löschen".
               </p>
             </div>
           ) : (
@@ -338,10 +338,10 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
                       <p className="whitespace-pre-line leading-relaxed text-slate-600 font-sans">{item.answer}</p>
                       <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-200/40 text-[9px] text-slate-400 font-mono uppercase">
                         <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-bold">
-                          CAT: {item.category}
+                          KAT: {item.category}
                         </span>
                         <span>•</span>
-                        <span>DHS-SDS Certified Chemical Safety Sheet</span>
+                        <span>GHS-SDB Zertifiziertes Chemikaliensicherheitsblatt</span>
                       </div>
                     </div>
                   )}
@@ -356,7 +356,7 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
           <div className="hidden sm:flex items-start gap-3 bg-blue-50/50 border border-blue-100/50 p-3 rounded-2xl">
             <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
             <div className="text-[10px] md:text-[11px] text-slate-500 leading-normal">
-              <strong>Institutional procurement limits:</strong> For custom commercial requests, bulk high-purity syntheses, or government order tax exemptions, please specify your credentials.
+              <strong>Institutionelle Beschaffungsrichtlinien:</strong> Für kommerzielle Großbestellungen, hochreine Synthesen oder behördliche Anfragen geben Sie bitte Ihre Organisationsdaten an.
             </div>
           </div>
 
@@ -364,7 +364,7 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
             <div className="flex items-center gap-2">
               <MessageSquare className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <label className="text-[10px] md:text-[11px] text-slate-600 font-bold truncate" htmlFor="support-query-input">
-                Still have safety or transit questions? Log with our safety desk:
+                Haben Sie weitere Fragen zu Sicherheit oder Versand? Kontaktieren Sie unsere Sicherheitsabteilung:
               </label>
             </div>
             
@@ -372,7 +372,7 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
               <input 
                 id="support-query-input"
                 type="text"
-                placeholder="Ask about storage, compliance, or SDS updates..."
+                placeholder="Frage zu Lagerung, Konformität oder SDB-Updates..."
                 value={userQuery}
                 onChange={(e) => setUserQuery(e.target.value)}
                 className="flex-1 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 transition outline-none"
@@ -382,17 +382,17 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
                   type="submit"
                   className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-97"
                 >
-                  <span>Send Query</span>
+                  <span>Anfrage senden</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <button 
                   type="button"
                   onClick={onClose}
                   className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-97"
-                  title="Close Manual"
+                  title="Handbuch schließen"
                   id="footer-faq-close-btn"
                 >
-                  <span>Close ❌</span>
+                  <span>Schließen ❌</span>
                 </button>
               </div>
             </div>
@@ -400,7 +400,7 @@ export default function HelpFaq({ isOpen, onClose }: HelpFaqProps) {
             {submitSuccess && (
               <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-1 animate-fade-in">
                 <ShieldCheck className="w-3 h-3 text-emerald-500 shrink-0" />
-                <span>Query indexed safely. Operational safety expert will respond to your registered laboratory email!</span>
+                <span>Anfrage erfolgreich erfasst. Unser Sicherheitsexperte wird sich in Kürze melden!</span>
               </p>
             )}
           </form>

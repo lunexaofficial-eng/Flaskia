@@ -40,7 +40,7 @@ export default function IndiamartInquiryModal({
   useEffect(() => {
     if (product && isOpen) {
       setQuantityCount(defaultQty > 0 ? defaultQty : 1);
-      setNotes(`Kindly send the best bulk quotation and Certificate of Analysis for ${product.name} (CAS: ${product.cas || 'N/A'}, Weight/MW: ${product.molecularWeight || 'N/A'}).`);
+      setNotes(`Bitte senden Sie uns das beste Großhandelsangebot und das Analysezertifikat (CoA) für ${product.name} (CAS: ${product.cas || 'N/A'}, Gewicht/MW: ${product.molecularWeight || 'N/A'}).`);
       setSubmittedId(null);
       setWasWhatsappSent(false);
       setError(null);
@@ -51,32 +51,31 @@ export default function IndiamartInquiryModal({
 
   const unitPriceFormatted = formatPrice(product.price);
   const totalPriceFormatted = formatPrice(product.price * Math.max(1, quantityCount));
-  const quantityString = `${quantityCount} ${product.unit || 'Pack'}${quantityCount > 1 ? 's' : ''}`;
+  const quantityString = `${quantityCount} ${product.unit || 'Packung'}${quantityCount > 1 ? 'en' : ''}`;
 
   const buildWhatsappUrl = (overrideNotes?: string) => {
     const cleanPhone = whatsappNumber.replace(/[^0-9]/g, "");
-    const textMsg = `*NEW PRODUCT ENQUIRY* 🧪
+    const textMsg = `*NEUE PRODUKTANFRAGE* 🧪
 ------------------------------------
-📦 *Product Name:* ${product.name}
-🆔 *Product ID:* ${product.id}
-🧪 *CAS Registry:* ${product.cas || "N/A"}
-⚗️ *Formula:* ${product.formula || "N/A"}
-⚖️ *Molecular Weight:* ${product.molecularWeight || "N/A"}
-🔬 *Purity & Grade:* ${product.purity || "ACS Grade"} | ${product.grade || "Technical"} Grade
-🏷️ *Price per Unit:* ${unitPriceFormatted} / ${product.unit || "unit"}
-📊 *Quantity Requested:* ${quantityString}
-💰 *Total Calculated Price:* ${totalPriceFormatted} (${currency})
-📝 *Description:* ${product.description || "N/A"}
-🖼️ *Product Image:* ${product.image}
+📦 *Produktname:* ${product.name}
+🆔 *Produkt-ID:* ${product.id}
+🧪 *CAS-Registrierungsnr.:* ${product.cas || "N/A"}
+⚗️ *Formel:* ${product.formula || "N/A"}
+⚖️ *Molekulargewicht:* ${product.molecularWeight || "N/A"}
+🔬 *Reinheit & Qualität:* ${product.purity || "ACS-Qualität"} | ${product.grade || "Technisch"}
+🏷️ *Preis pro Einheit:* ${unitPriceFormatted} / ${product.unit || "Einheit"}
+📊 *Angeforderte Menge:* ${quantityString}
+💰 *Berechneter Gesamtpreis:* ${totalPriceFormatted} (${currency})
+📝 *Beschreibung:* ${product.description || "N/A"}
+🖼️ *Produktbild:* ${product.image}
 ------------------------------------
-*BUYER DETAILS:*
-📍 *Delivery Location/Zip:* ${deliveryPincode || "Not Specified"}
-👤 *Buyer Name:* ${buyerName || "Prospect Buyer"}
-📞 *Phone:* ${buyerPhone || "Not Provided"}
-✉️ *Email:* ${buyerEmail || "Not Provided"}
-💬 *Notes/Requirement:* ${overrideNotes || notes || "Requesting formal quotation and COA."}
+*KÄUFERDETAILS:*
+👤 *Vollständiger Name:* ${buyerName || "Interessent"}
+📞 *Telefon:* ${buyerPhone || "Nicht angegeben"}
+✉️ *E-Mail:* ${buyerEmail || "Nicht angegeben"}
+💬 *Anfrage:* ${overrideNotes || notes || "Anfrage für ein formelles Angebot und Analysezertifikat (CoA)."}
 
-_Sent via ${appName} Marketplace Inquiry Portal_`;
+_Gesendet über das ${appName} Marktplatz-Anfrageportal_`;
 
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
   };
@@ -93,7 +92,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
         quantity: quantityString,
         totalPrice: totalPriceFormatted,
         currency,
-        buyerName: buyerName || "WhatsApp Customer",
+        buyerName: buyerName || "WhatsApp-Kunde",
         buyerEmail: buyerEmail || "whatsapp@customer.com",
         buyerPhone,
         deliveryPincode,
@@ -103,7 +102,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
 
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || "Failed to log inquiry");
+      throw new Error(data.error || "Anfrage konnte nicht protokolliert werden");
     }
     if (onSuccess) {
       onSuccess();
@@ -125,7 +124,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
       const waUrl = buildWhatsappUrl();
       window.open(waUrl, "_blank", "noopener,noreferrer");
     } catch (err: any) {
-      setError(err.message || "Could not log inquiry, but opening WhatsApp...");
+      setError(err.message || "Anfrage konnte nicht gespeichert werden, WhatsApp wird geöffnet...");
       // Fallback open WhatsApp anyway so customer request is never lost
       window.open(buildWhatsappUrl(), "_blank", "noopener,noreferrer");
     } finally {
@@ -137,7 +136,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
     e.preventDefault();
     setError(null);
     if (!buyerName.trim() || !buyerEmail.trim() || !buyerPhone.trim()) {
-      setError("Please fill in your Name, Email ID, and Mobile Phone number.");
+      setError("Bitte geben Sie Ihren vollständigen Namen, Ihre E-Mail-Adresse und Ihre Mobilnummer ein.");
       return;
     }
 
@@ -147,7 +146,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
       setSubmittedId(inqId);
       setWasWhatsappSent(false);
     } catch (err: any) {
-      setError(err.message || "Network error submitting inquiry");
+      setError(err.message || "Netzwerkfehler beim Senden der Anfrage");
     } finally {
       setLoading(false);
     }
@@ -167,10 +166,10 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
         <div className="shrink-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading">
-              Product Inquiry & Bulk Quotation
+              Produktanfrage & Großhandelsangebot
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Submit your institutional or wholesale inquiry for direct pricing
+              Senden Sie Ihre institutionelle oder Großhandelsanfrage für direkte Preise
             </p>
           </div>
           <button
@@ -192,39 +191,39 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
             
             <div className="space-y-1.5">
               <p className="text-xs text-slate-400 font-mono">
-                Reference #{submittedId}
+                Referenz #{submittedId}
               </p>
               <h2 className="text-xl font-bold text-slate-900 font-heading">
-                {wasWhatsappSent ? "Redirected to WhatsApp" : "Inquiry Logged"}
+                {wasWhatsappSent ? "Zu WhatsApp weitergeleitet" : "Anfrage gespeichert"}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
                 {wasWhatsappSent ? (
-                  <>Your inquiry for <strong className="text-slate-800">{product.name}</strong> has been prepared for WhatsApp.</>
+                  <>Ihre Anfrage für <strong className="text-slate-800">{product.name}</strong> wurde für WhatsApp vorbereitet.</>
                 ) : (
-                  <>Thank you{buyerName ? ` ${buyerName}` : ""}. Your quotation request for <strong className="text-slate-800">{product.name}</strong> ({quantityString}) has been saved.</>
+                  <>Vielen Dank{buyerName ? ` ${buyerName}` : ""}. Ihre Angebotsanfrage für <strong className="text-slate-800">{product.name}</strong> ({quantityString}) wurde gespeichert.</>
                 )}
               </p>
             </div>
 
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-left space-y-2 text-xs text-slate-700 font-mono">
               <div className="flex justify-between border-b border-slate-200/70 pb-2">
-                <span className="text-slate-500">Product:</span>
+                <span className="text-slate-500">Produkt:</span>
                 <span className="font-semibold text-slate-900 truncate max-w-[200px] sm:max-w-none">{product.name}</span>
               </div>
               <div className="flex justify-between border-b border-slate-200/70 pb-2">
-                <span className="text-slate-500">Unit Price:</span>
+                <span className="text-slate-500">Stückpreis:</span>
                 <span className="font-semibold text-slate-900">{unitPriceFormatted} / {product.unit}</span>
               </div>
               <div className="flex justify-between border-b border-slate-200/70 pb-2">
-                <span className="text-slate-500">Quantity:</span>
+                <span className="text-slate-500">Menge:</span>
                 <span className="font-semibold text-slate-900">{quantityString}</span>
               </div>
               <div className="flex justify-between border-b border-slate-200/70 pb-2">
-                <span className="text-slate-700 font-semibold">Estimated Total ({currency}):</span>
+                <span className="text-slate-700 font-semibold">Geschätzte Gesamtsumme ({currency}):</span>
                 <span className="font-bold text-[#0052cc] text-sm">{totalPriceFormatted}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">CAS Registry:</span>
+                <span className="text-slate-500">CAS-Registrierung:</span>
                 <span className="font-semibold">{product.cas || "N/A"}</span>
               </div>
             </div>
@@ -238,7 +237,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                   className="bg-[#0052cc] hover:bg-[#0747a6] text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-2"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Open WhatsApp Chat</span>
+                  <span>WhatsApp-Chat öffnen</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
@@ -246,7 +245,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                 onClick={handleReset}
                 className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition cursor-pointer"
               >
-                Done
+                Fertig
               </button>
             </div>
           </div>
@@ -268,7 +267,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                     {product.name}
                   </h4>
                   <p className="text-xs text-slate-500 font-mono mt-1">
-                    {product.cas ? `CAS ${product.cas} • ` : ""}{product.purity || "ACS Grade"} • {unitPriceFormatted} / {product.unit || "unit"}
+                    {product.cas ? `CAS ${product.cas} • ` : ""}{product.purity || "ACS-Qualität"} • {unitPriceFormatted} / {product.unit || "Einheit"}
                   </p>
                 </div>
               </div>
@@ -279,7 +278,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                 className="w-full sm:w-auto shrink-0 bg-[#0052cc] hover:bg-[#0747a6] text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>Direct WhatsApp</span>
+                <span>Direkt per WhatsApp</span>
               </button>
             </div>
 
@@ -288,10 +287,10 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                   <Calculator className="w-4 h-4 text-[#0052cc]" />
-                  <span>Quantity & Estimated Total</span>
+                  <span>Menge & Geschätzte Gesamtsumme</span>
                 </label>
                 <span className="text-xs text-slate-500 font-mono">
-                  Currency: {currency}
+                  Währung: {currency}
                 </span>
               </div>
 
@@ -302,7 +301,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                     type="button"
                     onClick={() => setQuantityCount(Math.max(1, quantityCount - 1))}
                     className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition cursor-pointer"
-                    title="Decrease quantity"
+                    title="Menge verringern"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
@@ -323,13 +322,13 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                     type="button"
                     onClick={() => setQuantityCount(quantityCount + 1)}
                     className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition cursor-pointer"
-                    title="Increase quantity"
+                    title="Menge erhöhen"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
 
                   <span className="text-xs text-slate-500 font-mono">
-                    {product.unit || "Pack"}{quantityCount > 1 ? "s" : ""}
+                    {product.unit || "Packung"}{quantityCount > 1 ? "en" : ""}
                   </span>
                 </div>
 
@@ -358,7 +357,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                   {quantityString} × {unitPriceFormatted}
                 </span>
                 <span className="text-sm font-bold text-[#0052cc]">
-                  Total: {totalPriceFormatted}
+                  Gesamt: {totalPriceFormatted}
                 </span>
               </div>
             </div>
@@ -374,39 +373,39 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
-                  Full Name
+                  Vollständiger Name
                 </label>
                 <input
                   type="text"
                   value={buyerName}
                   onChange={(e) => setBuyerName(e.target.value)}
-                  placeholder="Enter your full name"
+                  placeholder="Geben Sie Ihren vollständigen Namen ein"
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:border-[#0052cc] outline-none bg-white text-slate-900"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
-                  Mobile / WhatsApp Number
+                  Mobil- / WhatsApp-Nummer
                 </label>
                 <input
                   type="tel"
                   value={buyerPhone}
                   onChange={(e) => setBuyerPhone(e.target.value)}
-                  placeholder="+1 (555) 019-2834"
+                  placeholder="+49 151 23456789"
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:border-[#0052cc] outline-none bg-white text-slate-900"
                 />
               </div>
 
               <div className="space-y-1 md:col-span-2">
                 <label className="text-xs font-medium text-slate-700">
-                  Email Address
+                  E-Mail-Adresse
                 </label>
                 <input
                   type="email"
                   value={buyerEmail}
                   onChange={(e) => setBuyerEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder="Geben Sie Ihre E-Mail-Adresse ein"
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-200 focus:border-[#0052cc] outline-none bg-white text-slate-900"
                 />
               </div>
@@ -421,7 +420,7 @@ _Sent via ${appName} Marketplace Inquiry Portal_`;
                 className="bg-[#0052cc] hover:bg-[#0747a6] text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-2"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>{loading ? "Connecting..." : "Send via WhatsApp"}</span>
+                <span>{loading ? "Verbinde..." : "Per WhatsApp senden"}</span>
               </button>
             </div>
 

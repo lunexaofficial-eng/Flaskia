@@ -201,6 +201,8 @@ export default function App() {
     appBrandBadge: "PRO",
     appSubtitle: "Academic Supply Direct",
     appLogoIcon: "FlaskConical",
+    appLogoUrl: "",
+    footerLogoUrl: "",
     appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
     admin_url_path: "/lunexa_official",
     adminWhatsappNumber: "15099941048",
@@ -770,6 +772,7 @@ export default function App() {
           appBrandBadge={homepageConfig.appBrandBadge}
           appSubtitle={homepageConfig.appSubtitle}
           appLogoIcon={homepageConfig.appLogoIcon}
+          appLogoUrl={homepageConfig.appLogoUrl}
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenInquiry={handleHeaderOpenInquiry}
@@ -1241,35 +1244,45 @@ export default function App() {
                 onClick={() => handleNavigate("store")}
                 className="inline-flex items-center gap-2.5 cursor-pointer group"
               >
-                <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center shadow-2xs group-hover:bg-[#0747a6] transition-colors shrink-0">
-                  {(() => {
-                    const FooterIcon = (() => {
-                      switch (homepageConfig.appLogoIcon) {
-                        case "Award": return Award;
-                        case "Activity": return Activity;
-                        case "ShieldCheck": return ShieldCheck;
-                        case "Globe": return Globe;
-                        case "Cpu": return Cpu;
-                        case "Sparkles": return Sparkles;
-                        case "Beaker": return Beaker;
-                        case "Heart": return Heart;
-                        case "FlaskConical":
-                        default: return FlaskConical;
-                      }
-                    })();
-                    return <FooterIcon className="w-4.5 h-4.5" />;
-                  })()}
-                </div>
-                <div>
-                  <span className="font-bold text-slate-900 text-base tracking-tight font-heading block leading-none">
-                    {homepageConfig.appName}
-                  </span>
-                  {homepageConfig.appSubtitle && (
-                    <span className="text-[11px] text-slate-500 font-medium block mt-1 leading-none">
-                      {homepageConfig.appSubtitle}
-                    </span>
-                  )}
-                </div>
+                {homepageConfig.footerLogoUrl && homepageConfig.footerLogoUrl.trim().length > 0 ? (
+                  <img
+                    src={homepageConfig.footerLogoUrl.trim()}
+                    alt="Footer Brand Logo"
+                    className="h-9 md:h-10 w-auto max-w-[200px] object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+                  />
+                ) : (
+                  <>
+                    <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center shadow-2xs group-hover:bg-[#0747a6] transition-colors shrink-0">
+                      {(() => {
+                        const FooterIcon = (() => {
+                          switch (homepageConfig.appLogoIcon) {
+                            case "Award": return Award;
+                            case "Activity": return Activity;
+                            case "ShieldCheck": return ShieldCheck;
+                            case "Globe": return Globe;
+                            case "Cpu": return Cpu;
+                            case "Sparkles": return Sparkles;
+                            case "Beaker": return Beaker;
+                            case "Heart": return Heart;
+                            case "FlaskConical":
+                            default: return FlaskConical;
+                          }
+                        })();
+                        return <FooterIcon className="w-4.5 h-4.5" />;
+                      })()}
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-900 text-base tracking-tight font-heading block leading-none">
+                        {homepageConfig.appName}
+                      </span>
+                      {homepageConfig.appSubtitle && (
+                        <span className="text-[11px] text-slate-500 font-medium block mt-1 leading-none">
+                          {homepageConfig.appSubtitle}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               <p className="text-xs leading-relaxed text-slate-500 max-w-sm">

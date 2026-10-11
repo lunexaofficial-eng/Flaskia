@@ -40,7 +40,7 @@ export default function CurrencySelector({ align = "left" }: CurrencySelectorPro
           } mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-[120] overflow-hidden animate-fade-in`}
         >
           <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 text-[11px] font-medium text-slate-500">
-            Select Currency
+            Währung auswählen
           </div>
 
           <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">

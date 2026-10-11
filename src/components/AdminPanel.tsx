@@ -1396,6 +1396,8 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     appBrandBadge: "",
     appSubtitle: "",
     appLogoIcon: "",
+    appLogoUrl: "",
+    footerLogoUrl: "",
     appFaviconUrl: "",
     adminWhatsappNumber: "",
 
@@ -1419,6 +1421,297 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
     paypal_currency: "USD",
   });
   const [isSavingHomepage, setIsSavingHomepage] = useState<boolean>(false);
+  const [homepageSaveFeedback, setHomepageSaveFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Branding Logo & Favicon Upload States (Progress & Size Validation Alerts)
+  const [brandUploadProgress, setBrandUploadProgress] = useState<{
+    header: number | null;
+    footer: number | null;
+    favicon: number | null;
+  }>({ header: null, footer: null, favicon: null });
+
+  const [brandUploadAlert, setBrandUploadAlert] = useState<{
+    type: "error" | "success";
+    title: string;
+    message: string;
+    target?: "header" | "footer" | "favicon";
+  } | null>(null);
+
+  const validateImageDimensions = (
+    file: File
+  ): Promise<{ width: number; height: number; isSvgOrIco: boolean }> => {
+    return new Promise((resolve, reject) => {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      if (file.type === "image/svg+xml" || ext === "svg") {
+        resolve({ width: 240, height: 60, isSvgOrIco: true });
+        return;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      const img = new window.Image();
+      img.onload = () => {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        URL.revokeObjectURL(objectUrl);
+        resolve({ width: w, height: h, isSvgOrIco: ext === "ico" });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        if (ext === "ico" || file.type.includes("icon")) {
+          resolve({ width: 64, height: 64, isSvgOrIco: true });
+        } else {
+          reject(new Error("Invalid or corrupted image file. Could not read pixel dimensions."));
+        }
+      };
+      img.src = objectUrl;
+    });
+  };
+
+  const handleBrandingAssetUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    assetType: "header" | "footer" | "favicon"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    setBrandUploadAlert(null);
+
+    const specs = {
+      header: {
+        label: "Website Header Logo",
+        field: "appLogoUrl" as const,
+        maxBytes: 2 * 1024 * 1024,
+        maxSizeLabel: "2 MB",
+        minW: 60,
+        maxW: 600,
+        minH: 20,
+        maxH: 200,
+        recLabel: "240 × 60 px (Allowed: 60–600px W × 20–200px H, Max 2MB)",
+        allowedExts: ["png", "svg", "webp", "jpg", "jpeg"],
+      },
+      footer: {
+        label: "Website Footer Logo",
+        field: "footerLogoUrl" as const,
+        maxBytes: 2 * 1024 * 1024,
+        maxSizeLabel: "2 MB",
+        minW: 60,
+        maxW: 600,
+        minH: 20,
+        maxH: 200,
+        recLabel: "240 × 60 px (Allowed: 60–600px W × 20–200px H, Max 2MB)",
+        allowedExts: ["png", "svg", "webp", "jpg", "jpeg"],
+      },
+      favicon: {
+        label: "Browser Favicon",
+        field: "appFaviconUrl" as const,
+        maxBytes: 500 * 1024,
+        maxSizeLabel: "500 KB",
+        minW: 16,
+        maxW: 512,
+        minH: 16,
+        maxH: 512,
+        recLabel: "64 × 64 px or 48 × 48 px 1:1 Square (Allowed: 16×16px to 512×512px, Max 500KB)",
+        allowedExts: ["png", "ico", "svg", "webp"],
+      },
+    }[assetType];
+
+    // 1. Check File Extension
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!specs.allowedExts.includes(ext)) {
+      const msg = `${specs.label} format ".${ext}" is not supported. Allowed formats: ${specs.allowedExts.map((x) => x.toUpperCase()).join(", ")}.`;
+      setBrandUploadAlert({
+        type: "error",
+        title: `Invalid File Format — ${specs.label}`,
+        message: msg,
+        target: assetType,
+      });
+      return;
+    }
+
+    // 2. Check File Byte Size
+    if (file.size > specs.maxBytes) {
+      const fileSizeKb = (file.size / 1024).toFixed(1);
+      const fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      const msg = `Selected file size is ${file.size >= 1024 * 1024 ? `${fileSizeMb} MB` : `${fileSizeKb} KB`}, which exceeds the maximum limit of ${specs.maxSizeLabel} for ${specs.label}. Required: ${specs.recLabel}.`;
+      setBrandUploadAlert({
+        type: "error",
+        title: `File Size Too Large — ${specs.label}`,
+        message: msg,
+        target: assetType,
+      });
+      return;
+    }
+
+    // 3. Check Pixel Dimensions
+    let dims: { width: number; height: number; isSvgOrIco: boolean };
+    try {
+      dims = await validateImageDimensions(file);
+    } catch (err: any) {
+      setBrandUploadAlert({
+        type: "error",
+        title: `Unreadable Image File — ${specs.label}`,
+        message: err.message || "Unable to verify image dimensions.",
+        target: assetType,
+      });
+      return;
+    }
+
+    if (!dims.isSvgOrIco) {
+      const { width, height } = dims;
+      if (
+        width < specs.minW ||
+        width > specs.maxW ||
+        height < specs.minH ||
+        height > specs.maxH
+      ) {
+        const msg = `Uploaded image is ${width} × ${height} px, which is outside the allowed dimensions for ${specs.label}. Required size: ${specs.recLabel}.`;
+        setBrandUploadAlert({
+          type: "error",
+          title: `Image Dimensions Out of Range (${width}×${height}px)`,
+          message: msg,
+          target: assetType,
+        });
+        return;
+      }
+
+      if (assetType === "favicon" && Math.abs(width - height) > 4) {
+        const msg = `Uploaded favicon is ${width} × ${height} px. Browser favicons must have a 1:1 square aspect ratio (e.g., 32×32 px, 48×48 px, 64×64 px, or 512×512 px).`;
+        setBrandUploadAlert({
+          type: "error",
+          title: `Favicon Must Be Square (1:1 Ratio)`,
+          message: msg,
+          target: assetType,
+        });
+        return;
+      }
+    }
+
+    // 4. Size & Dimensions are OK -> Upload with Real-Time XHR Progress Bar
+    setBrandUploadProgress((prev) => ({ ...prev, [assetType]: 1 }));
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const adminToken =
+      token || localStorage.getItem("lunexa_admin_token") || "";
+
+    await new Promise<void>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/upload", true);
+      if (adminToken) {
+        xhr.setRequestHeader("Authorization", `Bearer ${adminToken}`);
+      }
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const pct = Math.max(
+            5,
+            Math.min(95, Math.round((event.loaded / event.total) * 100))
+          );
+          setBrandUploadProgress((prev) => ({ ...prev, [assetType]: pct }));
+        }
+      };
+
+      xhr.onload = async () => {
+        try {
+          const data = JSON.parse(xhr.responseText || "{}");
+          if (xhr.status >= 200 && xhr.status < 300 && data.success && data.url) {
+            setBrandUploadProgress((prev) => ({ ...prev, [assetType]: 100 }));
+            const uploadedUrl = data.url;
+
+            // Update local form state and immediately persist to database
+            setHomepageForm((prev) => {
+              const updatedForm = { ...prev, [specs.field]: uploadedUrl };
+              fetch("/api/homepage", {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${adminToken}`,
+                },
+                body: JSON.stringify(updatedForm),
+              }).catch((err) =>
+                console.error("Auto-persist branding logo error:", err)
+              );
+              return updatedForm;
+            });
+
+            fetchMediaFiles();
+
+            setBrandUploadAlert({
+              type: "success",
+              title: `${specs.label} Uploaded & Applied`,
+              message: `${file.name} (${dims.isSvgOrIco ? "Vector/Icon" : `${dims.width}×${dims.height}px`}, ${(file.size / 1024).toFixed(1)} KB) passed size verification and is now set live.`,
+              target: assetType,
+            });
+          } else {
+            setBrandUploadAlert({
+              type: "error",
+              title: `Upload Failed — ${specs.label}`,
+              message: data.error || "Server rejected the file upload.",
+              target: assetType,
+            });
+          }
+        } catch (err: any) {
+          setBrandUploadAlert({
+            type: "error",
+            title: `Upload Error — ${specs.label}`,
+            message: "Unexpected response from upload server.",
+            target: assetType,
+          });
+        } finally {
+          setTimeout(() => {
+            setBrandUploadProgress((prev) => ({ ...prev, [assetType]: null }));
+          }, 800);
+          resolve();
+        }
+      };
+
+      xhr.onerror = () => {
+        setBrandUploadProgress((prev) => ({ ...prev, [assetType]: null }));
+        setBrandUploadAlert({
+          type: "error",
+          title: `Network Error — ${specs.label}`,
+          message: "Failed to connect to upload server. Please try again.",
+          target: assetType,
+        });
+        resolve();
+      };
+
+      xhr.send(formData);
+    });
+  };
+
+  const handleClearBrandingAsset = async (
+    assetType: "header" | "footer"
+  ) => {
+    const field = assetType === "header" ? "appLogoUrl" : "footerLogoUrl";
+    const label =
+      assetType === "header" ? "Website Header Logo" : "Website Footer Logo";
+    const adminToken =
+      token || localStorage.getItem("lunexa_admin_token") || "";
+
+    setHomepageForm((prev) => {
+      const updated = { ...prev, [field]: "" };
+      fetch("/api/homepage", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify(updated),
+      }).catch((err) => console.error("Failed clearing logo:", err));
+      return updated;
+    });
+
+    setBrandUploadAlert({
+      type: "success",
+      title: `${label} Removed`,
+      message: `Custom ${label.toLowerCase()} removed. The system is now automatically using the Marketplace Site Title ("${homepageForm.appName || "Flaskia"}") as the logo.`,
+      target: assetType,
+    });
+  };
 
   // Financial Ledger Logs State
   const [paymentsLog, setPaymentsLog] = useState<any[]>([]);
@@ -1635,6 +1928,8 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         appBrandBadge: homeData.appBrandBadge || "PRO",
         appSubtitle: homeData.appSubtitle || "Academic Supply Direct",
         appLogoIcon: homeData.appLogoIcon || "FlaskConical",
+        appLogoUrl: homeData.appLogoUrl || "",
+        footerLogoUrl: homeData.footerLogoUrl || "",
         appFaviconUrl:
           homeData.appFaviconUrl ||
           "https://img.icons8.com/color/48/chemistry.png",
@@ -1737,7 +2032,10 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
         appBrandBadge: "PRO",
         appSubtitle: "Academic Supply Direct",
         appLogoIcon: "FlaskConical",
+        appLogoUrl: "",
+        footerLogoUrl: "",
         appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
+        adminWhatsappNumber: "15099941048",
 
         // Default footer variables
         footerCompanyName: "Flaskia Supplies International Co.",
@@ -2806,6 +3104,7 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
   const handleSaveHomepageConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingHomepage(true);
+    setHomepageSaveFeedback(null);
 
     try {
       const response = await fetch("/api/homepage", {
@@ -2820,18 +3119,20 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
       if (response.ok) {
         const data = await response.json();
         setHomepageForm((prev) => ({ ...prev, ...data }));
-        alert(
-          "Success: Homepage settings updated and are now live across the store!",
-        );
+        setHomepageSaveFeedback({
+          type: "success",
+          message: "Homepage & Site Branding settings saved and published live across the marketplace!",
+        });
       } else {
         const errorMsg = await response.text();
         throw new Error(errorMsg || "Failed to save homepage config");
       }
     } catch (err: any) {
       console.error("Failed to save homepage config to API:", err);
-      alert(
-        `[SANDBOX RECOVERY] Updated successfully. Homepage state remains cached in memory.`,
-      );
+      setHomepageSaveFeedback({
+        type: "error",
+        message: err.message || "Failed to save homepage settings.",
+      });
     } finally {
       setIsSavingHomepage(false);
     }
@@ -5247,53 +5548,84 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
                   {/* PANEL 1: TOP HEADER & SITE BRANDING IDENTITY */}
-                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2 flex items-center justify-between">
-                      <span>1. Top Header & Site Branding Identity</span>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        [{activeTheme.toUpperCase()}]
-                      </span>
-                    </h3>
-
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Marketplace Title / Name
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={homepageForm.appName}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appName: e.target.value,
-                              }))
-                            }
-                            placeholder="e.g. Flaskia"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Brand Badge Behind Title
-                          </label>
-                          <input
-                            type="text"
-                            value={homepageForm.appBrandBadge}
-                            onChange={(e) =>
-                              setHomepageForm((prev) => ({
-                                ...prev,
-                                appBrandBadge: e.target.value,
-                              }))
-                            }
-                            placeholder="e.g. CHEMICALS"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
-                          />
-                        </div>
+                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4 md:col-span-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                          <span>1. Top Header & Site Branding Identity</span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            [{activeTheme.toUpperCase()}]
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Manage your marketplace title, custom header & footer brand logos, and browser favicon. If no custom logo is uploaded, the system automatically displays the Site Title as your logo.
+                        </p>
                       </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border ${
+                            homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim().length > 0
+                              ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300"
+                              : "bg-amber-950/60 border-amber-700/60 text-amber-300"
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          {homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim().length > 0
+                            ? "HEADER: CUSTOM LOGO ACTIVE"
+                            : "HEADER: USING SITE TITLE"}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border ${
+                            homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim().length > 0
+                              ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300"
+                              : "bg-amber-950/60 border-amber-700/60 text-amber-300"
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          {homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim().length > 0
+                            ? "FOOTER: CUSTOM LOGO ACTIVE"
+                            : "FOOTER: USING SITE TITLE"}
+                        </span>
+                      </div>
+                    </div>
 
+                    {/* Top Row: Basic Site Identity Text Inputs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Marketplace Title / Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={homepageForm.appName}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              appName: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. Flaskia"
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Brand Badge Behind Title
+                        </label>
+                        <input
+                          type="text"
+                          value={homepageForm.appBrandBadge}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              appBrandBadge: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. PRO"
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                        />
+                      </div>
                       <div>
                         <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                           Header Subtitle Tagline
@@ -5308,15 +5640,39 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                               appSubtitle: e.target.value,
                             }))
                           }
-                          placeholder="e.g. Chemicals & Research Solutions"
+                          placeholder="e.g. Academic Supply Direct"
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
                         />
                       </div>
-
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Fallback Title Icon
+                        </label>
+                        <select
+                          value={homepageForm.appLogoIcon}
+                          onChange={(e) =>
+                            setHomepageForm((prev) => ({
+                              ...prev,
+                              appLogoIcon: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition cursor-pointer"
+                        >
+                          <option value="FlaskConical">Flask Conical</option>
+                          <option value="Award">Award Badge</option>
+                          <option value="Activity">Pulse Activity</option>
+                          <option value="ShieldCheck">Verified Shield</option>
+                          <option value="Globe">Global Network</option>
+                          <option value="Cpu">Microchip CPU</option>
+                          <option value="Sparkles">Sparkles Star</option>
+                          <option value="Beaker">Beaker Tube</option>
+                          <option value="Heart">Care Heart</option>
+                        </select>
+                      </div>
                       <div>
                         <label className="block text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                          <span>Admin WhatsApp Helpline Number</span>
-                          <span className="text-[9px] text-slate-500 font-normal">With Country Code (e.g. 15099941048)</span>
+                          <span>WhatsApp Helpline</span>
+                          <span className="text-[9px] text-slate-500 font-normal">With Country Code</span>
                         </label>
                         <input
                           type="text"
@@ -5331,37 +5687,376 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           className="w-full px-3 py-2 bg-slate-950 border border-emerald-900/60 rounded-xl text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500 transition"
                         />
                       </div>
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Launcher Logo Icon
-                          </label>
-                          <select
-                            value={homepageForm.appLogoIcon}
+                    {/* Alert Notification Banner for Size Check Validation or Upload Result */}
+                    {brandUploadAlert && (
+                      <div
+                        className={`p-4 rounded-xl border flex items-start justify-between gap-3 transition-all ${
+                          brandUploadAlert.type === "error"
+                            ? "bg-rose-950/60 border-rose-500/60 text-rose-200"
+                            : "bg-emerald-950/60 border-emerald-500/60 text-emerald-200"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {brandUploadAlert.type === "error" ? (
+                            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                          ) : (
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                          )}
+                          <div className="space-y-1">
+                            <h4 className="text-xs font-bold tracking-wide uppercase">
+                              {brandUploadAlert.title}
+                            </h4>
+                            <p className="text-xs leading-relaxed opacity-90">
+                              {brandUploadAlert.message}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setBrandUploadAlert(null)}
+                          className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 3-Column Brand Logo & Favicon Upload Studio */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2">
+                      {/* CARD 1: WEBSITE HEADER LOGO */}
+                      <div className="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between space-y-3.5">
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <Image className="w-3.5 h-3.5 text-rose-400" />
+                              Website Header Logo
+                            </span>
+                            <span
+                              className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase border ${
+                                homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim()
+                                  ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                                  : "bg-slate-900 text-slate-400 border-slate-700"
+                              }`}
+                            >
+                              {homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim()
+                                ? "Custom Logo"
+                                : "Site Title Mode"}
+                            </span>
+                          </div>
+
+                          {/* Live Preview Box */}
+                          <div className="h-20 rounded-xl bg-white border border-slate-200 flex items-center justify-center px-4 relative overflow-hidden">
+                            {homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim() ? (
+                              <img
+                                src={homepageForm.appLogoUrl.trim()}
+                                alt="Header Logo Preview"
+                                className="h-10 w-auto max-w-[200px] object-contain"
+                              />
+                            ) : (
+                              <div className="flex items-center gap-2 select-none">
+                                <div className="w-8 h-8 rounded-lg bg-[#0052cc] text-white flex items-center justify-center">
+                                  <Beaker className="w-4 h-4" />
+                                </div>
+                                <span className="text-base font-bold tracking-tight text-slate-900 font-heading">
+                                  {homepageForm.appName || "Flaskia"}
+                                </span>
+                              </div>
+                            )}
+                            <span className="absolute bottom-1 right-2 text-[8px] font-mono uppercase tracking-wider text-slate-400">
+                              {homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim()
+                                ? "Uploaded Logo Active"
+                                : "Auto Site Title Fallback"}
+                            </span>
+                          </div>
+
+                          {/* Size & Dimension Instructions */}
+                          <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-2.5 space-y-1 text-[10px] text-slate-300">
+                            <div className="font-semibold text-rose-300 flex items-center justify-between">
+                              <span>Required Size Specifications:</span>
+                              <span className="font-mono text-[9px] text-slate-400">MAX 2 MB</span>
+                            </div>
+                            <ul className="text-[10px] text-slate-400 space-y-0.5 font-mono">
+                              <li>• Ideal Size: <strong className="text-slate-200">240 × 60 px</strong> (4:1 ratio)</li>
+                              <li>• Allowed Range: <strong className="text-slate-200">60–600px W × 20–200px H</strong></li>
+                              <li>• Formats: <strong className="text-slate-200">PNG, SVG, WEBP, JPG</strong></li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Upload Progress Bar & Controls */}
+                        <div className="space-y-2 pt-1">
+                          {brandUploadProgress.header !== null && (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-mono text-rose-300">
+                                <span>Validating & Uploading Header Logo...</span>
+                                <span>{brandUploadProgress.header}%</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                                <div
+                                  className="h-full bg-gradient-to-r from-rose-500 to-emerald-500 transition-all duration-200"
+                                  style={{ width: `${brandUploadProgress.header}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold rounded-xl cursor-pointer transition shadow-xs">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>
+                                {brandUploadProgress.header !== null
+                                  ? `Uploading (${brandUploadProgress.header}%)`
+                                  : "Upload Header Logo"}
+                              </span>
+                              <input
+                                type="file"
+                                accept=".png,.svg,.webp,.jpg,.jpeg,image/png,image/svg+xml,image/webp,image/jpeg"
+                                onChange={(e) => handleBrandingAssetUpload(e, "header")}
+                                disabled={brandUploadProgress.header !== null}
+                                className="hidden"
+                              />
+                            </label>
+
+                            {homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => handleClearBrandingAsset("header")}
+                                title="Remove custom logo and use Site Title"
+                                className="px-2.5 py-2 bg-slate-900 hover:bg-rose-950/80 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-700 rounded-xl text-[10px] font-semibold cursor-pointer transition flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Use Title</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <input
+                            type="text"
+                            value={homepageForm.appLogoUrl || ""}
                             onChange={(e) =>
                               setHomepageForm((prev) => ({
                                 ...prev,
-                                appLogoIcon: e.target.value,
+                                appLogoUrl: e.target.value,
                               }))
                             }
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition cursor-pointer"
-                          >
-                            <option value="FlaskConical">Flask Conical</option>
-                            <option value="Award">Award Badge</option>
-                            <option value="Activity">Pulse Activity</option>
-                            <option value="ShieldCheck">Verified Shield</option>
-                            <option value="Globe">Global Network</option>
-                            <option value="Cpu">Microchip CPU</option>
-                            <option value="Sparkles">Sparkles Star</option>
-                            <option value="Beaker">Beaker Tube</option>
-                            <option value="Heart">Care Heart</option>
-                          </select>
+                            placeholder="Or paste direct Header Logo URL (leave empty for Site Title)..."
+                            className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[10px] text-slate-300 font-mono focus:outline-none focus:border-rose-500"
+                          />
                         </div>
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                            Browser Favicon URL
-                          </label>
+                      </div>
+
+                      {/* CARD 2: WEBSITE FOOTER LOGO */}
+                      <div className="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between space-y-3.5">
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <Image className="w-3.5 h-3.5 text-sky-400" />
+                              Website Footer Logo
+                            </span>
+                            <span
+                              className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase border ${
+                                homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim()
+                                  ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                                  : "bg-slate-900 text-slate-400 border-slate-700"
+                              }`}
+                            >
+                              {homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim()
+                                ? "Custom Logo"
+                                : "Site Title Mode"}
+                            </span>
+                          </div>
+
+                          {/* Live Preview Box */}
+                          <div className="h-20 rounded-xl bg-white border border-slate-200 flex items-center justify-center px-4 relative overflow-hidden">
+                            {homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim() ? (
+                              <img
+                                src={homepageForm.footerLogoUrl.trim()}
+                                alt="Footer Logo Preview"
+                                className="h-10 w-auto max-w-[200px] object-contain"
+                              />
+                            ) : (
+                              <div className="flex items-center gap-2 select-none">
+                                <div className="w-8 h-8 rounded-lg bg-[#0052cc] text-white flex items-center justify-center">
+                                  <Beaker className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <span className="text-sm font-bold tracking-tight text-slate-900 font-heading block leading-none">
+                                    {homepageForm.appName || "Flaskia"}
+                                  </span>
+                                  <span className="text-[9px] text-slate-500 block mt-0.5">
+                                    {homepageForm.appSubtitle || "Academic Supply Direct"}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            <span className="absolute bottom-1 right-2 text-[8px] font-mono uppercase tracking-wider text-slate-400">
+                              {homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim()
+                                ? "Uploaded Logo Active"
+                                : "Auto Site Title Fallback"}
+                            </span>
+                          </div>
+
+                          {/* Size & Dimension Instructions */}
+                          <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-2.5 space-y-1 text-[10px] text-slate-300">
+                            <div className="font-semibold text-sky-300 flex items-center justify-between">
+                              <span>Required Size Specifications:</span>
+                              <span className="font-mono text-[9px] text-slate-400">MAX 2 MB</span>
+                            </div>
+                            <ul className="text-[10px] text-slate-400 space-y-0.5 font-mono">
+                              <li>• Ideal Size: <strong className="text-slate-200">240 × 60 px</strong> (4:1 ratio)</li>
+                              <li>• Allowed Range: <strong className="text-slate-200">60–600px W × 20–200px H</strong></li>
+                              <li>• Formats: <strong className="text-slate-200">PNG, SVG, WEBP, JPG</strong></li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Upload Progress Bar & Controls */}
+                        <div className="space-y-2 pt-1">
+                          {brandUploadProgress.footer !== null && (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-mono text-sky-300">
+                                <span>Validating & Uploading Footer Logo...</span>
+                                <span>{brandUploadProgress.footer}%</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                                <div
+                                  className="h-full bg-gradient-to-r from-sky-500 to-emerald-500 transition-all duration-200"
+                                  style={{ width: `${brandUploadProgress.footer}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-bold rounded-xl cursor-pointer transition shadow-xs">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>
+                                {brandUploadProgress.footer !== null
+                                  ? `Uploading (${brandUploadProgress.footer}%)`
+                                  : "Upload Footer Logo"}
+                              </span>
+                              <input
+                                type="file"
+                                accept=".png,.svg,.webp,.jpg,.jpeg,image/png,image/svg+xml,image/webp,image/jpeg"
+                                onChange={(e) => handleBrandingAssetUpload(e, "footer")}
+                                disabled={brandUploadProgress.footer !== null}
+                                className="hidden"
+                              />
+                            </label>
+
+                            {homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => handleClearBrandingAsset("footer")}
+                                title="Remove custom footer logo and use Site Title"
+                                className="px-2.5 py-2 bg-slate-900 hover:bg-rose-950/80 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-700 rounded-xl text-[10px] font-semibold cursor-pointer transition flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Use Title</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <input
+                            type="text"
+                            value={homepageForm.footerLogoUrl || ""}
+                            onChange={(e) =>
+                              setHomepageForm((prev) => ({
+                                ...prev,
+                                footerLogoUrl: e.target.value,
+                              }))
+                            }
+                            placeholder="Or paste direct Footer Logo URL (leave empty for Site Title)..."
+                            className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[10px] text-slate-300 font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* CARD 3: BROWSER FAVICON */}
+                      <div className="bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between space-y-3.5">
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                              Browser Tab Favicon
+                            </span>
+                            <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase bg-emerald-950 text-emerald-400 border border-emerald-800">
+                              1:1 Square Icon
+                            </span>
+                          </div>
+
+                          {/* Live Browser Tab Mock Preview Box */}
+                          <div className="h-20 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center px-4 relative overflow-hidden">
+                            <div className="bg-slate-800 border border-slate-700 rounded-t-lg px-3 py-1.5 flex items-center gap-2 max-w-[220px] w-full shadow-xs">
+                              {homepageForm.appFaviconUrl ? (
+                                <img
+                                  src={homepageForm.appFaviconUrl}
+                                  alt="Favicon Preview"
+                                  className="w-4 h-4 object-contain shrink-0"
+                                />
+                              ) : (
+                                <div className="w-4 h-4 rounded bg-rose-500 shrink-0" />
+                              )}
+                              <span className="text-[10px] text-slate-200 font-sans truncate">
+                                {homepageForm.appName || "Flaskia"} | {homepageForm.appSubtitle || "Store"}
+                              </span>
+                            </div>
+                            <span className="text-[8.5px] font-mono text-slate-400 mt-1.5">
+                              Live Browser Tab Favicon Preview
+                            </span>
+                          </div>
+
+                          {/* Size & Dimension Instructions */}
+                          <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-2.5 space-y-1 text-[10px] text-slate-300">
+                            <div className="font-semibold text-emerald-300 flex items-center justify-between">
+                              <span>Required Size Specifications:</span>
+                              <span className="font-mono text-[9px] text-slate-400">MAX 500 KB</span>
+                            </div>
+                            <ul className="text-[10px] text-slate-400 space-y-0.5 font-mono">
+                              <li>• Ideal Size: <strong className="text-slate-200">64 × 64 px</strong> or <strong className="text-slate-200">48 × 48 px</strong> (1:1)</li>
+                              <li>• Allowed Range: <strong className="text-slate-200">16×16px to 512×512px (Square)</strong></li>
+                              <li>• Formats: <strong className="text-slate-200">PNG, ICO, SVG, WEBP</strong></li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Upload Progress Bar & Controls */}
+                        <div className="space-y-2 pt-1">
+                          {brandUploadProgress.favicon !== null && (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-mono text-emerald-300">
+                                <span>Validating & Uploading Favicon...</span>
+                                <span>{brandUploadProgress.favicon}%</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                                <div
+                                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-200"
+                                  style={{ width: `${brandUploadProgress.favicon}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-xl cursor-pointer transition shadow-xs">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>
+                                {brandUploadProgress.favicon !== null
+                                  ? `Uploading (${brandUploadProgress.favicon}%)`
+                                  : "Upload Favicon"}
+                              </span>
+                              <input
+                                type="file"
+                                accept=".png,.ico,.svg,.webp,image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp"
+                                onChange={(e) => handleBrandingAssetUpload(e, "favicon")}
+                                disabled={brandUploadProgress.favicon !== null}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+
                           <input
                             type="text"
                             required
@@ -5372,8 +6067,8 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                                 appFaviconUrl: e.target.value,
                               }))
                             }
-                            placeholder="e.g. https://icons8.com/chemistry"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 transition"
+                            placeholder="Or paste direct Favicon URL..."
+                            className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-[10px] text-slate-300 font-mono focus:outline-none focus:border-emerald-500"
                           />
                         </div>
                       </div>

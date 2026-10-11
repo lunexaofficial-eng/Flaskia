@@ -27,6 +27,7 @@ interface HeaderProps {
   appBrandBadge?: string;
   appSubtitle?: string;
   appLogoIcon?: string;
+  appLogoUrl?: string;
   currentUser?: any;
   onLogout?: () => void;
   onOpenInquiry?: (product?: any) => void;
@@ -67,6 +68,7 @@ export default function Header({
   onOpenHelp,
   appName = "Flaskia",
   appLogoIcon = "FlaskConical",
+  appLogoUrl = "",
   currentUser,
   onLogout,
   onOpenInquiry,
@@ -74,6 +76,7 @@ export default function Header({
   const { isIndiamart, isRetail } = useTheme();
   const isNoCartAuthTheme = isRetail || isIndiamart;
   const TargetIcon = getLogoIcon(appLogoIcon);
+  const hasCustomLogo = Boolean(appLogoUrl && appLogoUrl.trim().length > 0);
 
   return (
     <header
@@ -86,12 +89,22 @@ export default function Header({
           onClick={() => onNavigate("store")}
           className="flex items-center gap-2.5 cursor-pointer group shrink-0"
         >
-          <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center group-hover:bg-[#0747a6] transition-colors">
-            <TargetIcon className="w-5 h-5 text-white stroke-[2]" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-slate-900 font-heading">
-            {appName}
-          </span>
+          {hasCustomLogo ? (
+            <img
+              src={appLogoUrl.trim()}
+              alt="Brand Logo"
+              className="h-9 md:h-10 w-auto max-w-[200px] object-contain transition-transform duration-200 group-hover:scale-[1.01]"
+            />
+          ) : (
+            <>
+              <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center group-hover:bg-[#0747a6] transition-colors">
+                <TargetIcon className="w-5 h-5 text-white stroke-[2]" />
+              </div>
+              <span className="text-lg font-bold tracking-tight text-slate-900 font-heading">
+                {appName}
+              </span>
+            </>
+          )}
         </div>
 
         {/* 2. Search Bar */}

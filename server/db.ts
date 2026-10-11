@@ -1316,6 +1316,8 @@ export async function initDb(frontProducts?: any[]) {
         appBrandBadge: "PRO",
         appSubtitle: "Academic Supply Direct",
         appLogoIcon: "FlaskConical",
+        appLogoUrl: "",
+        footerLogoUrl: "",
         appFaviconUrl: "https://img.icons8.com/color/48/chemistry.png",
         footerCompanyName: "Flaskia Supplies International Co.",
         footerLicence1: "OSHA ID: 44321-REAG",
