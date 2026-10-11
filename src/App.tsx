@@ -1246,12 +1246,13 @@ export default function App() {
               >
                 {homepageConfig.footerLogoUrl && homepageConfig.footerLogoUrl.trim().length > 0 ? (
                   <img
+                    key="footer-custom-logo"
                     src={homepageConfig.footerLogoUrl.trim()}
                     alt="Footer Brand Logo"
                     className="h-9 md:h-10 w-auto max-w-[200px] object-contain transition-transform duration-200 group-hover:scale-[1.01]"
                   />
                 ) : (
-                  <>
+                  <div key="footer-title-logo" className="inline-flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center shadow-2xs group-hover:bg-[#0747a6] transition-colors shrink-0">
                       {(() => {
                         const FooterIcon = (() => {
@@ -1281,7 +1282,7 @@ export default function App() {
                         </span>
                       )}
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
 

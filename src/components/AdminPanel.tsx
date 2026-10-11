@@ -5750,12 +5750,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           <div className="h-20 rounded-xl bg-white border border-slate-200 flex items-center justify-center px-4 relative overflow-hidden">
                             {homepageForm.appLogoUrl && homepageForm.appLogoUrl.trim() ? (
                               <img
+                                key="preview-header-img"
                                 src={homepageForm.appLogoUrl.trim()}
                                 alt="Header Logo Preview"
                                 className="h-10 w-auto max-w-[200px] object-contain"
                               />
                             ) : (
-                              <div className="flex items-center gap-2 select-none">
+                              <div key="preview-header-fallback" className="flex items-center gap-2 select-none">
                                 <div className="w-8 h-8 rounded-lg bg-[#0052cc] text-white flex items-center justify-center">
                                   <Beaker className="w-4 h-4" />
                                 </div>
@@ -5872,12 +5873,13 @@ export default function AdminPanel({ onBackToStore }: AdminPanelProps) {
                           <div className="h-20 rounded-xl bg-white border border-slate-200 flex items-center justify-center px-4 relative overflow-hidden">
                             {homepageForm.footerLogoUrl && homepageForm.footerLogoUrl.trim() ? (
                               <img
+                                key="preview-footer-img"
                                 src={homepageForm.footerLogoUrl.trim()}
                                 alt="Footer Logo Preview"
                                 className="h-10 w-auto max-w-[200px] object-contain"
                               />
                             ) : (
-                              <div className="flex items-center gap-2 select-none">
+                              <div key="preview-footer-fallback" className="flex items-center gap-2 select-none">
                                 <div className="w-8 h-8 rounded-lg bg-[#0052cc] text-white flex items-center justify-center">
                                   <Beaker className="w-4 h-4" />
                                 </div>

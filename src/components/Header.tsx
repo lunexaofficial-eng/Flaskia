@@ -91,19 +91,20 @@ export default function Header({
         >
           {hasCustomLogo ? (
             <img
+              key="header-custom-logo"
               src={appLogoUrl.trim()}
               alt="Brand Logo"
               className="h-9 md:h-10 w-auto max-w-[200px] object-contain transition-transform duration-200 group-hover:scale-[1.01]"
             />
           ) : (
-            <>
+            <div key="header-title-logo" className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-lg bg-[#0052cc] text-white flex items-center justify-center group-hover:bg-[#0747a6] transition-colors">
                 <TargetIcon className="w-5 h-5 text-white stroke-[2]" />
               </div>
               <span className="text-lg font-bold tracking-tight text-slate-900 font-heading">
                 {appName}
               </span>
-            </>
+            </div>
           )}
         </div>
 
