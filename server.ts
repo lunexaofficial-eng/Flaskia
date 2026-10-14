@@ -4837,7 +4837,11 @@ const startServer = async () => {
     console.log("Starting server in development mode...");
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+        watch: null,
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -4850,9 +4854,26 @@ const startServer = async () => {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Aniixa backend running on http://localhost:${PORT}`);
   });
+
+  server.on("error", (err: any) => {
+    if (err.code === "EADDRINUSE") {
+      console.warn(`Port ${PORT} is currently in use or being re-bound.`);
+    } else {
+      console.error("Server listen error:", err);
+    }
+  });
+
+  const cleanup = () => {
+    server.close(() => {
+      process.exit(0);
+    });
+  };
+
+  process.once("SIGTERM", cleanup);
+  process.once("SIGINT", cleanup);
 };
 
 if (!process.env.VERCEL) {

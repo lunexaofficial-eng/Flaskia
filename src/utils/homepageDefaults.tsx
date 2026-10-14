@@ -1212,3 +1212,124 @@ export function resolveFooterBanners(rawJson?: string): {
     customCount: 0,
   };
 }
+
+export interface BannerAspectRatioInfo {
+  ratioDecimal: number;
+  ratioString: string;
+  cssAspectRatio: string;
+  category: "portrait" | "tall" | "square" | "landscape" | "widescreen" | "panoramic";
+  label: string;
+}
+
+export function parseBannerAspectRatio(aspectRatio?: string | number): number | null {
+  if (typeof aspectRatio === "number" && !isNaN(aspectRatio) && aspectRatio > 0) {
+    return aspectRatio;
+  }
+  if (!aspectRatio || typeof aspectRatio !== "string") return null;
+  const str = aspectRatio.trim();
+  if (str.includes("/")) {
+    const [w, h] = str.split("/").map(Number);
+    if (w > 0 && h > 0) return w / h;
+  }
+  if (str.includes(":")) {
+    const [w, h] = str.split(":").map(Number);
+    if (w > 0 && h > 0) return w / h;
+  }
+  const parsedNum = parseFloat(str);
+  if (!isNaN(parsedNum) && parsedNum > 0) return parsedNum;
+  return null;
+}
+
+export function formatBannerAspectRatio(
+  width?: number,
+  height?: number,
+  existingRatio?: string
+): BannerAspectRatioInfo {
+  let decimal: number = 2 / 3;
+  const w = width || 0;
+  const h = height || 0;
+
+  if (w > 0 && h > 0) {
+    decimal = w / h;
+  } else if (existingRatio) {
+    const parsed = parseBannerAspectRatio(existingRatio);
+    if (parsed) {
+      decimal = parsed;
+    }
+  }
+
+  let ratioString = w > 0 && h > 0 ? `${w}:${h}` : "2:3";
+  let cssAspectRatio = w > 0 && h > 0 ? `${w} / ${h}` : "2 / 3";
+  let category: "portrait" | "tall" | "square" | "landscape" | "widescreen" | "panoramic" = "portrait";
+  let label = "Custom Ratio";
+
+  if (Math.abs(decimal - 2 / 3) < 0.05) {
+    ratioString = "2:3";
+    cssAspectRatio = "2 / 3";
+    category = "portrait";
+    label = "2:3 Portrait";
+  } else if (Math.abs(decimal - 9 / 16) < 0.05) {
+    ratioString = "9:16";
+    cssAspectRatio = "9 / 16";
+    category = "portrait";
+    label = "9:16 Mobile Portrait";
+  } else if (Math.abs(decimal - 3 / 4) < 0.05 || Math.abs(decimal - 4 / 5) < 0.05) {
+    ratioString = decimal < 0.78 ? "3:4" : "4:5";
+    cssAspectRatio = ratioString.replace(":", " / ");
+    category = "tall";
+    label = `${ratioString} Tall`;
+  } else if (Math.abs(decimal - 1) < 0.08) {
+    ratioString = "1:1";
+    cssAspectRatio = "1 / 1";
+    category = "square";
+    label = "1:1 Square";
+  } else if (Math.abs(decimal - 4 / 3) < 0.06) {
+    ratioString = "4:3";
+    cssAspectRatio = "4 / 3";
+    category = "landscape";
+    label = "4:3 Landscape";
+  } else if (Math.abs(decimal - 3 / 2) < 0.06) {
+    ratioString = "3:2";
+    cssAspectRatio = "3 / 2";
+    category = "landscape";
+    label = "3:2 Landscape";
+  } else if (Math.abs(decimal - 16 / 9) < 0.06) {
+    ratioString = "16:9";
+    cssAspectRatio = "16 / 9";
+    category = "widescreen";
+    label = "16:9 Widescreen";
+  } else if (Math.abs(decimal - 21 / 9) < 0.1 || decimal > 2.05) {
+    ratioString = "21:9";
+    cssAspectRatio = "21 / 9";
+    category = "panoramic";
+    label = "21:9 Panoramic";
+  } else {
+    if (decimal < 0.75) {
+      category = "portrait";
+      label = `Portrait (${decimal.toFixed(2)}:1)`;
+    } else if (decimal < 0.95) {
+      category = "tall";
+      label = `Tall (${decimal.toFixed(2)}:1)`;
+    } else if (decimal <= 1.05) {
+      category = "square";
+      label = "Square (1:1)";
+    } else if (decimal <= 1.5) {
+      category = "landscape";
+      label = `Landscape (${decimal.toFixed(2)}:1)`;
+    } else if (decimal <= 2.0) {
+      category = "widescreen";
+      label = `Widescreen (${decimal.toFixed(2)}:1)`;
+    } else {
+      category = "panoramic";
+      label = `Ultra-wide (${decimal.toFixed(2)}:1)`;
+    }
+  }
+
+  return {
+    ratioDecimal: decimal,
+    ratioString,
+    cssAspectRatio,
+    category,
+    label,
+  };
+}

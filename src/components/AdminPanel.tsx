@@ -94,6 +94,8 @@ import {
   FooterBannerItem,
   DEFAULT_FOOTER_MOCK_BANNERS,
   resolveFooterBanners,
+  formatBannerAspectRatio,
+  parseBannerAspectRatio,
 } from "../utils/homepageDefaults";
 import { ApiKeysManagement } from "./admin/ApiKeysManagement";
 
@@ -1788,6 +1790,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
     badge: string;
     width: number;
     height: number;
+    aspectRatio: string;
     enabled: boolean;
   }>({
     title: "",
@@ -1799,6 +1802,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
     badge: "",
     width: 0,
     height: 0,
+    aspectRatio: "",
     enabled: true,
   });
   const [bannerUploadProgress, setBannerUploadProgress] = useState<number | null>(null);
@@ -1846,12 +1850,14 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
   const handleBannerImageUpload = async (file: File) => {
     if (!file) return;
 
-    // Detect image natural dimensions
+    // Detect image natural dimensions and exact aspect ratio
     const objectUrl = URL.createObjectURL(file);
     const img = new window.Image();
     img.onload = () => {
-      const w = img.naturalWidth || 1920;
-      const h = img.naturalHeight || 600;
+      const w = img.naturalWidth || 800;
+      const h = img.naturalHeight || 1200;
+      const ratioStr = `${w} / ${h}`;
+      const aspectInfo = formatBannerAspectRatio(w, h);
       URL.revokeObjectURL(objectUrl);
 
       // Upload file to /api/upload
@@ -1882,10 +1888,11 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
               imageUrl: data.url,
               width: w,
               height: h,
+              aspectRatio: ratioStr,
             }));
             setBannerAlert({
               type: "success",
-              message: `Image uploaded successfully! Auto-detected dimensions: ${w} × ${h}px (${(w / h).toFixed(2)}:1 aspect ratio).`,
+              message: `Image uploaded successfully! Auto-detected dimensions: ${w} × ${h}px (${aspectInfo.label}). Storefront slider will automatically adjust its frame to match this ratio.`,
             });
           } else {
             setBannerAlert({
@@ -1921,11 +1928,17 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
       img.onload = () => {
         const w = img.naturalWidth || 800;
         const h = img.naturalHeight || 1200;
+        const aspectInfo = formatBannerAspectRatio(w, h);
         setBannerForm((prev) => ({
           ...prev,
           width: w,
           height: h,
+          aspectRatio: `${w} / ${h}`,
         }));
+        setBannerAlert({
+          type: "success",
+          message: `Banner dimensions auto-detected: ${w} × ${h}px (${aspectInfo.label}). Slider will adapt automatically.`,
+        });
       };
       img.src = trimmed;
     }
@@ -1943,7 +1956,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
 
     const detectedW = bannerForm.width || 800;
     const detectedH = bannerForm.height || 1200;
-    const computedRatio = "2/3";
+    const computedRatio = bannerForm.aspectRatio || `${detectedW} / ${detectedH}`;
 
     if (editingBannerId) {
       const updated = customBanners.map((b) => {
@@ -1967,7 +1980,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
       });
       await persistCustomBanners(updated);
       setEditingBannerId(null);
-      setBannerAlert({ type: "success", message: "Banner successfully updated!" });
+      setBannerAlert({ type: "success", message: "Banner successfully updated with automatic aspect ratio!" });
     } else {
       const newBanner: FooterBannerItem = {
         id: `custom-banner-${Date.now()}`,
@@ -1989,7 +2002,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
       await persistCustomBanners(updated);
       setBannerAlert({
         type: "success",
-        message: "New custom banner added! Default mock banners are now automatically disabled on storefront.",
+        message: "New custom banner added! Default mock banners are now automatically disabled on storefront, and the slider adapts to this banner's ratio.",
       });
     }
 
@@ -2003,6 +2016,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
       badge: "",
       width: 0,
       height: 0,
+      aspectRatio: "",
       enabled: true,
     });
   };
@@ -2019,6 +2033,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
       badge: banner.badge || "",
       width: banner.width || 0,
       height: banner.height || 0,
+      aspectRatio: banner.aspectRatio || (banner.width && banner.height ? `${banner.width} / ${banner.height}` : "2 / 3"),
       enabled: banner.enabled !== false,
     });
     const cardEl = document.getElementById("custom-banner-editor-card");
@@ -2039,6 +2054,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
       badge: "",
       width: 0,
       height: 0,
+      aspectRatio: "",
       enabled: true,
     });
   };
@@ -7854,7 +7870,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                                 Click or drag banner image here
                               </p>
                               <p className="text-[10px] text-blue-400 font-medium">
-                                Recommended: 2:3 Portrait Aspect Ratio (e.g. 600×900 or 800×1200)
+                                Automatic Aspect Ratio: Upload any format (Portrait, Landscape, Widescreen, Square)
                               </p>
                             </div>
                           </div>
@@ -7878,7 +7894,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                           {/* Manual Image URL Input fallback */}
                           <div>
                             <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                              Or Image URL / Path (2:3 Portrait)
+                              Or Image URL / Path (Any Aspect Ratio)
                             </label>
                             <input
                               type="text"
@@ -7892,42 +7908,52 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                             />
                           </div>
 
-                          {/* Preview & Auto-Detected Dimensions Box - 2:3 Portrait */}
-                          {bannerForm.imageUrl && (
-                            <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-2.5 space-y-2">
-                              <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
-                                <span className="text-blue-400 font-semibold flex items-center gap-1">
-                                  <span>2:3 Portrait Preview:</span>
-                                </span>
-                                <span className="bg-blue-950/60 text-blue-400 px-1.5 py-0.5 rounded text-[10px] border border-blue-900/60 font-semibold">
-                                  2:3 Portrait Format
-                                </span>
+                          {/* Preview & Auto-Detected Dimensions Box */}
+                          {bannerForm.imageUrl && (() => {
+                            const aspectInfo = formatBannerAspectRatio(
+                              bannerForm.width,
+                              bannerForm.height,
+                              bannerForm.aspectRatio
+                            );
+                            return (
+                              <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-2.5 space-y-2">
+                                <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
+                                  <span className="text-blue-400 font-semibold flex items-center gap-1">
+                                    <span>Auto-Detected Preview:</span>
+                                  </span>
+                                  <span className="bg-blue-950/60 text-blue-400 px-1.5 py-0.5 rounded text-[10px] border border-blue-900/60 font-semibold">
+                                    {aspectInfo.label}
+                                  </span>
+                                </div>
+                                <div
+                                  className="relative mx-auto rounded-xl overflow-hidden bg-white border border-slate-700/80 flex items-center justify-center transition-all p-1"
+                                  style={{
+                                    aspectRatio: aspectInfo.cssAspectRatio,
+                                    maxHeight: "280px",
+                                    maxWidth: aspectInfo.ratioDecimal > 1.2 ? "360px" : "220px",
+                                  }}
+                                >
+                                  <img
+                                    src={bannerForm.imageUrl}
+                                    alt="Preview"
+                                    className="w-full h-full object-contain rounded-lg"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
+                                  <span>Detected Dimensions:</span>
+                                  <span className="text-slate-200">
+                                    {bannerForm.width > 0 && bannerForm.height > 0
+                                      ? `${bannerForm.width} × ${bannerForm.height}px (${aspectInfo.ratioString})`
+                                      : "Auto-detecting..."}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-emerald-400 font-medium">
+                                  ✓ The storefront slider will automatically adjust its frame to match this banner's exact proportions ({aspectInfo.label}) without cropping.
+                                </p>
                               </div>
-                              <div
-                                className="relative mx-auto rounded-xl overflow-hidden bg-white border border-slate-700/80 flex items-center justify-center transition-all p-1"
-                                style={{
-                                  aspectRatio: "2 / 3",
-                                  maxHeight: "300px",
-                                  maxWidth: "200px",
-                                }}
-                              >
-                                <img
-                                  src={bannerForm.imageUrl}
-                                  alt="Preview"
-                                  className="w-full h-full object-contain rounded-lg"
-                                  referrerPolicy="no-referrer"
-                                />
-                              </div>
-                              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
-                                <span>Detected Dimensions:</span>
-                                <span className="text-slate-200">
-                                  {bannerForm.width > 0 && bannerForm.height > 0
-                                    ? `${bannerForm.width} × ${bannerForm.height}px`
-                                    : "800 × 1200px (2:3)"}
-                                </span>
-                              </div>
-                            </div>
-                          )}
+                            );
+                          })()}
                         </div>
 
                         {/* Banner Text, CTA, & Metadata Options (7 cols) */}
@@ -8100,15 +8126,26 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                               }`}
                             >
                               <div className="flex items-center gap-3">
-                                {/* Thumbnail - 2:3 Portrait */}
-                                <div className="w-12 h-18 rounded-lg overflow-hidden bg-white border border-slate-700/80 shrink-0 flex items-center justify-center p-0.5">
-                                  <img
-                                    src={banner.imageUrl}
-                                    alt={banner.title || "Banner"}
-                                    className="w-full h-full object-contain rounded"
-                                    referrerPolicy="no-referrer"
-                                  />
-                                </div>
+                                {/* Thumbnail - Dynamic Auto Aspect Ratio */}
+                                {(() => {
+                                  const bannerAspect = formatBannerAspectRatio(banner.width, banner.height, banner.aspectRatio);
+                                  return (
+                                    <div
+                                      className="rounded-lg overflow-hidden bg-white border border-slate-700/80 shrink-0 flex items-center justify-center p-0.5"
+                                      style={{
+                                        width: bannerAspect.ratioDecimal > 1.2 ? "4.2rem" : "2.8rem",
+                                        height: bannerAspect.ratioDecimal > 1.2 ? "2.6rem" : "4.2rem",
+                                      }}
+                                    >
+                                      <img
+                                        src={banner.imageUrl}
+                                        alt={banner.title || "Banner"}
+                                        className="w-full h-full object-contain rounded"
+                                        referrerPolicy="no-referrer"
+                                      />
+                                    </div>
+                                  );
+                                })()}
 
                                 <div className="space-y-0.5">
                                   <div className="flex items-center gap-2">
@@ -8132,9 +8169,14 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                                   </div>
 
                                   <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
-                                    <span>
-                                      Size: {banner.width || 800} × {banner.height || 1200}px (2:3 Portrait)
-                                    </span>
+                                    {(() => {
+                                      const bannerAspect = formatBannerAspectRatio(banner.width, banner.height, banner.aspectRatio);
+                                      return (
+                                        <span className="text-blue-300 font-mono font-medium">
+                                          Auto-Ratio: {bannerAspect.label} ({banner.width || 800} × {banner.height || 1200}px)
+                                        </span>
+                                      );
+                                    })()}
                                     <span aria-hidden="true">·</span>
                                     <span className="font-mono text-slate-500">
                                       Target: {banner.linkUrl || "#catalog"}

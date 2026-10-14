@@ -1,19 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronLeft,
   ChevronRight,
   Pause,
   Play,
-  ArrowRight,
-  ExternalLink,
-  Sparkles,
-  Layers,
-  Smartphone,
 } from "lucide-react";
 import {
   FooterBannerItem,
   resolveFooterBanners,
+  parseBannerAspectRatio,
 } from "../utils/homepageDefaults";
 
 interface FooterBannerSliderProps {
@@ -25,50 +21,13 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
   footerBannersJson,
   onNavigate,
 }) => {
-  const { banners, isUsingMock } = resolveFooterBanners(footerBannersJson);
+  const { banners } = resolveFooterBanners(footerBannersJson);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [isPaused, setIsPaused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  // Auto-detected aspect ratios keyed by banner ID
-  const [dimensionMap, setDimensionMap] = useState<Record<string, { width: number; height: number; ratio: number }>>(() => {
-    const initial: Record<string, { width: number; height: number; ratio: number }> = {};
-    banners.forEach((b) => {
-      if (b.width && b.height && b.width > 0 && b.height > 0) {
-        initial[b.id] = {
-          width: b.width,
-          height: b.height,
-          ratio: b.width / b.height,
-        };
-      }
-    });
-    return initial;
-  });
-
-  // Pre-load and monitor dimensions for all banners
-  useEffect(() => {
-    banners.forEach((b) => {
-      if (!b.imageUrl) return;
-      if (dimensionMap[b.id]?.width && dimensionMap[b.id]?.height) return;
-      const img = new window.Image();
-      img.onload = () => {
-        if (img.naturalWidth && img.naturalHeight) {
-          const w = img.naturalWidth;
-          const h = img.naturalHeight;
-          setDimensionMap((prev) => {
-            if (prev[b.id]?.width === w && prev[b.id]?.height === h) return prev;
-            return {
-              ...prev,
-              [b.id]: { width: w, height: h, ratio: w / h },
-            };
-          });
-        }
-      };
-      img.src = b.imageUrl;
-    });
-  }, [banners, dimensionMap]);
+  const [naturalRatios, setNaturalRatios] = useState<Record<string, number>>({});
 
   // Keep index within bounds if banners list changes
   useEffect(() => {
@@ -76,6 +35,48 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
       setCurrentIndex(0);
     }
   }, [banners.length, currentIndex]);
+
+  // Preload all banner images and automatically detect their natural dimensions & aspect ratios
+  useEffect(() => {
+    banners.forEach((banner) => {
+      if (!banner.imageUrl) return;
+      const img = new Image();
+      img.onload = () => {
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          const ratio = img.naturalWidth / img.naturalHeight;
+          setNaturalRatios((prev) => {
+            if (prev[banner.imageUrl] && Math.abs(prev[banner.imageUrl] - ratio) < 0.001) {
+              return prev;
+            }
+            return {
+              ...prev,
+              [banner.imageUrl]: ratio,
+            };
+          });
+        }
+      };
+      img.src = banner.imageUrl;
+    });
+  }, [banners]);
+
+  // Helper to resolve aspect ratio for any banner item
+  const getBannerRatio = useCallback(
+    (banner?: FooterBannerItem): number => {
+      if (!banner) return 2 / 3;
+      if (banner.imageUrl && naturalRatios[banner.imageUrl]) {
+        return naturalRatios[banner.imageUrl];
+      }
+      if (banner.width && banner.height && banner.width > 0 && banner.height > 0) {
+        return banner.width / banner.height;
+      }
+      if (banner.aspectRatio) {
+        const parsed = parseBannerAspectRatio(banner.aspectRatio);
+        if (parsed) return parsed;
+      }
+      return 2 / 3; // sensible portrait default
+    },
+    [naturalRatios]
+  );
 
   const handleNext = useCallback(() => {
     if (banners.length <= 1) return;
@@ -101,7 +102,7 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
 
     const timer = setInterval(() => {
       handleNext();
-    }, 5500);
+    }, 6000);
 
     return () => clearInterval(timer);
   }, [banners.length, isPaused, isHovered, handleNext]);
@@ -158,9 +159,47 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
   const prevIndex = (currentIndex - 1 + banners.length) % banners.length;
   const nextIndex = (currentIndex + 1) % banners.length;
 
+  const currentRatio = getBannerRatio(currentBanner);
+  const prevRatio = getBannerRatio(banners[prevIndex]);
+  const nextRatio = getBannerRatio(banners[nextIndex]);
+
+  // Determine responsive container dimensions based on the banner's actual aspect ratio
+  const { maxWidth, maxHeight, isWideFormat } = useMemo(() => {
+    const r = currentRatio;
+    if (r < 0.85) {
+      // Portrait (e.g. 2:3 = 0.67, 9:16 = 0.56)
+      return {
+        maxWidth: "min(92vw, 420px)",
+        maxHeight: "min(82vh, 620px)",
+        isWideFormat: false,
+      };
+    } else if (r < 1.15) {
+      // Square or near-square (e.g. 1:1, 4:5)
+      return {
+        maxWidth: "min(92vw, 540px)",
+        maxHeight: "min(75vh, 540px)",
+        isWideFormat: false,
+      };
+    } else if (r < 1.6) {
+      // Standard Landscape (e.g. 4:3 = 1.33, 3:2 = 1.5)
+      return {
+        maxWidth: "min(94vw, 840px)",
+        maxHeight: "min(68vh, 520px)",
+        isWideFormat: true,
+      };
+    } else {
+      // Widescreen / Panoramic (e.g. 16:9 = 1.78, 21:9 = 2.33)
+      return {
+        maxWidth: "min(96vw, 1080px)",
+        maxHeight: "min(60vh, 500px)",
+        isWideFormat: true,
+      };
+    }
+  }, [currentRatio]);
+
   return (
     <section
-      aria-label="Marketplace 2:3 Portrait Featured Banners"
+      aria-label="Featured highlights & procurement updates"
       className="print:hidden w-full bg-white border-t border-slate-200/90 text-slate-900 relative select-none overflow-hidden focus:outline-none"
       tabIndex={0}
       onKeyDown={handleKeyDown}
@@ -168,149 +207,120 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Banner Section Header / Meta Info */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        {/* Banner Section Header: Clean title only */}
+        <div className="flex items-center justify-between mb-5 sm:mb-6">
           <div className="flex items-center gap-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse shrink-0" />
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-900">
-                  Featured Highlights & Procurement Updates
-                </h2>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                  2:3 Portrait
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-normal">
-                Verified laboratory supply chains · Certified reagents & logistics
-              </p>
-            </div>
+            <h2 className="text-xs sm:text-sm md:text-base font-bold tracking-wider uppercase text-slate-900">
+              Featured highlights & procurement updates
+            </h2>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            {/* Status Badge */}
-            {isUsingMock ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                Featured Showcase
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
-                <Layers className="w-3.5 h-3.5 text-blue-600" />
-                Verified Custom Banners
-              </span>
-            )}
-
-            {/* Slide Index Counter */}
-            {banners.length > 1 && (
-              <span className="text-xs font-mono font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                {String(currentIndex + 1).padStart(2, "0")} / {String(banners.length).padStart(2, "0")}
-              </span>
-            )}
-
-            {/* Play/Pause Button */}
-            {banners.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setIsPaused((prev) => !prev)}
-                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-colors border border-slate-200 shadow-2xs"
-                title={isPaused ? "Resume auto-rotation" : "Pause auto-rotation"}
-                aria-label={isPaused ? "Play" : "Pause"}
-              >
-                {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
-              </button>
-            )}
-          </div>
+          {banners.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setIsPaused((prev) => !prev)}
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-colors border border-slate-200 shadow-2xs cursor-pointer"
+              title={isPaused ? "Resume auto-rotation" : "Pause auto-rotation"}
+              aria-label={isPaused ? "Play" : "Pause"}
+            >
+              {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+            </button>
+          )}
         </div>
 
-        {/* Professional Company 2:3 Portrait Slidable Stage */}
-        <div className="relative w-full flex items-center justify-center py-2 sm:py-4 overflow-hidden">
-          {/* Main Stage Area - Centered 2:3 Portrait Carousel with Side Previews */}
-          <div className="relative w-full flex items-center justify-center min-h-[480px] sm:min-h-[560px] md:min-h-[600px] lg:min-h-[640px]">
-            {/* If more than 1 banner, render Side Previews for Apple / Nike Style Cover Stage */}
-            {banners.length > 1 && (
+        {/* Automatic Aspect Ratio Slidable Stage */}
+        <div className="relative w-full flex items-center justify-center py-2 sm:py-4 overflow-hidden min-h-[380px] sm:min-h-[460px]">
+          <div className="relative w-full flex items-center justify-center">
+            {/* Side Previews (shown gracefully on large screens when banner is portrait or square) */}
+            {banners.length > 1 && !isWideFormat && (
               <>
                 {/* Previous Banner Peek (Left Side) */}
                 <div
                   onClick={handlePrev}
-                  className="hidden md:block absolute left-4 lg:left-12 xl:left-24 z-10 cursor-pointer transform -translate-y-1/2 top-1/2 transition-all duration-300 hover:scale-[0.94] opacity-50 hover:opacity-85"
+                  className="hidden lg:block absolute left-4 xl:left-16 z-10 cursor-pointer transform -translate-y-1/2 top-1/2 transition-all duration-500 hover:scale-[0.96] opacity-45 hover:opacity-85"
                   style={{
-                    width: "clamp(220px, 22vw, 300px)",
-                    aspectRatio: "2 / 3",
+                    width: "clamp(180px, 18vw, 260px)",
+                    aspectRatio: `${prevRatio}`,
+                    maxHeight: "min(65vh, 480px)",
                   }}
-                  title={`Previous: ${banners[prevIndex].title || "Slide"}`}
+                  title="Previous banner"
                 >
-                  <div className="w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-lg border border-slate-200/90 p-1 flex items-center justify-center">
+                  <div className="w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-md border border-slate-200/90 p-1 flex items-center justify-center">
                     <img
                       src={banners[prevIndex].imageUrl}
-                      alt={banners[prevIndex].altText || "Previous Banner"}
+                      alt={banners[prevIndex].altText || "Previous banner"}
                       className="w-full h-full object-contain rounded-xl sm:rounded-2xl bg-white"
                       referrerPolicy="no-referrer"
                     />
                   </div>
-                  <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px] rounded-2xl sm:rounded-3xl transition-opacity hover:opacity-0" />
+                  <div className="absolute inset-0 bg-white/25 backdrop-blur-[0.5px] rounded-2xl sm:rounded-3xl transition-opacity hover:opacity-0" />
                 </div>
 
                 {/* Next Banner Peek (Right Side) */}
                 <div
                   onClick={handleNext}
-                  className="hidden md:block absolute right-4 lg:right-12 xl:right-24 z-10 cursor-pointer transform -translate-y-1/2 top-1/2 transition-all duration-300 hover:scale-[0.94] opacity-50 hover:opacity-85"
+                  className="hidden lg:block absolute right-4 xl:right-16 z-10 cursor-pointer transform -translate-y-1/2 top-1/2 transition-all duration-500 hover:scale-[0.96] opacity-45 hover:opacity-85"
                   style={{
-                    width: "clamp(220px, 22vw, 300px)",
-                    aspectRatio: "2 / 3",
+                    width: "clamp(180px, 18vw, 260px)",
+                    aspectRatio: `${nextRatio}`,
+                    maxHeight: "min(65vh, 480px)",
                   }}
-                  title={`Next: ${banners[nextIndex].title || "Slide"}`}
+                  title="Next banner"
                 >
-                  <div className="w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-lg border border-slate-200/90 p-1 flex items-center justify-center">
+                  <div className="w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-md border border-slate-200/90 p-1 flex items-center justify-center">
                     <img
                       src={banners[nextIndex].imageUrl}
-                      alt={banners[nextIndex].altText || "Next Banner"}
+                      alt={banners[nextIndex].altText || "Next banner"}
                       className="w-full h-full object-contain rounded-xl sm:rounded-2xl bg-white"
                       referrerPolicy="no-referrer"
                     />
                   </div>
-                  <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px] rounded-2xl sm:rounded-3xl transition-opacity hover:opacity-0" />
+                  <div className="absolute inset-0 bg-white/25 backdrop-blur-[0.5px] rounded-2xl sm:rounded-3xl transition-opacity hover:opacity-0" />
                 </div>
               </>
             )}
 
-            {/* Active Center 2:3 Portrait Card */}
+            {/* Active Banner Stage - Automatic Aspect Ratio Container */}
             <div
               className="relative z-20 flex items-center justify-center"
               style={{
-                width: "min(92vw, 400px)",
-                aspectRatio: "2 / 3",
-                maxHeight: "min(82vh, 620px)",
+                width: "100%",
+                maxWidth,
+                maxHeight,
+                aspectRatio: `${currentRatio}`,
+                transition:
+                  "max-width 0.45s cubic-bezier(0.2, 0.9, 0.3, 1), max-height 0.45s cubic-bezier(0.2, 0.9, 0.3, 1), aspect-ratio 0.45s cubic-bezier(0.2, 0.9, 0.3, 1)",
               }}
             >
-              <AnimatePresence initial={false} custom={direction} mode="wait">
+              <AnimatePresence initial={false} custom={direction} mode="popLayout">
                 <motion.div
-                  key={currentBanner.id}
+                  key={currentBanner.id || currentIndex}
                   custom={direction}
                   variants={{
                     enter: (dir: number) => ({
-                      x: dir > 0 ? 120 : -120,
+                      x: dir > 0 ? "100%" : "-100%",
                       opacity: 0,
-                      scale: 0.92,
+                      scale: 0.95,
                     }),
                     center: {
                       x: 0,
                       opacity: 1,
                       scale: 1,
                       transition: {
-                        x: { type: "spring", stiffness: 320, damping: 30 },
-                        opacity: { duration: 0.25 },
-                        scale: { duration: 0.25 },
+                        x: { type: "spring", stiffness: 280, damping: 28, mass: 0.8 },
+                        opacity: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+                        scale: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
                       },
                     },
                     exit: (dir: number) => ({
-                      x: dir > 0 ? -120 : 120,
+                      x: dir > 0 ? "-100%" : "100%",
                       opacity: 0,
-                      scale: 0.92,
+                      scale: 0.95,
                       transition: {
-                        x: { type: "spring", stiffness: 320, damping: 30 },
-                        opacity: { duration: 0.2 },
-                        scale: { duration: 0.2 },
+                        x: { type: "spring", stiffness: 280, damping: 28, mass: 0.8 },
+                        opacity: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+                        scale: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
                       },
                     }),
                   }}
@@ -319,74 +329,43 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
                   exit="exit"
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.2}
+                  dragElastic={0.16}
                   onDragEnd={(_, info) => {
-                    const threshold = 50;
-                    if (info.offset.x < -threshold) {
+                    const threshold = 40;
+                    const velocity = info.velocity.x;
+                    if (info.offset.x < -threshold || velocity < -280) {
                       handleNext();
-                    } else if (info.offset.x > threshold) {
+                    } else if (info.offset.x > threshold || velocity > 280) {
                       handlePrev();
                     }
                   }}
-                  className="w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-xl sm:shadow-2xl border border-slate-200/90 flex flex-col justify-between cursor-pointer group relative transition-shadow hover:shadow-3xl"
+                  className="w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-xl sm:shadow-2xl border border-slate-200/90 flex items-center justify-center cursor-pointer group relative transition-shadow hover:shadow-3xl"
                   onClick={(e) => handleBannerAction(currentBanner, e)}
                 >
-                  {/* Aspect Ratio 2:3 Portrait Graphic - object-contain ensures 100% complete banner is shown with NO cropping */}
+                  {/* Banner Graphic - Preserves exact image ratio without cropping */}
                   <div className="relative w-full h-full flex items-center justify-center p-2 sm:p-2.5 bg-white">
                     <img
                       src={currentBanner.imageUrl}
-                      alt={currentBanner.altText || currentBanner.title || "Marketplace Banner"}
-                      className="w-full h-full object-contain object-center rounded-xl sm:rounded-2xl transition-transform duration-500 ease-out group-hover:scale-[1.015]"
+                      alt={currentBanner.altText || currentBanner.title || "Featured banner"}
+                      onLoad={(e) => {
+                        const img = e.currentTarget;
+                        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                          const ratio = img.naturalWidth / img.naturalHeight;
+                          setNaturalRatios((prev) => {
+                            if (prev[currentBanner.imageUrl] && Math.abs(prev[currentBanner.imageUrl] - ratio) < 0.001) {
+                              return prev;
+                            }
+                            return {
+                              ...prev,
+                              [currentBanner.imageUrl]: ratio,
+                            };
+                          });
+                        }
+                      }}
+                      className="w-full h-full object-contain object-center rounded-xl sm:rounded-2xl transition-transform duration-500 ease-out group-hover:scale-[1.01]"
                       referrerPolicy="no-referrer"
                     />
-
-                    {/* Top Floating Badge if configured */}
-                    {currentBanner.badge && (
-                      <div className="absolute top-4 left-4 z-20">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-blue-700 border border-blue-200/80 shadow-md backdrop-blur-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                          {currentBanner.badge}
-                        </span>
-                      </div>
-                    )}
                   </div>
-
-                  {/* Frosted Glass Footer Overlay if title/subtitle/button exists */}
-                  {((currentBanner.title && currentBanner.title.trim().length > 0) ||
-                    (currentBanner.subtitle && currentBanner.subtitle.trim().length > 0) ||
-                    (currentBanner.buttonText && currentBanner.buttonText.trim().length > 0)) && (
-                    <div className="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-4 sm:p-5 rounded-b-2xl sm:rounded-b-3xl text-left pointer-events-none transition-transform group-hover:translate-y-0">
-                      <div className="pointer-events-auto space-y-2">
-                        {currentBanner.title && (
-                          <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug line-clamp-2">
-                            {currentBanner.title}
-                          </h3>
-                        )}
-
-                        {currentBanner.subtitle && (
-                          <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                            {currentBanner.subtitle}
-                          </p>
-                        )}
-
-                        {currentBanner.buttonText && (
-                          <div className="pt-1">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleBannerAction(currentBanner, e);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm shadow-blue-500/20 group/btn"
-                            >
-                              <span>{currentBanner.buttonText}</span>
-                              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -400,9 +379,9 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
                     e.stopPropagation();
                     handlePrev();
                   }}
-                  className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-blue-600 backdrop-blur-md flex items-center justify-center transition-all border border-slate-200/90 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 z-30"
-                  aria-label="Previous Slide"
-                  title="Previous Slide (←)"
+                  className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-blue-600 backdrop-blur-md flex items-center justify-center transition-all border border-slate-200/90 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 z-30 cursor-pointer"
+                  aria-label="Previous slide"
+                  title="Previous slide (←)"
                 >
                   <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
@@ -412,9 +391,9 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
                     e.stopPropagation();
                     handleNext();
                   }}
-                  className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-blue-600 backdrop-blur-md flex items-center justify-center transition-all border border-slate-200/90 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 z-30"
-                  aria-label="Next Slide"
-                  title="Next Slide (→)"
+                  className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-blue-600 backdrop-blur-md flex items-center justify-center transition-all border border-slate-200/90 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 z-30 cursor-pointer"
+                  aria-label="Next slide"
+                  title="Next slide (→)"
                 >
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
@@ -422,7 +401,7 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
             )}
           </div>
 
-          {/* Dots Indicator & Quick Carousel Nav */}
+          {/* Dots Indicator */}
           {banners.length > 1 && (
             <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-slate-200/90 shadow-sm">
               {banners.map((b, idx) => {
@@ -441,7 +420,7 @@ export const FooterBannerSlider: React.FC<FooterBannerSliderProps> = ({
                         : "w-2 h-2 bg-slate-300 hover:bg-slate-400"
                     }`}
                     aria-label={`Go to slide ${idx + 1}`}
-                    title={b.title || `Slide ${idx + 1}`}
+                    title={`Slide ${idx + 1}`}
                   />
                 );
               })}
