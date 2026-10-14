@@ -18,6 +18,10 @@ import {
   Package,
 } from "lucide-react";
 
+import bannerLabReagents from "../assets/images/banner_lab_reagents_1791994502101.jpg";
+import bannerBulkLogistics from "../assets/images/banner_bulk_logistics_1791994504829.jpg";
+import bannerAnalyticalGrade from "../assets/images/banner_analytical_grade_1791994503648.jpg";
+
 export interface HeroFeatureItem {
   id: string;
   icon: string;
@@ -32,6 +36,23 @@ export interface AcceptedCryptoItem {
   symbol: string;
   logoUrl: string;
   enabled: boolean;
+}
+
+export interface FooterBannerItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  altText?: string;
+  linkUrl?: string;
+  buttonText?: string;
+  badge?: string;
+  width?: number;
+  height?: number;
+  aspectRatio?: string;
+  enabled: boolean;
+  isMock?: boolean;
+  createdAt?: number;
 }
 
 export interface SupportedLanguage {
@@ -1103,4 +1124,91 @@ export function renderHeroFeatureIcon(iconName: string, className: string = "w-5
     default:
       return <ShieldCheck className={className} />;
   }
+}
+
+export const DEFAULT_FOOTER_MOCK_BANNERS: FooterBannerItem[] = [
+  {
+    id: "mock-banner-1",
+    title: "High-Purity Laboratory Reagents & Analytical Standards",
+    subtitle: "Certified ACS, HPLC & Spectroscopy grades with full SDS and GHS documentation for academic and industrial research.",
+    imageUrl: bannerLabReagents || "/src/assets/images/banner_lab_reagents_1791994502101.jpg",
+    altText: "High-Purity Laboratory Reagents & Glassware",
+    linkUrl: "#catalog",
+    buttonText: "Browse Lab Reagents",
+    badge: "Certified ACS Grade",
+    width: 1792,
+    height: 1008,
+    aspectRatio: "16/9",
+    enabled: true,
+    isMock: true,
+  },
+  {
+    id: "mock-banner-2",
+    title: "Bulk Industrial Chemical Logistics & Certified Supply",
+    subtitle: "Direct-from-manufacturer bulk chemical storage, ISO-certified drum packaging, and global compliant hazmat transport.",
+    imageUrl: bannerBulkLogistics || "/src/assets/images/banner_bulk_logistics_1791994504829.jpg",
+    altText: "Bulk Industrial Chemical Logistics & Warehouse",
+    linkUrl: "#catalog",
+    buttonText: "Request Bulk Quote",
+    badge: "Bulk Procurement",
+    width: 1792,
+    height: 1008,
+    aspectRatio: "16/9",
+    enabled: true,
+    isMock: true,
+  },
+  {
+    id: "mock-banner-3",
+    title: "State-of-the-Art Chromatography & Spectroscopy Solutions",
+    subtitle: "Ultra-pure mobile phases, certified reference materials, and custom synthesis solutions tailored for institutional laboratories.",
+    imageUrl: bannerAnalyticalGrade || "/src/assets/images/banner_analytical_grade_1791994503648.jpg",
+    altText: "Advanced Analytical Solutions & Chromatography",
+    linkUrl: "#catalog",
+    buttonText: "Explore Analytical Line",
+    badge: "ISO 17025 Compliant",
+    width: 1792,
+    height: 1008,
+    aspectRatio: "16/9",
+    enabled: true,
+    isMock: true,
+  },
+];
+
+export function resolveFooterBanners(rawJson?: string): {
+  banners: FooterBannerItem[];
+  isUsingMock: boolean;
+  customCount: number;
+} {
+  let parsed: FooterBannerItem[] = [];
+  if (rawJson && typeof rawJson === "string" && rawJson.trim().length > 0) {
+    try {
+      const data = JSON.parse(rawJson);
+      if (Array.isArray(data)) {
+        parsed = data.filter((b) => b && b.imageUrl && b.imageUrl.trim().length > 0);
+      }
+    } catch (e) {
+      console.warn("Could not parse footer banners JSON:", e);
+      parsed = [];
+    }
+  }
+
+  // Filter out any mock banners if present in custom list
+  const customBanners = parsed.filter((b) => !b.isMock);
+
+  if (customBanners.length > 0) {
+    // If admin has added custom banners, automatically disable mock banners!
+    const activeCustom = customBanners.filter((b) => b.enabled !== false);
+    return {
+      banners: activeCustom.length > 0 ? activeCustom : customBanners,
+      isUsingMock: false,
+      customCount: customBanners.length,
+    };
+  }
+
+  // When no custom banners exist, return mock banners
+  return {
+    banners: DEFAULT_FOOTER_MOCK_BANNERS.filter((b) => b.enabled !== false),
+    isUsingMock: true,
+    customCount: 0,
+  };
 }

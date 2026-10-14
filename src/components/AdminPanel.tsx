@@ -91,6 +91,9 @@ import {
   renderHeroFeatureIcon,
   formatWhatsappDisplay,
   sanitizeWhatsappPhone,
+  FooterBannerItem,
+  DEFAULT_FOOTER_MOCK_BANNERS,
+  resolveFooterBanners,
 } from "../utils/homepageDefaults";
 import { ApiKeysManagement } from "./admin/ApiKeysManagement";
 
@@ -1438,6 +1441,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
     footerLicence2: "",
     footerLicence3: "",
     footerCopyright: "",
+    footerBannersJson: "[]",
 
     admin_url_path: "",
 
@@ -1456,6 +1460,13 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setHomepageSaveFeedback({ type, message });
+    setTimeout(() => {
+      setHomepageSaveFeedback(null);
+    }, 4500);
+  };
 
   // Quick Add New Cryptocurrency Form State inside Homepage Control
   const [newCryptoName, setNewCryptoName] = useState<string>("");
@@ -1762,6 +1773,307 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
     });
   };
 
+  // ==========================================
+  // CUSTOM FOOTER SLIDABLE BANNERS MANAGEMENT
+  // ==========================================
+  const [customBanners, setCustomBanners] = useState<FooterBannerItem[]>([]);
+  const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
+  const [bannerForm, setBannerForm] = useState<{
+    title: string;
+    subtitle: string;
+    imageUrl: string;
+    altText: string;
+    linkUrl: string;
+    buttonText: string;
+    badge: string;
+    width: number;
+    height: number;
+    enabled: boolean;
+  }>({
+    title: "",
+    subtitle: "",
+    imageUrl: "",
+    altText: "",
+    linkUrl: "#catalog",
+    buttonText: "",
+    badge: "",
+    width: 0,
+    height: 0,
+    enabled: true,
+  });
+  const [bannerUploadProgress, setBannerUploadProgress] = useState<number | null>(null);
+  const [bannerAlert, setBannerAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [showMockPreview, setShowMockPreview] = useState<boolean>(false);
+
+  // Sync customBanners when homepageForm.footerBannersJson updates
+  useEffect(() => {
+    if (homepageForm.footerBannersJson) {
+      try {
+        const parsed = JSON.parse(homepageForm.footerBannersJson);
+        if (Array.isArray(parsed)) {
+          setCustomBanners(parsed.filter((b: any) => !b.isMock));
+        }
+      } catch (e) {
+        console.error("Error parsing footerBannersJson in AdminPanel:", e);
+      }
+    }
+  }, [homepageForm.footerBannersJson]);
+
+  const persistCustomBanners = async (updatedList: FooterBannerItem[]) => {
+    setCustomBanners(updatedList);
+    const jsonStr = JSON.stringify(updatedList);
+    setHomepageForm((prev) => ({ ...prev, footerBannersJson: jsonStr }));
+
+    const adminToken = token || localStorage.getItem("lunexa_admin_token") || "";
+    try {
+      const res = await fetch("/api/homepage", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {}),
+        },
+        body: JSON.stringify({ footerBannersJson: jsonStr }),
+      });
+      if (res.ok) {
+        const saved = await res.json().catch(() => null);
+        if (onHomepageUpdated) onHomepageUpdated(saved || { footerBannersJson: jsonStr });
+      }
+    } catch (err) {
+      console.error("Failed persisting custom footer banners:", err);
+    }
+  };
+
+  const handleBannerImageUpload = async (file: File) => {
+    if (!file) return;
+
+    // Detect image natural dimensions
+    const objectUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      const w = img.naturalWidth || 1920;
+      const h = img.naturalHeight || 600;
+      URL.revokeObjectURL(objectUrl);
+
+      // Upload file to /api/upload
+      setBannerUploadProgress(15);
+      const formData = new FormData();
+      formData.append("file", file);
+      const adminToken = token || localStorage.getItem("lunexa_admin_token") || "";
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/upload", true);
+      if (adminToken) {
+        xhr.setRequestHeader("Authorization", `Bearer ${adminToken}`);
+      }
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const pct = Math.round((evt.loaded / evt.total) * 100);
+          setBannerUploadProgress(Math.min(95, Math.max(15, pct)));
+        }
+      };
+      xhr.onload = () => {
+        setBannerUploadProgress(100);
+        setTimeout(() => setBannerUploadProgress(null), 800);
+        try {
+          const data = JSON.parse(xhr.responseText || "{}");
+          if (xhr.status >= 200 && xhr.status < 300 && data.success && data.url) {
+            setBannerForm((prev) => ({
+              ...prev,
+              imageUrl: data.url,
+              width: w,
+              height: h,
+            }));
+            setBannerAlert({
+              type: "success",
+              message: `Image uploaded successfully! Auto-detected dimensions: ${w} × ${h}px (${(w / h).toFixed(2)}:1 aspect ratio).`,
+            });
+          } else {
+            setBannerAlert({
+              type: "error",
+              message: data.error || "Failed to upload banner image.",
+            });
+          }
+        } catch {
+          setBannerAlert({
+            type: "error",
+            message: "Invalid response from server during banner upload.",
+          });
+        }
+      };
+      xhr.onerror = () => {
+        setBannerUploadProgress(null);
+        setBannerAlert({ type: "error", message: "Network error uploading banner image." });
+      };
+      xhr.send(formData);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setBannerAlert({ type: "error", message: "Could not read image file." });
+    };
+    img.src = objectUrl;
+  };
+
+  const handleBannerUrlBlur = (url: string) => {
+    const trimmed = (url || "").trim();
+    if (trimmed && (trimmed.startsWith("http") || trimmed.startsWith("/src") || trimmed.startsWith("/uploads"))) {
+      const img = new window.Image();
+      img.onload = () => {
+        const w = img.naturalWidth || 1920;
+        const h = img.naturalHeight || 600;
+        setBannerForm((prev) => ({
+          ...prev,
+          width: w,
+          height: h,
+        }));
+      };
+      img.src = trimmed;
+    }
+  };
+
+  const handleAddOrUpdateBanner = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!bannerForm.imageUrl || bannerForm.imageUrl.trim().length === 0) {
+      setBannerAlert({
+        type: "error",
+        message: "Please upload an image file or provide an image URL for the banner.",
+      });
+      return;
+    }
+
+    const detectedW = bannerForm.width || 1920;
+    const detectedH = bannerForm.height || 600;
+    const computedRatio = `${detectedW}/${detectedH}`;
+
+    if (editingBannerId) {
+      const updated = customBanners.map((b) => {
+        if (b.id === editingBannerId) {
+          return {
+            ...b,
+            title: bannerForm.title.trim(),
+            subtitle: bannerForm.subtitle.trim(),
+            imageUrl: bannerForm.imageUrl.trim(),
+            altText: bannerForm.altText.trim() || bannerForm.title.trim() || "Marketplace Banner",
+            linkUrl: bannerForm.linkUrl.trim(),
+            buttonText: bannerForm.buttonText.trim(),
+            badge: bannerForm.badge.trim(),
+            width: detectedW,
+            height: detectedH,
+            aspectRatio: computedRatio,
+            enabled: bannerForm.enabled,
+          };
+        }
+        return b;
+      });
+      await persistCustomBanners(updated);
+      setEditingBannerId(null);
+      setBannerAlert({ type: "success", message: "Banner successfully updated!" });
+    } else {
+      const newBanner: FooterBannerItem = {
+        id: `custom-banner-${Date.now()}`,
+        title: bannerForm.title.trim(),
+        subtitle: bannerForm.subtitle.trim(),
+        imageUrl: bannerForm.imageUrl.trim(),
+        altText: bannerForm.altText.trim() || bannerForm.title.trim() || "Marketplace Banner",
+        linkUrl: bannerForm.linkUrl.trim(),
+        buttonText: bannerForm.buttonText.trim(),
+        badge: bannerForm.badge.trim(),
+        width: detectedW,
+        height: detectedH,
+        aspectRatio: computedRatio,
+        enabled: bannerForm.enabled,
+        isMock: false,
+        createdAt: Date.now(),
+      };
+      const updated = [...customBanners, newBanner];
+      await persistCustomBanners(updated);
+      setBannerAlert({
+        type: "success",
+        message: "New custom banner added! Default mock banners are now automatically disabled on storefront.",
+      });
+    }
+
+    setBannerForm({
+      title: "",
+      subtitle: "",
+      imageUrl: "",
+      altText: "",
+      linkUrl: "#catalog",
+      buttonText: "",
+      badge: "",
+      width: 0,
+      height: 0,
+      enabled: true,
+    });
+  };
+
+  const handleStartEditBanner = (banner: FooterBannerItem) => {
+    setEditingBannerId(banner.id);
+    setBannerForm({
+      title: banner.title || "",
+      subtitle: banner.subtitle || "",
+      imageUrl: banner.imageUrl || "",
+      altText: banner.altText || "",
+      linkUrl: banner.linkUrl || "#catalog",
+      buttonText: banner.buttonText || "",
+      badge: banner.badge || "",
+      width: banner.width || 0,
+      height: banner.height || 0,
+      enabled: banner.enabled !== false,
+    });
+    const cardEl = document.getElementById("custom-banner-editor-card");
+    if (cardEl) {
+      cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const handleCancelEditBanner = () => {
+    setEditingBannerId(null);
+    setBannerForm({
+      title: "",
+      subtitle: "",
+      imageUrl: "",
+      altText: "",
+      linkUrl: "#catalog",
+      buttonText: "",
+      badge: "",
+      width: 0,
+      height: 0,
+      enabled: true,
+    });
+  };
+
+  const handleDeleteBanner = async (bannerId: string) => {
+    const updated = customBanners.filter((b) => b.id !== bannerId);
+    await persistCustomBanners(updated);
+    if (editingBannerId === bannerId) {
+      handleCancelEditBanner();
+    }
+    setBannerAlert({
+      type: "success",
+      message:
+        updated.length === 0
+          ? "Banner deleted. All custom banners removed — system automatically restored default mock banners on storefront."
+          : "Banner removed successfully.",
+    });
+  };
+
+  const handleToggleBannerEnabled = async (bannerId: string) => {
+    const updated = customBanners.map((b) =>
+      b.id === bannerId ? { ...b, enabled: !b.enabled } : b
+    );
+    await persistCustomBanners(updated);
+  };
+
+  const handleMoveBanner = async (index: number, dir: "up" | "down") => {
+    const targetIdx = dir === "up" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= customBanners.length) return;
+    const copy = [...customBanners];
+    const item = copy.splice(index, 1)[0];
+    copy.splice(targetIdx, 0, item);
+    await persistCustomBanners(copy);
+  };
+
   // Financial Ledger Logs State
   const [paymentsLog, setPaymentsLog] = useState<any[]>([]);
   const [webhooksLog, setWebhooksLog] = useState<any[]>([]);
@@ -1985,7 +2297,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
             ? homeData.heroTitleHighlight
             : "Research, Industry & Innovation",
         heroDescription:
-          homeData.heroDescription &&
+          typeof homeData.heroDescription === "string" &&
           !homeData.heroDescription.startsWith(
             "Aniixa distributes analytical chemicals"
           )
@@ -2001,7 +2313,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
         heroStat2Label:
           homeData.heroStat2Label || "SDS / GHS Clear Documentation",
         heroImageUrl:
-          homeData.heroImageUrl &&
+          typeof homeData.heroImageUrl === "string" &&
           !homeData.heroImageUrl.includes(
             "chemical_hero_banner_1780924768442.png"
           )
@@ -2065,6 +2377,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
         footerCopyright:
           homeData.footerCopyright ||
           "Aniixa. Educational Material Logistics. Sandbox Checkout Portal.",
+        footerBannersJson: homeData.footerBannersJson || "[]",
 
         admin_url_path: homeData.admin_url_path || "/lunexa_official",
 
@@ -7432,17 +7745,508 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                                 heroWatermarkBadge: e.target.value,
                               }))
                             }
-                            className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none"
-                          />
+                            />
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* PANEL 4: GHS & COMPLIANCE ADVISORY FOOTNOTE BANNER */}
+                  {/* PANEL: SLIDABLE FOOTER BANNERS (TOP OF FOOTER SECTION) */}
+                  <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-5 md:col-span-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                          <Image className="w-4 h-4 text-blue-400" />
+                          <span>4. Slidable Promotional Banners (Top of Footer Section)</span>
+                          <span className="text-[10px] text-slate-500 font-mono">[UNLIMITED UPLOADS]</span>
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Upload unlimited custom banners with auto-detected dimensions (width & height). Once you add your first custom banner, default mock banners are automatically disabled by the system.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {customBanners.length > 0 ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-emerald-950/80 border border-emerald-700/70 text-emerald-300">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            ACTIVE: {customBanners.length} Custom Banner{customBanners.length > 1 ? "s" : ""} (Mock Banners Disabled)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-amber-950/80 border border-amber-700/70 text-amber-300">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            System Mock Banners Active (Auto-replaces when you add custom banner)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Banner Feedback / Alert */}
+                    {bannerAlert && (
+                      <div
+                        className={`p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 ${
+                          bannerAlert.type === "success"
+                            ? "bg-emerald-950/50 border-emerald-700/60 text-emerald-200"
+                            : "bg-rose-950/50 border-rose-700/60 text-rose-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {bannerAlert.type === "success" ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                          )}
+                          <span>{bannerAlert.message}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setBannerAlert(null)}
+                          className="text-slate-400 hover:text-white p-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Add / Edit Banner Form Card */}
+                    <div
+                      id="custom-banner-editor-card"
+                      className="bg-slate-950/70 border border-slate-800 rounded-xl p-4.5 space-y-4"
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-800/60 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <Plus className="w-4 h-4 text-blue-400" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                            {editingBannerId ? "Edit Custom Banner" : "Upload & Add New Custom Banner"}
+                          </h4>
+                        </div>
+                        {editingBannerId && (
+                          <button
+                            type="button"
+                            onClick={handleCancelEditBanner}
+                            className="text-[11px] text-slate-400 hover:text-rose-400 transition"
+                          >
+                            Cancel Editing
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                        {/* Image Upload & Dimension Detection (5 cols) */}
+                        <div className="lg:col-span-5 space-y-3">
+                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                            Banner Graphic Image (File Upload or URL)
+                          </label>
+
+                          {/* File upload drag/click box */}
+                          <div className="relative border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-4 bg-slate-900/40 text-center transition group">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleBannerImageUpload(file);
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="flex flex-col items-center justify-center space-y-1.5 py-1">
+                              <UploadCloud className="w-6 h-6 text-slate-400 group-hover:text-blue-400 transition" />
+                              <p className="text-xs font-medium text-slate-200">
+                                Click or drag banner image here
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                PNG, JPG, WebP, SVG · Auto-detects width & height
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Upload Progress Bar */}
+                          {bannerUploadProgress !== null && (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                                <span>Uploading image...</span>
+                                <span>{bannerUploadProgress}%</span>
+                              </div>
+                              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className="bg-blue-500 h-1.5 rounded-full transition-all duration-200"
+                                  style={{ width: `${bannerUploadProgress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Manual Image URL Input fallback */}
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                              Or Image URL / Path
+                            </label>
+                            <input
+                              type="text"
+                              value={bannerForm.imageUrl}
+                              onChange={(e) =>
+                                setBannerForm((prev) => ({ ...prev, imageUrl: e.target.value }))
+                              }
+                              onBlur={(e) => handleBannerUrlBlur(e.target.value)}
+                              placeholder="/src/assets/images/... or https://..."
+                              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                            />
+                          </div>
+
+                          {/* Preview & Auto-Detected Dimensions Box */}
+                          {bannerForm.imageUrl && (
+                            <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-2.5 space-y-2">
+                              <div className="relative rounded overflow-hidden aspect-video bg-black/50 border border-slate-800">
+                                <img
+                                  src={bannerForm.imageUrl}
+                                  alt="Preview"
+                                  className="w-full h-full object-contain"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
+                                <span className="text-blue-400 font-semibold">Auto-Detected Size:</span>
+                                <span>
+                                  {bannerForm.width > 0 && bannerForm.height > 0
+                                    ? `${bannerForm.width} × ${bannerForm.height}px (${(bannerForm.width / bannerForm.height).toFixed(2)}:1)`
+                                    : "Dimensions detecting..."}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Banner Text, CTA, & Metadata Options (7 cols) */}
+                        <div className="lg:col-span-7 space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                Banner Headline Title (Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={bannerForm.title}
+                                onChange={(e) =>
+                                  setBannerForm((prev) => ({ ...prev, title: e.target.value }))
+                                }
+                                placeholder="e.g. Certified High-Purity Reagents"
+                                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                Badge / Kicker Tag (Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={bannerForm.badge}
+                                onChange={(e) =>
+                                  setBannerForm((prev) => ({ ...prev, badge: e.target.value }))
+                                }
+                                placeholder="e.g. Special Offer, ACS Grade"
+                                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                              Banner Subtitle / Description (Optional)
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={bannerForm.subtitle}
+                              onChange={(e) =>
+                                setBannerForm((prev) => ({ ...prev, subtitle: e.target.value }))
+                              }
+                              placeholder="Brief description of the promotion, announcement or procurement service..."
+                              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 resize-none leading-relaxed"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                CTA Button Label (Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={bannerForm.buttonText}
+                                onChange={(e) =>
+                                  setBannerForm((prev) => ({ ...prev, buttonText: e.target.value }))
+                                }
+                                placeholder="e.g. Browse Catalog, View Quote"
+                                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                Target Link URL / Anchor
+                              </label>
+                              <input
+                                type="text"
+                                value={bannerForm.linkUrl}
+                                onChange={(e) =>
+                                  setBannerForm((prev) => ({ ...prev, linkUrl: e.target.value }))
+                                }
+                                placeholder="#catalog, /catalog, or https://..."
+                                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                            <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                              <input
+                                type="checkbox"
+                                checked={bannerForm.enabled}
+                                onChange={(e) =>
+                                  setBannerForm((prev) => ({ ...prev, enabled: e.target.checked }))
+                                }
+                                className="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0"
+                              />
+                              <span>Active & Visible in Slider</span>
+                            </label>
+
+                            <div className="flex items-center gap-2">
+                              {editingBannerId && (
+                                <button
+                                  type="button"
+                                  onClick={handleCancelEditBanner}
+                                  className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white text-xs transition"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleAddOrUpdateBanner()}
+                                className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                              >
+                                {editingBannerId ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>Update Banner</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Add Banner to Slider</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Unlimited Custom Banners List */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                          <span>Uploaded Custom Banners ({customBanners.length})</span>
+                          {customBanners.length > 0 && (
+                            <span className="text-[10px] text-emerald-400 font-mono">
+                              (Mock Banners Auto-Disabled)
+                            </span>
+                          )}
+                        </h4>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowMockPreview((prev) => !prev)}
+                          className="text-[11px] text-slate-400 hover:text-slate-200 transition flex items-center gap-1 underline"
+                        >
+                          {showMockPreview ? "Hide Default Mock Banners" : "Preview System Mock Banners"}
+                        </button>
+                      </div>
+
+                      {customBanners.length === 0 ? (
+                        <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-xl p-5 text-center space-y-2">
+                          <Image className="w-7 h-7 text-slate-600 mx-auto" />
+                          <p className="text-xs font-medium text-slate-300">
+                            No custom banners added yet
+                          </p>
+                          <p className="text-[11px] text-slate-400 max-w-md mx-auto">
+                            The storefront is currently showing the 3 high-quality Aniixa mock banners above the footer. Once you upload your first custom banner above, the system will automatically disable the mock banners and only show your custom uploaded banners.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {customBanners.map((banner, index) => (
+                            <div
+                              key={banner.id}
+                              className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${
+                                banner.enabled !== false
+                                  ? "bg-slate-950/70 border-slate-800"
+                                  : "bg-slate-950/30 border-slate-800/50 opacity-60"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                {/* Thumbnail */}
+                                <div className="w-20 h-12 rounded-lg overflow-hidden bg-black/60 border border-slate-800 shrink-0">
+                                  <img
+                                    src={banner.imageUrl}
+                                    alt={banner.title || "Banner"}
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </div>
+
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-white">
+                                      {banner.title || "Untitled Custom Banner"}
+                                    </span>
+                                    {banner.badge && (
+                                      <span className="text-[10px] text-blue-400 bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-900/60">
+                                        {banner.badge}
+                                      </span>
+                                    )}
+                                    {banner.enabled !== false ? (
+                                      <span className="text-[10px] text-emerald-400 font-mono">
+                                        ● Active
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] text-slate-500 font-mono">
+                                        ○ Inactive
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
+                                    <span>
+                                      Size: {banner.width || 1920} × {banner.height || 600}px
+                                    </span>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="font-mono text-slate-500">
+                                      Target: {banner.linkUrl || "#catalog"}
+                                    </span>
+                                    {banner.buttonText && (
+                                      <>
+                                        <span aria-hidden="true">·</span>
+                                        <span>CTA: "{banner.buttonText}"</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action controls */}
+                              <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                                {/* Move Up */}
+                                <button
+                                  type="button"
+                                  disabled={index === 0}
+                                  onClick={() => handleMoveBanner(index, "up")}
+                                  className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                  title="Move Up"
+                                >
+                                  <ChevronUp className="w-3.5 h-3.5" />
+                                </button>
+                                {/* Move Down */}
+                                <button
+                                  type="button"
+                                  disabled={index === customBanners.length - 1}
+                                  onClick={() => handleMoveBanner(index, "down")}
+                                  className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                  title="Move Down"
+                                >
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </button>
+                                {/* Toggle Active */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleBannerEnabled(banner.id)}
+                                  className={`p-1.5 rounded-lg border text-xs transition ${
+                                    banner.enabled !== false
+                                      ? "bg-emerald-950/60 border-emerald-800/60 text-emerald-300 hover:bg-emerald-900/60"
+                                      : "bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300"
+                                  }`}
+                                  title={banner.enabled !== false ? "Disable banner" : "Enable banner"}
+                                >
+                                  {banner.enabled !== false ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                </button>
+                                {/* Edit */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEditBanner(banner)}
+                                  className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-blue-400 hover:border-blue-700/60 transition"
+                                  title="Edit Banner"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                {/* Delete */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteBanner(banner.id)}
+                                  className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-rose-400 hover:border-rose-700/60 transition"
+                                  title="Delete Banner"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* System Mock Banners Reference (Collapsible) */}
+                    {showMockPreview && (
+                      <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-400" />
+                            <h5 className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                              System Default Mock Banners Reference
+                            </h5>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {customBanners.length > 0
+                              ? "Status: DISABLED (Replaced by Custom Banners)"
+                              : "Status: ACTIVE on Storefront"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          These 3 high-resolution mock banners are provided out-of-the-box for Aniixa. They display automatically whenever no custom banners are uploaded, and turn off automatically as soon as you upload your custom banners.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {DEFAULT_FOOTER_MOCK_BANNERS.map((mock) => (
+                            <div
+                              key={mock.id}
+                              className="bg-slate-900/60 border border-slate-800 rounded-lg p-2 space-y-1.5 text-left"
+                            >
+                              <div className="rounded overflow-hidden aspect-video bg-black/60 border border-slate-800">
+                                <img
+                                  src={mock.imageUrl}
+                                  alt={mock.title}
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </div>
+                              <p className="text-[11px] font-semibold text-white line-clamp-1">
+                                {mock.title}
+                              </p>
+                              <p className="text-[10px] text-slate-400 line-clamp-2">
+                                {mock.subtitle}
+                              </p>
+                              <span className="text-[9px] font-mono text-slate-500 block">
+                                Dimensions: {mock.width} × {mock.height}px
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PANEL 5: GHS & COMPLIANCE ADVISORY FOOTNOTE BANNER */}
                   <div className="bg-slate-900/30 border border-slate-800/80 p-5 rounded-2xl space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 border-b border-slate-800/60 pb-2">
-                      4. GHS & Compliance Advisory Footnote Banner
+                      5. GHS & Compliance Advisory Footnote Banner
                     </h3>
 
                     <div className="space-y-3">

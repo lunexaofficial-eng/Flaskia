@@ -21,6 +21,7 @@ import UserProfile from "./components/UserProfile";
 import MyInquiriesHub from "./components/MyInquiriesHub";
 import CheckoutPromptModal from "./components/CheckoutPromptModal";
 import IndiamartInquiryModal from "./components/IndiamartInquiryModal";
+import { FooterBannerSlider } from "./components/FooterBannerSlider";
 import { useTheme } from "./context/ThemeContext";
 import { useCurrency } from "./context/CurrencyContext";
 import {
@@ -238,7 +239,8 @@ export default function App() {
     footerLicence1: "OSHA ID: 44321-REAG",
     footerLicence2: "EPA LICENSE: 7385-CHEM",
     footerLicence3: "DOT TRANSPORT: CLASS 9",
-    footerCopyright: "Aniixa Supplies International Co. All rights reserved."
+    footerCopyright: "Aniixa Supplies International Co. All rights reserved.",
+    footerBannersJson: "[]",
   });
 
   const loadHomepageConfig = () => {
@@ -1452,6 +1454,12 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Slidable Footer Banner (Top of Footer) */}
+      <FooterBannerSlider
+        footerBannersJson={homepageConfig.footerBannersJson}
+        onNavigate={(view) => handleNavigate(view as any)}
+      />
 
       {/* Clean Corporate Footer */}
       <footer className="print:hidden border-t border-slate-200/90 bg-white text-slate-600 font-sans select-none">

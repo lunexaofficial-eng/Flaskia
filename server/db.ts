@@ -999,37 +999,39 @@ export async function initDb(frontProducts?: any[]) {
       }
     }
 
-    // Seeding Customers if empty
-    const custCheck = await client.query("SELECT COUNT(*) FROM customers");
-    if (parseInt(custCheck.rows[0].count) === 0) {
-      console.log("Seeding initial customers...");
-      const customersSet = [
-        {
-          id: "cust-1",
-          name: "Dr. Eleanor Vance",
-          email: "e.vance@stateuniversity.edu",
-          institution: "Federal Chemistry Research Institute",
-          licenseId: "N/A",
-          city: "Chicago",
-          room: "Laboratory 402B",
-          activeOrders: 1,
-          joinedDate: "2026-01-15",
-          role: "CUSTOMER",
-        },
-        {
-          id: "cust-2",
-          name: "Prof. Marcus Brody",
-          email: "mbrody@marshall.edu",
-          institution: "Marshall College Dept of Archaeology",
-          licenseId: "N/A",
-          city: "San Jose",
-          room: "Sequencing Suite 2",
-          activeOrders: 1,
-          joinedDate: "2026-03-22",
-          role: "CUSTOMER",
-        },
-      ];
-      for (const cust of customersSet) {
+    // Seeding sample Customers if not already present
+    const customersSet = [
+      {
+        id: "cust-1",
+        name: "Dr. Eleanor Vance",
+        email: "e.vance@stateuniversity.edu",
+        institution: "Federal Chemistry Research Institute",
+        licenseId: "N/A",
+        city: "Chicago",
+        room: "Laboratory 402B",
+        activeOrders: 1,
+        joinedDate: "2026-01-15",
+        role: "CUSTOMER",
+      },
+      {
+        id: "cust-2",
+        name: "Prof. Marcus Brody",
+        email: "mbrody@marshall.edu",
+        institution: "Marshall College Dept of Archaeology",
+        licenseId: "N/A",
+        city: "San Jose",
+        room: "Sequencing Suite 2",
+        activeOrders: 1,
+        joinedDate: "2026-03-22",
+        role: "CUSTOMER",
+      },
+    ];
+    for (const cust of customersSet) {
+      const existing = await client.query(
+        "SELECT id FROM customers WHERE id = $1 OR email = $2",
+        [cust.id, cust.email]
+      );
+      if (existing.rows.length === 0) {
         await client.query(
           `
           INSERT INTO customers (id, name, email, institution, license_id, city, room, active_orders, joined_date, role)
@@ -1076,10 +1078,15 @@ export async function initDb(frontProducts?: any[]) {
         },
       ];
       for (const ord of ordersSet) {
+        // Verify customer exists to prevent foreign key violation
+        const custCheck = await client.query("SELECT id FROM customers WHERE id = $1", [ord.customerId]);
+        const validCustomerId = custCheck.rows.length > 0 ? ord.customerId : null;
+
         await client.query(
           `
           INSERT INTO orders (id, order_id, date, amount, payment_id, status, customer_id)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (id) DO NOTHING
         `,
           [
             ord.id,
@@ -1088,7 +1095,7 @@ export async function initDb(frontProducts?: any[]) {
             ord.amount,
             ord.paymentId,
             ord.status,
-            ord.customerId,
+            validCustomerId,
           ],
         );
       }
@@ -1117,6 +1124,7 @@ export async function initDb(frontProducts?: any[]) {
           `
           INSERT INTO order_items (id, order_id, product_id, qty, package_size, price)
           VALUES ($1, $2, $3, $4, $5, $6)
+          ON CONFLICT (id) DO NOTHING
         `,
           [it.id, it.orderId, it.productId, it.qty, it.packageSize, it.price],
         );
