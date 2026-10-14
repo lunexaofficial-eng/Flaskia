@@ -18,9 +18,9 @@ import {
   Package,
 } from "lucide-react";
 
-import bannerLabReagents from "../assets/images/banner_lab_reagents_1791994502101.jpg";
-import bannerBulkLogistics from "../assets/images/banner_bulk_logistics_1791994504829.jpg";
-import bannerAnalyticalGrade from "../assets/images/banner_analytical_grade_1791994503648.jpg";
+import portraitLabReagents from "../assets/images/portrait_lab_reagents_1791997681228.jpg";
+import portraitBulkLogistics from "../assets/images/portrait_bulk_logistics_1791997712073.jpg";
+import portraitBiochemResearch from "../assets/images/portrait_biochem_research_1791997731872.jpg";
 
 export interface HeroFeatureItem {
   id: string;
@@ -1131,14 +1131,14 @@ export const DEFAULT_FOOTER_MOCK_BANNERS: FooterBannerItem[] = [
     id: "mock-banner-1",
     title: "High-Purity Laboratory Reagents & Analytical Standards",
     subtitle: "Certified ACS, HPLC & Spectroscopy grades with full SDS and GHS documentation for academic and industrial research.",
-    imageUrl: bannerLabReagents || "/src/assets/images/banner_lab_reagents_1791994502101.jpg",
+    imageUrl: portraitLabReagents || "/src/assets/images/portrait_lab_reagents_1791997681228.jpg",
     altText: "High-Purity Laboratory Reagents & Glassware",
     linkUrl: "#catalog",
     buttonText: "Browse Lab Reagents",
     badge: "Certified ACS Grade",
-    width: 1792,
-    height: 1008,
-    aspectRatio: "16/9",
+    width: 800,
+    height: 1200,
+    aspectRatio: "2/3",
     enabled: true,
     isMock: true,
   },
@@ -1146,14 +1146,14 @@ export const DEFAULT_FOOTER_MOCK_BANNERS: FooterBannerItem[] = [
     id: "mock-banner-2",
     title: "Bulk Industrial Chemical Logistics & Certified Supply",
     subtitle: "Direct-from-manufacturer bulk chemical storage, ISO-certified drum packaging, and global compliant hazmat transport.",
-    imageUrl: bannerBulkLogistics || "/src/assets/images/banner_bulk_logistics_1791994504829.jpg",
+    imageUrl: portraitBulkLogistics || "/src/assets/images/portrait_bulk_logistics_1791997712073.jpg",
     altText: "Bulk Industrial Chemical Logistics & Warehouse",
     linkUrl: "#catalog",
     buttonText: "Request Bulk Quote",
     badge: "Bulk Procurement",
-    width: 1792,
-    height: 1008,
-    aspectRatio: "16/9",
+    width: 800,
+    height: 1200,
+    aspectRatio: "2/3",
     enabled: true,
     isMock: true,
   },
@@ -1161,14 +1161,14 @@ export const DEFAULT_FOOTER_MOCK_BANNERS: FooterBannerItem[] = [
     id: "mock-banner-3",
     title: "State-of-the-Art Chromatography & Spectroscopy Solutions",
     subtitle: "Ultra-pure mobile phases, certified reference materials, and custom synthesis solutions tailored for institutional laboratories.",
-    imageUrl: bannerAnalyticalGrade || "/src/assets/images/banner_analytical_grade_1791994503648.jpg",
+    imageUrl: portraitBiochemResearch || "/src/assets/images/portrait_biochem_research_1791997731872.jpg",
     altText: "Advanced Analytical Solutions & Chromatography",
     linkUrl: "#catalog",
     buttonText: "Explore Analytical Line",
     badge: "ISO 17025 Compliant",
-    width: 1792,
-    height: 1008,
-    aspectRatio: "16/9",
+    width: 800,
+    height: 1200,
+    aspectRatio: "2/3",
     enabled: true,
     isMock: true,
   },

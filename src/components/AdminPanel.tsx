@@ -1919,8 +1919,8 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
     if (trimmed && (trimmed.startsWith("http") || trimmed.startsWith("/src") || trimmed.startsWith("/uploads"))) {
       const img = new window.Image();
       img.onload = () => {
-        const w = img.naturalWidth || 1920;
-        const h = img.naturalHeight || 600;
+        const w = img.naturalWidth || 800;
+        const h = img.naturalHeight || 1200;
         setBannerForm((prev) => ({
           ...prev,
           width: w,
@@ -1941,9 +1941,9 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
       return;
     }
 
-    const detectedW = bannerForm.width || 1920;
-    const detectedH = bannerForm.height || 600;
-    const computedRatio = `${detectedW}/${detectedH}`;
+    const detectedW = bannerForm.width || 800;
+    const detectedH = bannerForm.height || 1200;
+    const computedRatio = "2/3";
 
     if (editingBannerId) {
       const updated = customBanners.map((b) => {
@@ -7853,8 +7853,8 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                               <p className="text-xs font-medium text-slate-200">
                                 Click or drag banner image here
                               </p>
-                              <p className="text-[10px] text-slate-400">
-                                PNG, JPG, WebP, SVG · Auto-detects width & height
+                              <p className="text-[10px] text-blue-400 font-medium">
+                                Recommended: 2:3 Portrait Aspect Ratio (e.g. 600×900 or 800×1200)
                               </p>
                             </div>
                           </div>
@@ -7878,7 +7878,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                           {/* Manual Image URL Input fallback */}
                           <div>
                             <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                              Or Image URL / Path
+                              Or Image URL / Path (2:3 Portrait)
                             </label>
                             <input
                               type="text"
@@ -7892,23 +7892,38 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                             />
                           </div>
 
-                          {/* Preview & Auto-Detected Dimensions Box */}
+                          {/* Preview & Auto-Detected Dimensions Box - 2:3 Portrait */}
                           {bannerForm.imageUrl && (
                             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-2.5 space-y-2">
-                              <div className="relative rounded overflow-hidden aspect-video bg-black/50 border border-slate-800">
+                              <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
+                                <span className="text-blue-400 font-semibold flex items-center gap-1">
+                                  <span>2:3 Portrait Preview:</span>
+                                </span>
+                                <span className="bg-blue-950/60 text-blue-400 px-1.5 py-0.5 rounded text-[10px] border border-blue-900/60 font-semibold">
+                                  2:3 Portrait Format
+                                </span>
+                              </div>
+                              <div
+                                className="relative mx-auto rounded-xl overflow-hidden bg-white border border-slate-700/80 flex items-center justify-center transition-all p-1"
+                                style={{
+                                  aspectRatio: "2 / 3",
+                                  maxHeight: "300px",
+                                  maxWidth: "200px",
+                                }}
+                              >
                                 <img
                                   src={bannerForm.imageUrl}
                                   alt="Preview"
-                                  className="w-full h-full object-contain"
+                                  className="w-full h-full object-contain rounded-lg"
                                   referrerPolicy="no-referrer"
                                 />
                               </div>
-                              <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
-                                <span className="text-blue-400 font-semibold">Auto-Detected Size:</span>
-                                <span>
+                              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
+                                <span>Detected Dimensions:</span>
+                                <span className="text-slate-200">
                                   {bannerForm.width > 0 && bannerForm.height > 0
-                                    ? `${bannerForm.width} × ${bannerForm.height}px (${(bannerForm.width / bannerForm.height).toFixed(2)}:1)`
-                                    : "Dimensions detecting..."}
+                                    ? `${bannerForm.width} × ${bannerForm.height}px`
+                                    : "800 × 1200px (2:3)"}
                                 </span>
                               </div>
                             </div>
@@ -8085,12 +8100,12 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
                               }`}
                             >
                               <div className="flex items-center gap-3">
-                                {/* Thumbnail */}
-                                <div className="w-20 h-12 rounded-lg overflow-hidden bg-black/60 border border-slate-800 shrink-0">
+                                {/* Thumbnail - 2:3 Portrait */}
+                                <div className="w-12 h-18 rounded-lg overflow-hidden bg-white border border-slate-700/80 shrink-0 flex items-center justify-center p-0.5">
                                   <img
                                     src={banner.imageUrl}
                                     alt={banner.title || "Banner"}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain rounded"
                                     referrerPolicy="no-referrer"
                                   />
                                 </div>
@@ -8118,7 +8133,7 @@ export default function AdminPanel({ onBackToStore, onHomepageUpdated }: AdminPa
 
                                   <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
                                     <span>
-                                      Size: {banner.width || 1920} × {banner.height || 600}px
+                                      Size: {banner.width || 800} × {banner.height || 1200}px (2:3 Portrait)
                                     </span>
                                     <span aria-hidden="true">·</span>
                                     <span className="font-mono text-slate-500">
